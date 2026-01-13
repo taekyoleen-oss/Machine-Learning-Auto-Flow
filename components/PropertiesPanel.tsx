@@ -3785,13 +3785,21 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       setIsLoadingExamples(true);
       try {
         // 빌드 시점에 생성된 JSON 파일을 직접 로드
-        const response = await fetch('/examples-in-load.json');
+        console.log('Loading examples from /examples-in-load.json...');
+        const response = await fetch('/examples-in-load.json', {
+          cache: 'no-cache', // 캐시 방지
+        });
+        
+        console.log(`Response status: ${response.status} ${response.statusText}`);
+        
         if (!response.ok) {
           throw new Error(
             `Failed to fetch examples-in-load.json: ${response.status} ${response.statusText}`
           );
         }
+        
         const examplesData = await response.json();
+        console.log(`Received examples data:`, Array.isArray(examplesData) ? `${examplesData.length} items` : 'not an array');
 
         if (Array.isArray(examplesData)) {
           // JSON 파일에는 이미 name, filename, content가 포함되어 있음
@@ -3800,18 +3808,26 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             content: ex.content,
           }));
           
-        setExampleDataList(validExamples);
-        if (validExamples.length === 0) {
+          setExampleDataList(validExamples);
+          if (validExamples.length === 0) {
             console.warn("No examples loaded from examples-in-load.json");
           } else {
-            console.log(`Loaded ${validExamples.length} examples from examples-in-load.json`);
+            console.log(`✓ Loaded ${validExamples.length} examples from examples-in-load.json`);
+            console.log(`✓ Example files: ${validExamples.map((ex: any) => ex.name).join(', ')}`);
+            const bostonHousing = validExamples.find((ex: any) => ex.name === 'BostonHousing.csv');
+            if (bostonHousing) {
+              console.log(`✓ BostonHousing.csv is available`);
+            } else {
+              console.warn(`⚠ BostonHousing.csv NOT found in loaded examples`);
+            }
           }
         } else {
-          console.warn("Invalid examples-in-load.json format");
+          console.warn("Invalid examples-in-load.json format - expected array, got:", typeof examplesData);
           setExampleDataList([]);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error loading examples:", error);
+        console.error("Error details:", error.message, error.stack);
         // 에러 발생 시 빈 배열로 설정 (서버 없이도 작동하도록)
         setExampleDataList([]);
       } finally {
