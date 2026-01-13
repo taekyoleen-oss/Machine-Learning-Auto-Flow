@@ -1,6 +1,35 @@
 # Change History
 
-## 2026-01-12 (현재 작업)
+## 2026-01-13 (현재 작업)
+
+### chore: Trigger Vercel redeployment to update Statistics Dtype display
+
+**Description:**
+- Vercel 재배포를 트리거하여 Statistics 모듈의 Dtype 행 표시 업데이트
+- 빈 커밋을 생성하여 Vercel 자동 배포 프로세스 시작
+- Statistics 모듈의 View Details에서 Dtype 행이 올바르게 표시되도록 보장
+
+**Files Affected:**
+- 없음 (빈 커밋)
+
+**Reason:**
+- Vercel 배포 사이트(https://www.insureautoflow.com/)에 최신 코드가 반영되지 않은 것으로 확인
+- Statistics 모듈의 View Details에서 Dtype 행이 표의 첫 부분에 올바르게 표시되도록 재배포 필요
+- 최신 커밋(42937f3)의 변경사항이 Vercel에 반영되도록 재배포 트리거
+
+**Commit Hash:** 5c954df
+
+**Recovery Command:**
+```bash
+# Backup and recover
+git stash push -u -m "백업"
+git reset --hard 5c954df
+
+# Or direct recovery
+git reset --hard 5c954df
+```
+
+## 2026-01-12 (이전 작업)
 
 ### refactor(git): Create new Git repository to remove api folder history
 
