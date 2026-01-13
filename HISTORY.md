@@ -2,6 +2,38 @@
 
 ## 2026-01-12 (현재 작업)
 
+### refactor(git): Create new Git repository to remove api folder history
+
+**Description:**
+- 기존 Git 저장소와의 연결을 끊고 새로운 GitHub 저장소에 푸시
+- Git 히스토리에서 `api` 폴더 관련 기록 완전 제거
+- Vercel 빌드 캐시 문제 해결을 위한 깨끗한 시작
+- 새 저장소: `https://github.com/taekyoleen-oss/Machine-Learning-Auto-Flow.git`
+- 기존 저장소: `https://github.com/taekyoleen-oss/ML_Auto_Flow.git` (연결 해제)
+
+**Files Affected:**
+- `.git/` - 기존 Git 히스토리 삭제 후 새로 초기화
+- 모든 프로젝트 파일 - 새 저장소에 초기 커밋으로 추가 (179개 파일, 102,572줄)
+
+**Reason:**
+- Git 히스토리에 남아있던 `api` 폴더로 인한 Vercel 빌드 오류 해결
+- Vercel 빌드 캐시에서 존재하지 않는 `api` 폴더를 참조하는 문제 방지
+- 깨끗한 Git 히스토리로 프로젝트 재시작
+
+**Commit Hash:** 08b49ca
+
+**Recovery Command:**
+```bash
+# Backup and recover
+git stash push -u -m "백업"
+git reset --hard 08b49ca
+
+# Or direct recovery
+git reset --hard 08b49ca
+```
+
+## 2026-01-12 (이전 작업)
+
 ### refactor(ui): Move 'Save as Sample' button to Samples menu top
 
 **Description:**
