@@ -6,18 +6,18 @@
   "devCommand": "pnpm run dev",
   "cleanUrls": false,
   "trailingSlash": false,
-  "routes": [
+  "rewrites": [
     {
-      "src": "/samples.json",
-      "dest": "/samples.json"
+      "source": "/samples.json",
+      "destination": "/samples.json"
     },
     {
-      "src": "/examples-in-load.json",
-      "dest": "/examples-in-load.json"
+      "source": "/examples-in-load.json",
+      "destination": "/examples-in-load.json"
     },
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
