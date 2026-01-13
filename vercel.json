@@ -2,7 +2,6 @@
   "buildCommand": "rm -rf api pages/api .vercel/api 2>/dev/null || true; pnpm run build",
   "outputDirectory": "dist",
   "framework": "vite",
-  "installCommand": "npm install -g pnpm@latest && pnpm install --no-frozen-lockfile",
   "devCommand": "pnpm run dev",
   "cleanUrls": false,
   "trailingSlash": false,
