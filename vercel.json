@@ -1,8 +1,8 @@
 {
-  "buildCommand": "rm -rf api pages/api .vercel/api 2>/dev/null || true; pnpm run build",
+  "buildCommand": "rm -rf api pages/api .vercel/api 2>/dev/null || true && npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
-  "devCommand": "pnpm run dev",
+  "devCommand": "npm run dev",
   "cleanUrls": false,
   "trailingSlash": false,
   "rewrites": [
