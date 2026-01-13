@@ -3808,17 +3808,31 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             content: ex.content,
           }));
           
-          setExampleDataList(validExamples);
-          if (validExamples.length === 0) {
+          // boston_housing.csv가 있는지 확인하고 제거
+          const filteredExamples = validExamples.filter((ex: any) => {
+            const name = ex.name || '';
+            const isOldBoston = name.toLowerCase() === 'boston_housing.csv';
+            if (isOldBoston) {
+              console.warn(`⚠ Filtering out old file: ${name}`);
+            }
+            return !isOldBoston;
+          });
+          
+          setExampleDataList(filteredExamples);
+          if (filteredExamples.length === 0) {
             console.warn("No examples loaded from examples-in-load.json");
           } else {
-            console.log(`✓ Loaded ${validExamples.length} examples from examples-in-load.json`);
-            console.log(`✓ Example files: ${validExamples.map((ex: any) => ex.name).join(', ')}`);
-            const bostonHousing = validExamples.find((ex: any) => ex.name === 'BostonHousing.csv');
+            console.log(`✓ Loaded ${filteredExamples.length} examples from examples-in-load.json`);
+            console.log(`✓ Example files: ${filteredExamples.map((ex: any) => ex.name).join(', ')}`);
+            const bostonHousing = filteredExamples.find((ex: any) => ex.name === 'BostonHousing.csv');
+            const oldBoston = filteredExamples.find((ex: any) => (ex.name || '').toLowerCase() === 'boston_housing.csv');
             if (bostonHousing) {
               console.log(`✓ BostonHousing.csv is available`);
             } else {
               console.warn(`⚠ BostonHousing.csv NOT found in loaded examples`);
+            }
+            if (oldBoston) {
+              console.error(`✗ ERROR: boston_housing.csv still exists in examples!`);
             }
           }
         } else {
