@@ -183,9 +183,11 @@ fs.writeFileSync(
 );
 console.log(`Saved ${samplesList.length} samples to ${samplesJsonPath}`);
 
+// JSON 파일로 저장 (압축 없이 저장하여 파일 크기 최소화)
+const examplesJsonContent = JSON.stringify(examplesList);
 fs.writeFileSync(
   examplesJsonPath,
-  JSON.stringify(examplesList, null, 2),
+  examplesJsonContent,
   'utf-8'
 );
 console.log(`Saved ${examplesList.length} examples to ${examplesJsonPath}`);
@@ -203,6 +205,8 @@ if (fs.existsSync(examplesJsonPath)) {
     } else {
       console.warn(`⚠ BostonHousing.csv NOT found in examples-in-load.json`);
     }
+    // 모든 파일 이름 출력
+    console.log(`✓ Example files: ${content.map((ex) => ex.filename).join(', ')}`);
   }
 } else {
   console.error(`✗ ERROR: examples-in-load.json file was not created!`);
