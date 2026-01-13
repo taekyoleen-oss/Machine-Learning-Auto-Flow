@@ -34,9 +34,9 @@ const CorrelationHeatmap: React.FC<{ matrix: StatisticsOutput['correlation'] }> 
                             <div
                                 className="w-full h-6 rounded-sm flex items-center justify-center text-white font-mono"
                                 style={{ backgroundColor: getColor(matrix[rowCol][colCol]) }}
-                                title={`${rowCol} vs ${colCol}: ${matrix[rowCol][colCol].toFixed(2)}`}
+                                title={`${rowCol} vs ${colCol}: ${matrix[rowCol][colCol].toFixed(5)}`}
                             >
-                                {matrix[rowCol][colCol].toFixed(1)}
+                                {matrix[rowCol][colCol].toFixed(5)}
                             </div>
                         </div>
                     ))}
@@ -94,7 +94,7 @@ const Pairplot: React.FC<{ output: StatisticsOutput }> = ({ output }) => {
     if (numericColumns.length === 0) {
         return <p className="text-sm text-gray-500">No numeric columns to display in pairplot.</p>;
     }
-    const displayColumns = numericColumns.slice(0, 5); 
+    const displayColumns = numericColumns.slice(0, 15); 
 
     const gridStyle: React.CSSProperties = {
         display: 'grid',
@@ -354,6 +354,34 @@ ${correlationText}
                                             </tr>
                                         </thead>
                                         <tbody>
+                                            {/* Non-Null Count row (info() style) */}
+                                            {stats && Object.keys(stats).length > 0 && (
+                                                <tr className="border-b border-gray-200 bg-gray-50">
+                                                    <td className="py-1.5 px-3 font-medium text-gray-500">Non-Null Count</td>
+                                                    {Object.keys(stats).map(col => {
+                                                        const value = (stats[col] as any).nonNullCount;
+                                                        return (
+                                                            <td key={`nonNullCount-${col}`} className="py-1.5 px-3 font-mono text-right text-gray-700">
+                                                                {value !== undefined && value !== null ? String(value) : 'N/A'}
+                                                            </td>
+                                                        );
+                                                    })}
+                                                </tr>
+                                            )}
+                                            {/* Dtype row (info() style) */}
+                                            {stats && Object.keys(stats).length > 0 && (
+                                                <tr className="border-b border-gray-200 bg-gray-50">
+                                                    <td className="py-1.5 px-3 font-medium text-gray-500">Dtype</td>
+                                                    {Object.keys(stats).map(col => {
+                                                        const value = (stats[col] as any).dtype;
+                                                        return (
+                                                            <td key={`dtype-${col}`} className="py-1.5 px-3 font-mono text-right text-gray-700">
+                                                                {value !== undefined && value !== null ? String(value) : 'N/A'}
+                                                            </td>
+                                                        );
+                                                    })}
+                                                </tr>
+                                            )}
                                             {statDisplay.map(({ key, label }) => (
                                                 <tr key={key} className="border-b border-gray-200 last:border-b-0">
                                                     <td className="py-1.5 px-3 font-medium text-gray-500">{label}</td>

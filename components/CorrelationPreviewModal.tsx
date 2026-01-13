@@ -49,9 +49,9 @@ export const CorrelationPreviewModal: React.FC<CorrelationPreviewModalProps> = (
     const formatValue = (value: number): string => {
         if (value === null || value === undefined) return 'N/A';
         if (Math.abs(value) < 0.0001 || Math.abs(value) > 1000000) {
-            return value.toExponential(4);
+            return value.toExponential(5);
         }
-        return value.toFixed(4);
+        return value.toFixed(5);
     };
 
     const getCorrelationColor = (value: number): string => {
@@ -265,6 +265,66 @@ export const CorrelationPreviewModal: React.FC<CorrelationPreviewModalProps> = (
                             </div>
                         </div>
                     )}
+
+                    {/* Heatmap 시각화 (맨 아래) */}
+                    {(() => {
+                        // Pearson 상관계수 행렬을 기본으로 사용, 없으면 첫 번째 행렬 사용
+                        const pearsonMatrix = correlationMatrices?.find(m => m.method === 'pearson');
+                        const defaultMatrix = correlationMatrices?.[0];
+                        const heatmapMatrix = pearsonMatrix || defaultMatrix;
+                        
+                        if (!heatmapMatrix || !heatmapMatrix.matrix) return null;
+                        
+                        const matrix = heatmapMatrix.matrix;
+                        const matrixColumns = heatmapMatrix.columns;
+                        
+                        const getColor = (value: number) => {
+                            const alpha = Math.abs(value);
+                            if (value > 0) return `rgba(59, 130, 246, ${alpha})`; // Blue for positive
+                            return `rgba(239, 68, 68, ${alpha})`; // Red for negative
+                        };
+                        
+                        return (
+                            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                <h3 className="text-lg font-bold text-gray-800 mb-3">
+                                    Correlation Heatmap ({getMethodLabel(heatmapMatrix.method)})
+                                </h3>
+                                <div className="overflow-x-auto border border-gray-200 rounded-lg bg-white">
+                                    <div className="p-2">
+                                        <div className="flex text-xs font-bold">
+                                            <div className="w-20 flex-shrink-0"></div>
+                                            {matrixColumns.map((col) => (
+                                                <div key={col} className="flex-1 text-center truncate" title={col}>
+                                                    {col}
+                                                </div>
+                                            ))}
+                                        </div>
+                                        {matrixColumns.map((rowCol) => (
+                                            <div key={rowCol} className="flex items-center text-xs">
+                                                <div className="w-20 flex-shrink-0 font-bold truncate" title={rowCol}>
+                                                    {rowCol}
+                                                </div>
+                                                {matrixColumns.map((colCol) => {
+                                                    const value = matrix[rowCol]?.[colCol] || 0;
+                                                    return (
+                                                        <div key={`${rowCol}-${colCol}`} className="flex-1 p-0.5">
+                                                            <div
+                                                                className="w-full h-6 rounded-sm flex items-center justify-center text-white font-mono"
+                                                                style={{ backgroundColor: getColor(value) }}
+                                                                title={`${rowCol} vs ${colCol}: ${formatValue(value)}`}
+                                                            >
+                                                                {formatValue(value)}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
                 </main>
             </div>
         </div>

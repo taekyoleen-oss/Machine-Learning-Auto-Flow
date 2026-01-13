@@ -7,6 +7,7 @@
     "dev": "concurrently -n \"server,vite\" -c \"blue,yellow\" \"npm run server\" \"vite\"",
     "dev:client-only": "vite",
     "build": "node scripts/clean-api.js && node scripts/build-samples.js && vite build",
+    "build:examples": "node scripts/build-samples.js",
     "preview": "vite preview",
     "server": "node server/split-data-server.js"
   },

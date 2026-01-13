@@ -3477,11 +3477,31 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
               >) || {};
             const isConfigured = Object.keys(selections).length > 0;
 
+            // 디버깅: selections 상태 확인
+            console.log("SelectData Debug:", {
+              isConfigured,
+              selectionsKeys: Object.keys(selections),
+              selections,
+              inputColumns: inputData.columns.map(c => c.name),
+            });
+
             const newColumns: ColumnInfo[] = [];
             inputData.columns.forEach((col) => {
               const selection = selections[col.name];
               // If the module is unconfigured, default to selecting all columns. Otherwise, respect the selection.
-              if (!isConfigured || selection?.selected) {
+              let shouldInclude: boolean;
+              if (!isConfigured) {
+                // configured가 아니면 모든 열 선택 (기본 동작)
+                shouldInclude = true;
+              } else {
+                // configured인 경우
+                // selection이 없으면 기본적으로 선택된 것으로 간주 (새로 추가된 열 등)
+                // selection이 있으면 selected 값에 따라 결정
+                // selected가 명시적으로 false가 아니면 선택 (true 또는 undefined도 선택으로 간주)
+                shouldInclude = selection ? (selection.selected !== false) : true;
+              }
+            
+              if (shouldInclude) {
                 newColumns.push({
                   name: col.name,
                   type: selection?.type ?? col.type,
@@ -3489,12 +3509,25 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
               }
             });
 
+            // 디버깅: 선택된 열 확인
+            console.log("SelectData Debug - Selected columns:", {
+              newColumnsCount: newColumns.length,
+              newColumnsNames: newColumns.map(c => c.name),
+            });
+
             if (
               isConfigured &&
               newColumns.length === 0 &&
               inputData.columns.length > 0
             ) {
-              throw new Error("No columns selected.");
+              console.error("SelectData Error - No columns selected:", {
+                isConfigured,
+                selections,
+                inputColumns: inputData.columns.map(c => c.name),
+              });
+              throw new Error(
+                "No columns selected. Please select at least one column in the Properties panel."
+              );
             }
 
             const newRows = (inputData.rows || []).map((row) => {

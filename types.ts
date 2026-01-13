@@ -118,6 +118,8 @@ export interface DescriptiveStats {
     mode: number | string;
     skewness: number;
     kurtosis: number;
+    nonNullCount: number; // Non-Null count (same as count, for info() compatibility)
+    dtype: string; // Data type (e.g., 'int64', 'float64', 'object')
   };
 }
 

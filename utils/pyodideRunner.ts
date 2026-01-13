@@ -3568,6 +3568,8 @@ for col in df.columns:
         desc = col_data.describe()
         # NaN과 빈 문자열 모두 null로 카운트
         nulls = col_data.isnull().sum() + empty_string_count
+        # Non-Null count 계산 (info() 함수와 동일)
+        non_null_count = int(desc.get('count', 0))
         # 빈 문자열을 제외한 값들로 mode 계산
         non_empty = col_data[(col_data.astype(str).str.strip() != '') & (~col_data.isnull())]
         mode_val = non_empty.mode() if len(non_empty) > 0 else pd.Series(dtype=float)
@@ -3586,11 +3588,15 @@ for col in df.columns:
             'mode': mode if mode is not None else 'N/A',
             'variance': float(col_data.var()) if not pd.isna(col_data.var()) else None,
             'skewness': float(col_data.skew()) if len(non_empty) > 0 and not pd.isna(col_data.skew()) else 0.0,
-            'kurtosis': float(col_data.kurtosis()) if len(non_empty) > 0 and not pd.isna(col_data.kurtosis()) else 0.0
+            'kurtosis': float(col_data.kurtosis()) if len(non_empty) > 0 and not pd.isna(col_data.kurtosis()) else 0.0,
+            'nonNullCount': non_null_count,
+            'dtype': str(col_data.dtype)
         }
     else:
         # 문자열 컬럼의 경우 빈 문자열도 null로 카운트
         nulls = col_data.isnull().sum() + empty_string_count
+        # Non-Null count 계산 (info() 함수와 동일)
+        non_null_count = len(col_data) - int(nulls)
         # 빈 문자열을 제외한 값들로 mode 계산
         non_empty = col_data[(col_data.astype(str).str.strip() != '') & (~col_data.isnull())]
         mode_val = non_empty.mode() if len(non_empty) > 0 else pd.Series(dtype=object)
@@ -3609,7 +3615,9 @@ for col in df.columns:
             'mode': mode,
             'variance': None,
             'skewness': None,
-            'kurtosis': None
+            'kurtosis': None,
+            'nonNullCount': non_null_count,
+            'dtype': str(col_data.dtype)
         }
 
 # 상관관계 계산
@@ -8118,8 +8126,8 @@ try:
         heatmap_image = base64.b64encode(buffer.getvalue()).decode('utf-8')
         plt.close()
         
-        # Pairplot 생성 (열이 5개 이하인 경우만) - matplotlib로 구현
-        if len(numeric_columns) <= 5:
+        # Pairplot 생성 (열이 15개 이하인 경우만) - matplotlib로 구현
+        if len(numeric_columns) <= 15:
             n_cols = len(numeric_columns)
             fig, axes = plt.subplots(n_cols, n_cols, figsize=(12, 10))
             if n_cols == 1:

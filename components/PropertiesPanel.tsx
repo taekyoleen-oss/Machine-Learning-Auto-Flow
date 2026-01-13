@@ -722,8 +722,8 @@ const renderParameters = (
           <div className="mt-4">
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-xs text-gray-500 uppercase font-bold">
-                Examples
-              </h4>
+              Examples
+            </h4>
               <button
                 onClick={handleSaveAsExample}
                 disabled={!module.outputData || module.outputData.type !== 'DataPreview'}
@@ -843,10 +843,12 @@ const renderParameters = (
               <span className="text-xs font-bold text-gray-400">Data Type</span>
             </div>
             {inputColumns.map((col) => {
-              const selection = currentSelections[col.name] || {
-                selected: true,
-                type: col.type,
-              };
+              // selection이 없으면 기본값으로 selected: true, type: col.type 사용 (UI 표시용)
+              // 하지만 실제 저장은 handleSelectionChange에서 처리
+              const selection = currentSelections[col.name];
+              const isChecked = selection ? selection.selected : true;
+              const columnType = selection ? selection.type : col.type;
+              
               return (
                 <div
                   key={col.name}
@@ -858,20 +860,21 @@ const renderParameters = (
                   >
                     <input
                       type="checkbox"
-                      checked={selection.selected}
-                      onChange={(e) =>
+                      checked={isChecked}
+                      onChange={(e) => {
+                        // 체크박스 변경 시 명시적으로 selected 값을 저장
                         handleSelectionChange(
                           col.name,
                           "selected",
                           e.target.checked
-                        )
-                      }
+                        );
+                      }}
                       className="h-4 w-4 rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-500"
                     />
                     <span className="truncate">{col.name}</span>
                   </label>
                   <select
-                    value={selection.type}
+                    value={columnType}
                     onChange={(e) =>
                       handleSelectionChange(col.name, "type", e.target.value)
                     }
@@ -3797,8 +3800,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             content: ex.content,
           }));
           
-          setExampleDataList(validExamples);
-          if (validExamples.length === 0) {
+        setExampleDataList(validExamples);
+        if (validExamples.length === 0) {
             console.warn("No examples loaded from examples-in-load.json");
           } else {
             console.log(`Loaded ${validExamples.length} examples from examples-in-load.json`);

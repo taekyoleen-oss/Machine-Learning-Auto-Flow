@@ -72,9 +72,9 @@ const CorrelationHeatmap: React.FC<{
                 }}
                 title={`${rowCol} vs ${colCol}: ${(
                   matrix[rowCol]?.[colCol] || 0
-                ).toFixed(2)}`}
+                ).toFixed(5)}`}
                             >
-                                {(matrix[rowCol]?.[colCol] || 0).toFixed(1)}
+                                {(matrix[rowCol]?.[colCol] || 0).toFixed(5)}
                             </div>
                         </div>
                     ))}
@@ -210,7 +210,7 @@ const Pairplot: React.FC<{
       </p>
     );
     }
-    const displayColumns = numericColumns.slice(0, 5); 
+    const displayColumns = numericColumns.slice(0, 15); 
 
     const gridStyle: React.CSSProperties = {
     display: "grid",
