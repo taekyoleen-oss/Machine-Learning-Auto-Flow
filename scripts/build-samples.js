@@ -190,4 +190,23 @@ fs.writeFileSync(
 );
 console.log(`Saved ${examplesList.length} examples to ${examplesJsonPath}`);
 
+// 빌드된 파일이 제대로 생성되었는지 확인
+if (fs.existsSync(examplesJsonPath)) {
+  const stats = fs.statSync(examplesJsonPath);
+  console.log(`✓ examples-in-load.json file created: ${stats.size} bytes`);
+  const content = JSON.parse(fs.readFileSync(examplesJsonPath, 'utf-8'));
+  console.log(`✓ File contains ${Array.isArray(content) ? content.length : 0} examples`);
+  if (Array.isArray(content)) {
+    const bostonHousing = content.find((ex) => ex.filename === 'BostonHousing.csv');
+    if (bostonHousing) {
+      console.log(`✓ BostonHousing.csv found in examples-in-load.json`);
+    } else {
+      console.warn(`⚠ BostonHousing.csv NOT found in examples-in-load.json`);
+    }
+  }
+} else {
+  console.error(`✗ ERROR: examples-in-load.json file was not created!`);
+  process.exit(1);
+}
+
 console.log('Build completed successfully!');
