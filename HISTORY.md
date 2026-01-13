@@ -2,6 +2,32 @@
 
 ## 2026-01-13 (현재 작업)
 
+### fix(vercel): Change installCommand from npm ci to npm install
+
+**Description:**
+- Vercel 빌드 오류 해결: `package-lock.json`이 없어 `npm ci` 명령이 실패하는 문제 수정
+- `vercel.json`의 `installCommand`를 `npm ci`에서 `npm install`로 변경
+- `package-lock.json`이 없어도 정상적으로 빌드되도록 수정
+
+**Files Affected:**
+- `vercel.json` - `installCommand`를 `npm install`로 변경
+
+**Reason:**
+- Vercel 빌드 시 `npm ci` 명령이 `package-lock.json`을 요구하여 빌드 실패
+- `npm install`은 `package-lock.json`이 없어도 작동하므로 빌드 안정성 향상
+
+**Commit Hash:** b8a7d91
+
+**Recovery Command:**
+```bash
+# Backup and recover
+git stash push -u -m "백업"
+git reset --hard b8a7d91
+
+# Or direct recovery
+git reset --hard b8a7d91
+```
+
 ### chore: Trigger Vercel redeployment to update Statistics Dtype display
 
 **Description:**
