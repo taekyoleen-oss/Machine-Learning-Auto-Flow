@@ -3,9 +3,8 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "dev": "concurrently -n \"server,vite\" -c \"blue,yellow\" \"pnpm run server\" \"vite\"",
+    "dev": "concurrently -n \"server,vite\" -c \"blue,yellow\" \"npm run server\" \"vite\"",
     "dev:client-only": "vite",
     "build": "node scripts/clean-api.js && node scripts/build-samples.js && vite build",
     "preview": "vite preview",
