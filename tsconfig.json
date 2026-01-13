@@ -1,0 +1,56 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "module": "ESNext",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "skipLibCheck": true,
+    "types": [
+      "node"
+    ],
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "allowJs": true,
+    "jsx": "react-jsx",
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    },
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "typeRoots": ["./node_modules/@types"]
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "api",
+    "**/api",
+    "**/api/**",
+    "api/**",
+    "pages/api",
+    "**/pages/api",
+    "**/pages/api/**",
+    "pages/api/**",
+    "**/api/**/*.ts",
+    "**/api/**/*.tsx",
+    "**/pages/api/**/*.ts",
+    "**/pages/api/**/*.tsx",
+    "api/**/*.ts",
+    "api/**/*.tsx",
+    "pages/api/**/*.ts",
+    "pages/api/**/*.tsx",
+    ".vercel/api",
+    "**/.vercel/api/**"
+  ]
+}

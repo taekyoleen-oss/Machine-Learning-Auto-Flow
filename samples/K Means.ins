@@ -1,0 +1,375 @@
+{
+  "modules": [
+    {
+      "type": "LoadData",
+      "status": "Pending",
+      "parameters": {
+        "source": "your-data-source.csv"
+      },
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "data_out",
+          "type": "data"
+        }
+      ],
+      "id": "module-1768101226798-0",
+      "name": "Load Data",
+      "position": {
+        "x": 50,
+        "y": 50
+      }
+    },
+    {
+      "type": "SelectData",
+      "status": "Pending",
+      "parameters": {
+        "columnSelections": {}
+      },
+      "inputs": [
+        {
+          "name": "data_in",
+          "type": "data"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "data_out",
+          "type": "data"
+        }
+      ],
+      "id": "module-1768101226798-1",
+      "name": "Select Data 1",
+      "position": {
+        "x": 366,
+        "y": 50
+      }
+    },
+    {
+      "type": "SplitData",
+      "status": "Pending",
+      "parameters": {
+        "train_size": 0.75,
+        "random_state": 43,
+        "shuffle": "True",
+        "stratify": "False",
+        "stratify_column": null
+      },
+      "inputs": [
+        {
+          "name": "data_in",
+          "type": "data"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "train_data_out",
+          "type": "data"
+        },
+        {
+          "name": "test_data_out",
+          "type": "data"
+        }
+      ],
+      "id": "module-1768101226798-2",
+      "name": "Split Data",
+      "position": {
+        "x": 682,
+        "y": 50
+      }
+    },
+    {
+      "type": "Statistics",
+      "status": "Pending",
+      "parameters": {},
+      "inputs": [
+        {
+          "name": "data_in",
+          "type": "data"
+        }
+      ],
+      "outputs": [],
+      "id": "module-1768101226798-3",
+      "name": "Statistics 1",
+      "position": {
+        "x": 366,
+        "y": 200
+      }
+    },
+    {
+      "type": "KMeans",
+      "status": "Pending",
+      "parameters": {
+        "n_clusters": 3,
+        "init": "k-means++",
+        "n_init": 10,
+        "max_iter": 300,
+        "random_state": 42
+      },
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "model_out",
+          "type": "model"
+        }
+      ],
+      "id": "module-1768101226798-4",
+      "name": "K-Means Clustering 1",
+      "position": {
+        "x": 1314,
+        "y": 38.91997379502861
+      }
+    },
+    {
+      "type": "TrainClusteringModel",
+      "status": "Pending",
+      "parameters": {
+        "feature_columns": []
+      },
+      "inputs": [
+        {
+          "name": "model_in",
+          "type": "model"
+        },
+        {
+          "name": "data_in",
+          "type": "data"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "trained_model_out",
+          "type": "model"
+        }
+      ],
+      "id": "module-1768101226798-5",
+      "name": "Train Clustering Model 1",
+      "position": {
+        "x": 1630,
+        "y": 50
+      }
+    },
+    {
+      "type": "ClusteringData",
+      "status": "Pending",
+      "parameters": {},
+      "inputs": [
+        {
+          "name": "model_in",
+          "type": "model"
+        },
+        {
+          "name": "data_in",
+          "type": "data"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "clustered_data_out",
+          "type": "data"
+        }
+      ],
+      "id": "module-1768101226798-6",
+      "name": "Clustering Data 1",
+      "position": {
+        "x": 1946,
+        "y": 50
+      }
+    },
+    {
+      "type": "HandleMissingValues",
+      "status": "Pending",
+      "parameters": {
+        "method": "remove_row",
+        "strategy": "mean",
+        "n_neighbors": 5,
+        "metric": "nan_euclidean",
+        "columnSelections": {}
+      },
+      "inputs": [
+        {
+          "name": "data_in",
+          "type": "data"
+        },
+        {
+          "name": "data_in2",
+          "type": "data"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "data_out",
+          "type": "data"
+        },
+        {
+          "name": "data_out2",
+          "type": "data"
+        }
+      ],
+      "id": "module-1768101226798-7",
+      "name": "Missing Transform 1",
+      "position": {
+        "x": 998,
+        "y": 50
+      }
+    },
+    {
+      "type": "NormalizeData",
+      "status": "Pending",
+      "parameters": {
+        "method": "MinMax",
+        "columnSelections": {}
+      },
+      "inputs": [
+        {
+          "name": "data_in",
+          "type": "data"
+        },
+        {
+          "name": "data_in2",
+          "type": "data"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "data_out",
+          "type": "data"
+        },
+        {
+          "name": "data_out2",
+          "type": "data"
+        }
+      ],
+      "id": "module-1768101226798-8",
+      "name": "Scaling Transform 1",
+      "position": {
+        "x": 1314,
+        "y": 200
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "connection-1768101226798-0",
+      "from": {
+        "moduleId": "module-1768101226798-0",
+        "portName": "data_out"
+      },
+      "to": {
+        "moduleId": "module-1768101226798-1",
+        "portName": "data_in"
+      }
+    },
+    {
+      "id": "connection-1768101226798-1",
+      "from": {
+        "moduleId": "module-1768101226798-0",
+        "portName": "data_out"
+      },
+      "to": {
+        "moduleId": "module-1768101226798-3",
+        "portName": "data_in"
+      }
+    },
+    {
+      "id": "connection-1768101226798-2",
+      "from": {
+        "moduleId": "module-1768101226798-4",
+        "portName": "model_out"
+      },
+      "to": {
+        "moduleId": "module-1768101226798-5",
+        "portName": "model_in"
+      }
+    },
+    {
+      "id": "connection-1768101226798-3",
+      "from": {
+        "moduleId": "module-1768101226798-5",
+        "portName": "trained_model_out"
+      },
+      "to": {
+        "moduleId": "module-1768101226798-6",
+        "portName": "model_in"
+      }
+    },
+    {
+      "id": "connection-1768101226798-4",
+      "from": {
+        "moduleId": "module-1768101226798-1",
+        "portName": "data_out"
+      },
+      "to": {
+        "moduleId": "module-1768101226798-2",
+        "portName": "data_in"
+      }
+    },
+    {
+      "id": "connection-1768101226798-5",
+      "from": {
+        "moduleId": "module-1768101226798-2",
+        "portName": "train_data_out"
+      },
+      "to": {
+        "moduleId": "module-1768101226798-7",
+        "portName": "data_in"
+      }
+    },
+    {
+      "id": "connection-1768101226798-6",
+      "from": {
+        "moduleId": "module-1768101226798-2",
+        "portName": "test_data_out"
+      },
+      "to": {
+        "moduleId": "module-1768101226798-7",
+        "portName": "data_in2"
+      }
+    },
+    {
+      "id": "connection-1768101226798-7",
+      "from": {
+        "moduleId": "module-1768101226798-7",
+        "portName": "data_out"
+      },
+      "to": {
+        "moduleId": "module-1768101226798-8",
+        "portName": "data_in"
+      }
+    },
+    {
+      "id": "connection-1768101226798-8",
+      "from": {
+        "moduleId": "module-1768101226798-7",
+        "portName": "data_out2"
+      },
+      "to": {
+        "moduleId": "module-1768101226798-8",
+        "portName": "data_in2"
+      }
+    },
+    {
+      "id": "connection-1768101226798-9",
+      "from": {
+        "moduleId": "module-1768101226798-8",
+        "portName": "data_out"
+      },
+      "to": {
+        "moduleId": "module-1768101226798-5",
+        "portName": "data_in"
+      }
+    },
+    {
+      "id": "connection-1768101226798-10",
+      "from": {
+        "moduleId": "module-1768101226798-8",
+        "portName": "data_out2"
+      },
+      "to": {
+        "moduleId": "module-1768101226798-6",
+        "portName": "data_in"
+      }
+    }
+  ],
+  "projectName": "K Means"
+}

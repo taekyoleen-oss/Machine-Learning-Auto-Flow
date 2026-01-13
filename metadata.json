@@ -1,0 +1,5 @@
+{
+  "name": "ML Auto Flow",
+  "description": "A web-based, drag-and-drop interface for designing, visualizing, and simulating machine learning pipelines. Build complex workflows by connecting data sources, preprocessing modules, models, and evaluation components on an interactive canvas.",
+  "requestFramePermissions": []
+}

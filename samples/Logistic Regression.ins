@@ -1,0 +1,333 @@
+{
+  "modules": [
+    {
+      "type": "LoadData",
+      "status": "Pending",
+      "parameters": {
+        "source": "your-data-source.csv"
+      },
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "data_out",
+          "type": "data"
+        }
+      ],
+      "id": "module-1768187102347-0",
+      "name": "데이터 로드",
+      "position": {
+        "x": 50,
+        "y": 50
+      }
+    },
+    {
+      "type": "HandleMissingValues",
+      "status": "Pending",
+      "parameters": {
+        "method": "remove_row",
+        "strategy": "mean",
+        "n_neighbors": 5,
+        "metric": "nan_euclidean",
+        "columnSelections": {}
+      },
+      "inputs": [
+        {
+          "name": "data_in",
+          "type": "data"
+        },
+        {
+          "name": "data_in2",
+          "type": "data"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "data_out",
+          "type": "data"
+        },
+        {
+          "name": "data_out2",
+          "type": "data"
+        }
+      ],
+      "id": "module-1768187102347-1",
+      "name": "결측치 처리",
+      "position": {
+        "x": 366,
+        "y": 50
+      }
+    },
+    {
+      "type": "ScalingTransform",
+      "status": "Pending",
+      "parameters": {
+        "method": "MinMax",
+        "columnSelections": {}
+      },
+      "inputs": [
+        {
+          "name": "data_in",
+          "type": "data"
+        },
+        {
+          "name": "data_in2",
+          "type": "data"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "data_out",
+          "type": "data"
+        },
+        {
+          "name": "data_out2",
+          "type": "data"
+        }
+      ],
+      "id": "module-1768187102347-2",
+      "name": "데이터 스케일링",
+      "position": {
+        "x": 682,
+        "y": 50
+      }
+    },
+    {
+      "type": "SplitData",
+      "status": "Pending",
+      "parameters": {
+        "train_size": 0.75,
+        "random_state": 43,
+        "shuffle": "True",
+        "stratify": "False",
+        "stratify_column": null
+      },
+      "inputs": [
+        {
+          "name": "data_in",
+          "type": "data"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "train_data_out",
+          "type": "data"
+        },
+        {
+          "name": "test_data_out",
+          "type": "data"
+        }
+      ],
+      "id": "module-1768187102347-3",
+      "name": "데이터 분할",
+      "position": {
+        "x": 998,
+        "y": 50
+      }
+    },
+    {
+      "type": "LogisticRegression",
+      "status": "Pending",
+      "parameters": {
+        "penalty": "l2",
+        "C": 1,
+        "solver": "lbfgs",
+        "max_iter": 100,
+        "tuning_enabled": "False",
+        "tuning_strategy": "GridSearch",
+        "c_candidates": "0.01,0.1,1,10,100",
+        "l1_ratio_candidates": "0.2,0.5,0.8",
+        "cv_folds": 5,
+        "scoring_metric": "accuracy"
+      },
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "model_out",
+          "type": "model"
+        }
+      ],
+      "id": "module-1768187102347-4",
+      "name": "로지스틱 회귀",
+      "position": {
+        "x": 1000.4125913812993,
+        "y": -112.06295690649591
+      }
+    },
+    {
+      "type": "TrainModel",
+      "status": "Pending",
+      "parameters": {
+        "feature_columns": [],
+        "label_column": null
+      },
+      "inputs": [
+        {
+          "name": "model_in",
+          "type": "model"
+        },
+        {
+          "name": "data_in",
+          "type": "data"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "trained_model_out",
+          "type": "model"
+        }
+      ],
+      "id": "module-1768187102347-5",
+      "name": "모델 학습",
+      "position": {
+        "x": 1314,
+        "y": -25
+      }
+    },
+    {
+      "type": "ScoreModel",
+      "status": "Pending",
+      "parameters": {},
+      "inputs": [
+        {
+          "name": "model_in",
+          "type": "model"
+        },
+        {
+          "name": "data_in",
+          "type": "data"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "scored_data_out",
+          "type": "data"
+        }
+      ],
+      "id": "module-1768187102347-6",
+      "name": "모델 예측",
+      "position": {
+        "x": 1630,
+        "y": 50
+      }
+    },
+    {
+      "type": "EvaluateModel",
+      "status": "Pending",
+      "parameters": {
+        "label_column": null,
+        "prediction_column": null,
+        "model_type": "regression",
+        "threshold": 0.5
+      },
+      "inputs": [
+        {
+          "name": "data_in",
+          "type": "data"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "evaluation_out",
+          "type": "evaluation"
+        }
+      ],
+      "id": "module-1768187102347-7",
+      "name": "모델 평가",
+      "position": {
+        "x": 1946,
+        "y": 50
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "connection-1768187102347-0",
+      "from": {
+        "moduleId": "module-1768187102347-0",
+        "portName": "data_out"
+      },
+      "to": {
+        "moduleId": "module-1768187102347-1",
+        "portName": "data_in"
+      }
+    },
+    {
+      "id": "connection-1768187102347-1",
+      "from": {
+        "moduleId": "module-1768187102347-1",
+        "portName": "data_out"
+      },
+      "to": {
+        "moduleId": "module-1768187102347-2",
+        "portName": "data_in"
+      }
+    },
+    {
+      "id": "connection-1768187102347-2",
+      "from": {
+        "moduleId": "module-1768187102347-2",
+        "portName": "data_out"
+      },
+      "to": {
+        "moduleId": "module-1768187102347-3",
+        "portName": "data_in"
+      }
+    },
+    {
+      "id": "connection-1768187102347-3",
+      "from": {
+        "moduleId": "module-1768187102347-3",
+        "portName": "train_data_out"
+      },
+      "to": {
+        "moduleId": "module-1768187102347-5",
+        "portName": "data_in"
+      }
+    },
+    {
+      "id": "connection-1768187102347-4",
+      "from": {
+        "moduleId": "module-1768187102347-4",
+        "portName": "model_out"
+      },
+      "to": {
+        "moduleId": "module-1768187102347-5",
+        "portName": "model_in"
+      }
+    },
+    {
+      "id": "connection-1768187102347-5",
+      "from": {
+        "moduleId": "module-1768187102347-5",
+        "portName": "trained_model_out"
+      },
+      "to": {
+        "moduleId": "module-1768187102347-6",
+        "portName": "model_in"
+      }
+    },
+    {
+      "id": "connection-1768187102347-6",
+      "from": {
+        "moduleId": "module-1768187102347-3",
+        "portName": "test_data_out"
+      },
+      "to": {
+        "moduleId": "module-1768187102347-6",
+        "portName": "data_in"
+      }
+    },
+    {
+      "id": "connection-1768187102347-7",
+      "from": {
+        "moduleId": "module-1768187102347-6",
+        "portName": "scored_data_out"
+      },
+      "to": {
+        "moduleId": "module-1768187102347-7",
+        "portName": "data_in"
+      }
+    }
+  ],
+  "projectName": "Logistic Regression"
+}

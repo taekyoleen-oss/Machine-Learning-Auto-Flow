@@ -1,0 +1,13 @@
+# Ignore API folders - we use static JSON files instead
+api/
+**/api/
+**/api/**
+pages/api/
+**/pages/api/
+**/pages/api/**
+
+# Ignore any TypeScript files in api directories
+**/api/**/*.ts
+**/api/**/*.tsx
+**/pages/api/**/*.ts
+**/pages/api/**/*.tsx

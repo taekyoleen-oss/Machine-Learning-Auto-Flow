@@ -1,0 +1,251 @@
+{
+  "modules": [
+    {
+      "type": "LoadData",
+      "status": "Pending",
+      "parameters": {
+        "source": "your-data-source.csv"
+      },
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "data_out",
+          "type": "data"
+        }
+      ],
+      "id": "module-1768029664260-0",
+      "name": "Load Data",
+      "position": {
+        "x": 50,
+        "y": 50
+      }
+    },
+    {
+      "type": "SelectData",
+      "status": "Pending",
+      "parameters": {
+        "columnSelections": {}
+      },
+      "inputs": [
+        {
+          "name": "data_in",
+          "type": "data"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "data_out",
+          "type": "data"
+        }
+      ],
+      "id": "module-1768029664260-1",
+      "name": "Select Data 1",
+      "position": {
+        "x": 366,
+        "y": 200
+      }
+    },
+    {
+      "type": "Statistics",
+      "status": "Pending",
+      "parameters": {},
+      "inputs": [
+        {
+          "name": "data_in",
+          "type": "data"
+        }
+      ],
+      "outputs": [],
+      "id": "module-1768029664260-2",
+      "name": "Statistics 1",
+      "position": {
+        "x": 366,
+        "y": 350
+      }
+    },
+    {
+      "type": "StatModels",
+      "status": "Pending",
+      "parameters": {
+        "model": "OLS"
+      },
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "model_out",
+          "type": "model"
+        }
+      ],
+      "id": "module-1768029664260-3",
+      "name": "Stat Models 1",
+      "position": {
+        "x": 366,
+        "y": 50
+      }
+    },
+    {
+      "type": "ResultModel",
+      "status": "Pending",
+      "parameters": {
+        "feature_columns": [],
+        "label_column": null
+      },
+      "inputs": [
+        {
+          "name": "model_in",
+          "type": "model"
+        },
+        {
+          "name": "data_in",
+          "type": "data"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result_out",
+          "type": "evaluation"
+        }
+      ],
+      "id": "module-1768029664260-4",
+      "name": "Result Model 1",
+      "position": {
+        "x": 682,
+        "y": 125
+      }
+    },
+    {
+      "type": "PredictModel",
+      "status": "Pending",
+      "parameters": {},
+      "inputs": [
+        {
+          "name": "model_in",
+          "type": "evaluation"
+        },
+        {
+          "name": "data_in",
+          "type": "data"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "scored_data_out",
+          "type": "data"
+        }
+      ],
+      "id": "module-1768029664260-5",
+      "name": "Predict Model 1",
+      "position": {
+        "x": 998,
+        "y": 162.5
+      }
+    },
+    {
+      "id": "DiversionChecker-1768029716540",
+      "name": "Diversion Checker 1",
+      "type": "DiversionChecker",
+      "position": {
+        "x": 366,
+        "y": 500
+      },
+      "status": "Pending",
+      "parameters": {
+        "feature_columns": [],
+        "label_column": null,
+        "max_iter": 100
+      },
+      "inputs": [
+        {
+          "name": "data_in",
+          "type": "data"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result_out",
+          "type": "evaluation"
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "connection-1768029664260-0",
+      "from": {
+        "moduleId": "module-1768029664260-0",
+        "portName": "data_out"
+      },
+      "to": {
+        "moduleId": "module-1768029664260-1",
+        "portName": "data_in"
+      }
+    },
+    {
+      "id": "connection-1768029664260-1",
+      "from": {
+        "moduleId": "module-1768029664260-0",
+        "portName": "data_out"
+      },
+      "to": {
+        "moduleId": "module-1768029664260-2",
+        "portName": "data_in"
+      }
+    },
+    {
+      "id": "connection-1768029664260-2",
+      "from": {
+        "moduleId": "module-1768029664260-3",
+        "portName": "model_out"
+      },
+      "to": {
+        "moduleId": "module-1768029664260-4",
+        "portName": "model_in"
+      }
+    },
+    {
+      "id": "connection-1768029664260-3",
+      "from": {
+        "moduleId": "module-1768029664260-1",
+        "portName": "data_out"
+      },
+      "to": {
+        "moduleId": "module-1768029664260-4",
+        "portName": "data_in"
+      }
+    },
+    {
+      "id": "connection-1768029664260-4",
+      "from": {
+        "moduleId": "module-1768029664260-4",
+        "portName": "result_out"
+      },
+      "to": {
+        "moduleId": "module-1768029664260-5",
+        "portName": "model_in"
+      }
+    },
+    {
+      "id": "connection-1768029664260-5",
+      "from": {
+        "moduleId": "module-1768029664260-1",
+        "portName": "data_out"
+      },
+      "to": {
+        "moduleId": "module-1768029664260-5",
+        "portName": "data_in"
+      }
+    },
+    {
+      "id": "conn-1768029719657",
+      "from": {
+        "moduleId": "module-1768029664260-0",
+        "portName": "data_out"
+      },
+      "to": {
+        "moduleId": "DiversionChecker-1768029716540",
+        "portName": "data_in"
+      }
+    }
+  ],
+  "projectName": "Stat Model"
+}

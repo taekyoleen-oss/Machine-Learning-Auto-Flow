@@ -1,0 +1,204 @@
+﻿[2025-12-04 14:27:17] .cursorrules 파일 생성
+위치: C:\cursor\insure-auto-flow
+명령: .cursorrules 파일 생성 및 history 자동 기록 규칙 추가
+설명: 프로젝트 루트에 .cursorrules 파일을 생성하여 명령 실행 시마다 history 파일에 위치, 명령어, 설명, 시간 등을 자동으로 기록하는 규칙 추가
+파일: .cursorrules
+---
+[2025-12-04 14:28:59] 전체 코드 패널 z-index 조정
+위치: C:\cursor\insure-auto-flow
+명령: PipelineCodePanel의 z-index를 z-20에서 z-10으로 변경하여 팝업이 항상 위에 표시되도록 수정
+설명: 전체 코드 패널이 열려있을 때 팝업이 가운데로 몰려서 발생하는 문제를 해결하기 위해 z-index 조정
+파일: components/PipelineCodePanel.tsx
+---
+[2025-12-04 14:30:45] Toolbox Panel 위치 수정
+위치: C:\cursor\insure-auto-flow
+명령: Toolbox Panel이 항상 가장 왼쪽(left: 0)에 위치하도록 style 속성 추가
+설명: 왼쪽 모듈이 항상 가장 왼쪽에서 열리도록 명시적으로 left: 0 스타일 추가
+파일: App.tsx
+---
+[2025-12-04 14:33:57] 전체 코드 버튼 및 패널 복구
+위치: C:\cursor\insure-auto-flow
+명령: PipelineCodePanel 컴포넌트 재생성 및 App.tsx에 통합
+설명: 삭제된 전체 코드 버튼과 패널을 복구하여 오른쪽에서 나타나도록 구현
+파일: components/PipelineCodePanel.tsx, App.tsx
+---
+[2025-12-04 14:38:24] generatePipelineCode.ts 파일 복구
+위치: C:\cursor\insure-auto-flow
+명령: utils/generatePipelineCode.ts 파일을 복구하여 generateFullPipelineCode 함수 재생성
+설명: 삭제된 generatePipelineCode.ts 파일을 복구하여 전체 파이프라인 코드 생성 기능 복원
+파일: utils/generatePipelineCode.ts
+---
+[2025-12-04 14:40:24] Samples 버튼 위치 변경
+위치: C:\cursor\insure-auto-flow
+명령: Samples 버튼을 햄버거 버튼 우측으로 이동
+설명: Samples 버튼을 두 번째 줄에서 세 번째 줄로 이동하여 햄버거 버튼 바로 우측에 배치
+파일: App.tsx
+---
+[2025-12-04 14:44:03] Git 커밋 완료
+위치: C:\cursor\insure-auto-flow
+명령: git commit -m 'feat: Samples 버튼을 햄버거 버튼 우측으로 이동'
+설명: Samples 버튼 위치 변경 및 전체 코드 패널 기능 추가 커밋
+파일: App.tsx, components/PipelineCodePanel.tsx, utils/generatePipelineCode.ts 등
+---
+[2025-12-04 15:58:53] Git 커밋 완료
+위치: C:\cursor\insure-auto-flow
+명령: git commit -m 'chore: 프로젝트 설정 및 문서 업데이트'
+설명: .cursorrules 파일 추가 및 프로젝트 문서 업데이트 커밋
+파일: .cursorrules, history 등 27개 파일
+커밋 해시: 7171581
+---
+[2025-12-04 16:02:06] 가로/세로 변환 버튼 추가
+위치: C:\cursor\insure-auto-flow
+명령: 하단 중앙 버튼 영역에 가로/세로 변환 버튼 추가
+설명: 세로가 긴 경우 90도 반시계방향, 가로가 긴 경우 90도 시계방향으로 전체 모듈 회전
+파일: App.tsx, components/icons.tsx
+---
+[2025-12-04 16:04:46] Rotate Modules 버튼 간격 조정 기능 추가
+위치: C:\cursor\insure-auto-flow
+명령: 가로 모드로 변환 시 모듈 간격 2배 넓게, 세로 모드로 변환 시 2배 작게
+설명: 회전 후 모듈 간격을 자동으로 조정하여 가로/세로 모드에 맞게 배치
+파일: App.tsx
+---
+[2025-12-04 16:10:45] Samples 버튼 수정
+위치: C:\cursor\insure-auto-flow
+명령: Samples 버튼 클릭 이벤트 및 에러 처리 개선
+설명: 이벤트 전파 방지 및 에러 처리 추가하여 Samples 버튼 작동 문제 해결
+파일: App.tsx
+---
+[2025-12-04 16:15:54] Samples 버튼 메뉴 표시 개선
+위치: C:\cursor\insure-auto-flow
+명령: Samples 버튼 메뉴를 fixed에서 absolute로 변경하고 z-index 최대화
+설명: 메뉴가 제대로 표시되도록 z-index를 z-[9999]로 설정하고 이벤트 처리 개선
+파일: App.tsx
+---
+[2025-12-04 17:45:00] Linear Regression 모듈 하이퍼파라미터 튜닝 추가
+위치: C:\cursor\insure-auto-flow
+명령: Linear Regression 모듈에 Ridge/Lasso/ElasticNet 튜닝 옵션 및 결과 표시 추가
+설명: Pyodide 학습 로직에 GridSearchCV 기반 튜닝을 적용하고, PropertiesPanel 및 TrainedModelPreviewModal에 관련 UI를 추가하여 최적 하이퍼파라미터와 점수를 확인 가능하도록 개선
+파일: App.tsx, constants.ts, components/PropertiesPanel.tsx, components/TrainedModelPreviewModal.tsx, utils/pyodideRunner.ts, types.ts, HISTORY.md, history
+커밋 해시: 48c3d80
+복구 명령:
+```bash
+# 백업 후 복구
+git stash push -u -m "백업"
+git reset --hard 48c3d80e2c2deed99165aa6ef35014e7c155a477
+
+# 또는 직접 복구
+git reset --hard 48c3d80e2c2deed99165aa6ef35014e7c155a477
+```
+---
+[2025-12-04 17:30:00] Samples 버튼 작동 수정 및 실행 버튼 색상 변경
+위치: C:\cursor\insure-auto-flow
+명령: overflow-visible 설정 및 외부 클릭 감지 로직 개선
+설명: Samples 버튼이 정상 작동하도록 overflow 수정 및 실행 버튼 색상 로직 변경 (실행 불가능: 회색, 실행 가능: 파란색, 완료: 녹색)
+파일: App.tsx, components/ComponentRenderer.tsx, HISTORY.md, history
+커밋 해시: e7b6d1b
+복구 명령:
+```bash
+# 백업 후 복구
+git stash push -u -m "백업"
+git reset --hard e7b6d1be0c4fc994aabe1da50c7209d2e3545cec
+
+# 또는 직접 복구
+git reset --hard e7b6d1be0c4fc994aabe1da50c7209d2e3545cec
+```
+---
+[2025-12-04 19:45:00] Split Data 타임아웃 증가 및 js_tuning_options 에러 수정
+위치: C:\cursor\insure-auto-flow
+명령: Split Data의 Pyodide 타임아웃 증가 및 js_tuning_options KeyError 수정
+설명: 
+- Split Data Pyodide 타임아웃: 60초 → 120초 (2분)
+- 전체 타임아웃: 90초 → 180초 (3분)
+- Node.js 백엔드 타임아웃: 30초 → 120초 (2분)
+- js_tuning_options KeyError 수정 (존재 여부 확인 후 삭제)
+- 에러 메시지 개선
+파일: App.tsx, utils/pyodideRunner.ts
+커밋 해시: 79cff46
+복구 명령:
+```bash
+# 백업 후 복구
+git stash push -u -m "백업"
+git reset --hard 79cff4679c99c75a7465ebf0180cd0600a6c230a
+
+# 또는 직접 복구
+git reset --hard 79cff4679c99c75a7465ebf0180cd0600a6c230a
+```
+---
+[2025-12-04 19:50:00] Train Model tuningSummary 에러 수정
+위치: C:\cursor\insure-auto-flow
+명령: tuningSummary 변수 초기화 수정
+설명: tuningSummary가 Linear Regression 블록에서만 정의되어 다른 모델 타입에서 에러 발생. 모든 모델 타입에서 사용 가능하도록 블록 밖에서 초기화
+파일: App.tsx
+커밋 해시: 5a611bc
+복구 명령:
+```bash
+# 백업 후 복구
+git stash push -u -m "백업"
+git reset --hard 5a611bcd0c717ff4d8534bd1bf8eea62d001b5a9
+
+# 또는 직접 복구
+git reset --hard 5a611bcd0c717ff4d8534bd1bf8eea62d001b5a9
+```
+---
+[2025-12-04 20:00:00] 하이퍼파라미터 튜닝 성능 그래프 추가
+위치: C:\cursor\insure-auto-flow
+명령: Hyperparameter Tuning Results 하단에 성능 그래프 추가
+설명: 
+- SVG를 사용한 TuningChart 컴포넌트 추가
+- alpha 파라미터와 score(MAE/MSE) 관계 시각화
+- 파란색 원형 데이터 포인트와 빨간색 점선 연결
+- 로그 스케일 적용 (alpha 축)
+- "예상 성능" 한글 라벨 추가
+- 그리드 라인 및 축 라벨 포함
+파일: components/TrainedModelPreviewModal.tsx
+커밋 해시: 362243a
+복구 명령:
+```bash
+# 백업 후 복구
+git stash push -u -m "백업"
+git reset --hard 362243ae10b89511ae1fc183c118f332bb5ad463
+
+# 또는 직접 복구
+git reset --hard 362243ae10b89511ae1fc183c118f332bb5ad463
+```
+---
+[2025-12-04 20:10:00] Train Model Input Preview에 실제 모델 타입 표시
+위치: C:\cursor\insure-auto-flow
+명령: Train Model의 Preview Input에 지도학습의 Model Type 표시
+설명: 
+- Train Model의 Input Preview에서 모듈 타입 대신 실제 모델 타입 파라미터 표시
+- Linear Regression 모듈의 경우 parameters.model_type 값 (Ridge, Lasso, ElasticNet, LinearRegression) 표시
+- 모델 타입 파라미터가 없으면 모듈 타입으로 폴백
+파일: components/PropertiesPanel.tsx
+커밋 해시: c1b98bd
+복구 명령:
+```bash
+# 백업 후 복구
+git stash push -u -m "백업"
+git reset --hard c1b98bdecc45c06ea11a2ddb847123a5036d62ef
+
+# 또는 직접 복구
+git reset --hard c1b98bdecc45c06ea11a2ddb847123a5036d62ef
+```
+---
+[2025-12-04 20:20:00] Load Data 모듈의 CSV 데이터를 파일 이름으로 대체
+위치: C:\cursor\insure-auto-flow
+명령: 전체 코드의 Load Data 모듈에서 CSV 데이터 부분을 파일 이름으로 대체
+설명: 
+- Load Data 모듈의 생성된 코드에서 csv_data = \"\"\"...\"\"\" 부분 제거
+- StringIO(csv_data)를 file_path로 변경
+- module.parameters.source를 파일 이름으로 사용
+- 불필요한 StringIO import 제거
+- CSV 데이터 내용을 코드에서 제거하여 파일 이름만 사용
+파일: utils/generatePipelineCode.ts
+커밋 해시: bb1efa3
+복구 명령:
+```bash
+# 백업 후 복구
+git stash push -u -m "백업"
+git reset --hard bb1efa319c7101e2db77b21b0bab93c12acf076d
+
+# 또는 직접 복구
+git reset --hard bb1efa319c7101e2db77b21b0bab93c12acf076d
+```
+---

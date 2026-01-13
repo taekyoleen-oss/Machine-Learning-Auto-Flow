@@ -1,0 +1,253 @@
+# Cursor Rules for Life Matrix Flow Project
+
+## History File Auto-Recording Rules
+
+### 1. Change History Documentation
+
+- When making significant changes to the codebase, automatically document them in `HISTORY.md` or `CHANGELOG.md`
+- Include the following information for each change:
+  - Date and time of change
+  - Description of what was changed
+  - Files affected
+  - Reason for the change (if applicable)
+  - Author information (if available)
+
+### 2. Commit Message Format
+
+- Use conventional commit format: `<type>(<scope>): <description>`
+- Types: feat, fix, refactor, style, docs, test, chore
+- Examples:
+  - `feat(modules): Add Python execution support for LoadData module`
+  - `fix(ui): Fix module rendering issue in ComponentRenderer`
+  - `refactor(layout): Improve Auto Layout algorithm for special modules`
+
+### 3. Code Change Tracking
+
+- Track significant changes in code comments when:
+  - Adding new features
+  - Fixing critical bugs
+  - Refactoring major components
+  - Changing API interfaces
+
+### 4. File Modification Rules
+
+- When modifying existing files, add a comment at the top indicating:
+  - Last modified date
+  - Brief description of changes
+  - Related issue or feature (if applicable)
+
+### 5. History File Structure
+
+- Maintain a structured history file with:
+  - Version numbers (if applicable)
+  - Chronological order (newest first)
+  - Categorized changes (Features, Bug Fixes, Improvements, etc.)
+  - Breaking changes section (if any)
+
+### 6. Automatic History Updates
+
+- When creating or modifying files, consider if the change warrants a history entry
+- For major features or breaking changes, always add to history
+- For minor fixes or style changes, batch them in periodic updates
+
+### 7. History.md File Management
+
+- All significant changes must be documented in `HISTORY.md`
+- Each entry must include:
+  - Date and time (ISO 8601 format: YYYY-MM-DD HH:MM:SS)
+  - Description of what was changed
+  - List of affected files
+  - Reason for the change
+  - Git commit hash (for recovery purposes)
+  - **Simple recovery command** - Include both stash backup method and direct reset method
+- Recovery commands should be simple and clear, prioritizing stash backup method
+- Update HISTORY.md immediately after making changes, before or during commit
+- Use the standard format provided in HISTORY.md for consistency
+
+### 8. Git Commit and History Integration
+
+- When committing changes, update `HISTORY.md` simultaneously
+- Ensure commit messages match History entries
+- Record commit hash in History for traceability
+- Use `git rev-parse HEAD` to get the current commit hash before committing
+
+### 9. Recovery Procedures
+
+- Check commit hash in HISTORY.md file when recovery is needed
+- **Simple recovery method (recommended)**: Use `git stash` to backup current changes, then `git reset --hard <commit-hash>`
+- Recovery commands should include both stash backup and direct reset options
+- Always document recovery commands in HISTORY.md with simple, clear instructions
+- Example recovery format:
+
+  ```bash
+  # Backup and recover
+  git stash push -u -m "백업"
+  git reset --hard <커밋해시>
+
+  # Or direct recovery
+  git reset --hard <커밋해시>
+  ```
+
+### 10. AI Assistant History Recording
+
+- When AI Assistant makes changes, automatically update HISTORY.md
+- Before completing a task, check if HISTORY.md needs updating
+- Include commit hash after changes are committed
+- Format entries according to the template in HISTORY.md
+- For multiple related changes, group them in a single entry
+- Always record significant changes immediately, don't defer to later
+
+### 11. Commit Workflow
+
+- Before committing: Update HISTORY.md with the change details
+- Get commit hash: `git rev-parse HEAD` (after commit)
+- Update HISTORY.md with the actual commit hash
+- Ensure commit message matches HISTORY.md entry description
+- Use conventional commit format in both commit message and HISTORY.md
+
+## Project-Specific Rules
+
+### Code Style
+
+- Use TypeScript with strict type checking
+- Follow React best practices
+- Use functional components with hooks
+- Maintain consistent naming conventions
+
+### Module Development
+
+- When adding new modules, update:
+  - `types.ts` with new ModuleType enum value
+  - `constants.ts` with module definition
+  - `codeSnippets.ts` with code generation logic
+  - Documentation in module description
+
+### UI/UX Guidelines
+
+- Maintain consistent styling with Tailwind CSS
+- Ensure responsive design for different screen sizes
+- Follow accessibility best practices
+- Keep user interactions intuitive
+
+### Testing and Quality
+
+- Test modules individually before integration
+- Verify pipeline execution flow
+- Check for edge cases and error handling
+- Ensure proper error messages for users
+
+## AI Assistant Guidelines
+
+When making changes:
+
+1. Always check existing code patterns before implementing new features
+2. Maintain consistency with existing codebase style
+3. Update related files when adding new functionality
+4. Consider backward compatibility
+5. Document significant changes in code comments
+6. Follow the project's file structure and naming conventions
+7. **Update HISTORY.md** when making significant changes (see section 10)
+8. Record commit hash in HISTORY.md after committing changes
+9. Follow the commit workflow (section 11) for proper change tracking
+
+## Properties Panel Tab Structure Protection Rules
+
+### Properties Panel Tab Configuration
+
+**CRITICAL: DO NOT MODIFY THE FOLLOWING STRUCTURE**
+
+The Properties Panel MUST maintain the following tab structure:
+
+1. **Tab Configuration:**
+   - Tabs MUST be: "properties", "preview", "code", "terminal" (in this order)
+   - Tab type definition: `"properties" | "preview" | "code" | "terminal"`
+   - All tabs MUST be displayed as buttons in a horizontal flex layout
+   - Tab buttons MUST use `flex-1` class for equal width distribution
+
+2. **Tab Icons and Sizes:**
+   - **Properties tab**: `<CogIcon className="w-5 h-5" />` - MUST use w-5 h-5
+   - **Preview tab**: `<TableCellsIcon className="w-5 h-5" />` - MUST use w-5 h-5
+   - **Code tab**: `<CodeBracketIcon className="w-5 h-5" />` - MUST use w-5 h-5
+   - **Terminal tab**: `<CommandLineIcon className="w-5 h-5" />` - MUST use w-5 h-5
+   - All icons MUST have `className="w-5 h-5"` - DO NOT change icon sizes
+   - Icon classes MUST be: `w-5 h-5` (20px x 20px)
+
+3. **Terminal Tab Implementation:**
+   - Terminal MUST be implemented as a tab, NOT as a separate bottom panel
+   - Terminal content MUST be displayed when `activeTab === "terminal"`
+   - Terminal MUST use the same log display logic as before
+   - Terminal MUST NOT have a separate resize handle or bottom panel
+   - Terminal logs MUST be displayed within the tab content area
+
+4. **Tab Button Styling:**
+   - Active tab: `bg-gray-700 text-white`
+   - Inactive tab: `text-gray-400 hover:bg-gray-700/50`
+   - All tabs MUST use: `flex-1 flex items-center justify-center gap-2 p-3 text-sm font-semibold`
+   - Tab container MUST use: `flex-shrink-0 border-b border-gray-700` with `flex` layout
+
+5. **Prohibited Changes:**
+   - DO NOT remove the terminal tab
+   - DO NOT change icon sizes from `w-5 h-5`
+   - DO NOT change tab order
+   - DO NOT add or remove tabs without explicit user request
+   - DO NOT move terminal to a separate bottom panel
+   - DO NOT modify tab button styling classes
+   - DO NOT change the tab type definition structure
+
+6. **When Modifying Properties Panel:**
+   - Always preserve the tab structure
+   - Always preserve icon sizes (w-5 h-5)
+   - Always preserve tab order
+   - If adding new tabs, follow the same pattern and icon size
+   - If removing tabs, ensure terminal tab remains
+
+## Code Change Protection Rules
+
+### Explicit Change Only Policy
+
+**CRITICAL: AI Assistant MUST follow these rules strictly**
+
+1. **Only Modify What's Requested:**
+   - ONLY modify code that is explicitly requested in the user's current query
+   - DO NOT modify related files, functions, or code sections unless explicitly requested
+   - DO NOT "improve" or "refactor" code that is not part of the current task
+   - DO NOT revert changes to previous versions or "better" implementations
+
+2. **Scope Limitation:**
+   - When user requests changes to File A, DO NOT modify File B, C, or D
+   - When user requests changes to Function X, DO NOT modify Function Y or Z
+   - When user requests UI changes, DO NOT modify business logic
+   - When user requests feature additions, DO NOT refactor existing code
+
+3. **Preservation Requirements:**
+   - Preserve existing code structure, patterns, and style
+   - Preserve existing variable names, function names, and class names
+   - Preserve existing comments and documentation
+   - Preserve existing error handling and edge cases
+   - Preserve existing UI/UX patterns unless explicitly requested to change
+
+4. **Change Confirmation:**
+   - Before making any change, verify it's explicitly requested
+   - If a change seems related but not explicitly requested, DO NOT make it
+   - When in doubt, ask the user before modifying code
+   - If code looks "wrong" but user hasn't requested a fix, DO NOT change it
+
+5. **Protected Patterns:**
+   - Code with `// DO NOT MODIFY` or `// PROTECTED` comments: NEVER modify
+   - Critical UI components: Only modify when explicitly requested
+   - Core business logic: Only modify when explicitly requested
+   - Configuration files: Only modify when explicitly requested
+
+6. **Version Control Respect:**
+   - DO NOT revert to previous versions of code
+   - DO NOT "fix" code that was intentionally changed
+   - Respect the current state of the codebase
+   - If something was changed recently, respect that change
+
+### When User Requests Changes:
+
+1. Read the request carefully - identify the EXACT scope
+2. Check if change is explicitly requested - don't assume
+3. Modify ONLY the requested area - nothing else
+4. Preserve existing patterns - don't "improve" unrelated code
+5. Ask before expanding scope - don't modify related code "for consistency"
