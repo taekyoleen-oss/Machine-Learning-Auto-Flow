@@ -2,6 +2,35 @@
 
 ## 2026-01-13 (현재 작업)
 
+### fix(vercel): Add package-lock.json and restore npm ci command
+
+**Description:**
+- `package-lock.json` 파일 생성하여 Vercel 빌드 시 `npm ci` 오류 해결
+- `npm install --package-lock-only` 명령으로 `package-lock.json` 생성
+- `vercel.json`의 `installCommand`를 `npm ci --prefer-offline --no-audit`로 복원
+- 이제 `npm ci`가 정상적으로 작동하여 더 빠르고 안정적인 빌드 가능
+
+**Files Affected:**
+- `package-lock.json` - 새로 생성 (4,415줄)
+- `vercel.json` - `installCommand`를 `npm ci --prefer-offline --no-audit`로 복원
+
+**Reason:**
+- Vercel 빌드 시 `npm ci` 명령이 `package-lock.json`을 요구하여 빌드 실패
+- `package-lock.json`을 생성하여 `npm ci`가 정상 작동하도록 수정
+- `npm ci`는 `npm install`보다 빠르고 재현 가능한 빌드를 제공
+
+**Commit Hash:** 179aad7
+
+**Recovery Command:**
+```bash
+# Backup and recover
+git stash push -u -m "백업"
+git reset --hard 179aad7
+
+# Or direct recovery
+git reset --hard 179aad7
+```
+
 ### fix(vercel): Change installCommand from npm ci to npm install
 
 **Description:**
