@@ -18,6 +18,8 @@ interface ToolboxProps {
 
 const preprocessTypes = [
   ModuleType.LoadData,
+  ModuleType.Join,
+  ModuleType.Concat,
   ModuleType.SelectData,
   ModuleType.DataFiltering,
   ModuleType.ResampleData,

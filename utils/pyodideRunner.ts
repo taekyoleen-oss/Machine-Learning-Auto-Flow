@@ -5938,6 +5938,243 @@ except Exception as e:
 }
 
 /**
+ * Join을 Python으로 실행합니다 (데이터 조인)
+ * 타임아웃: 60초
+ */
+export async function joinDataPython(
+  data1: any[],
+  data2: any[],
+  joinType: string,
+  leftOn: string | null,
+  rightOn: string | null,
+  on: string | null,
+  how: string,
+  suffixes: [string, string],
+  timeoutMs: number = 60000
+): Promise<{
+  rows: any[];
+  columns: Array<{ name: string; type: string }>;
+}> {
+  try {
+    const py = await withTimeout(
+      loadPyodide(30000),
+      30000,
+      "Pyodide 로딩 타임아웃 (30초 초과)"
+    );
+
+    py.globals.set("js_data1", data1);
+    py.globals.set("js_data2", data2);
+    py.globals.set("js_how", how || joinType || "inner");
+    py.globals.set("js_suffixes", suffixes || ["_x", "_y"]);
+
+    let joinKeysCode = '';
+    if (on) {
+      py.globals.set("js_on", on);
+      joinKeysCode = `on=js_on`;
+    } else if (leftOn && rightOn) {
+      py.globals.set("js_left_on", leftOn);
+      py.globals.set("js_right_on", rightOn);
+      joinKeysCode = `left_on=js_left_on, right_on=js_right_on`;
+    } else {
+      throw new Error("조인 키를 설정해야 합니다 (on 또는 left_on/right_on)");
+    }
+
+    const code = `
+import pandas as pd
+import traceback
+
+try:
+    df1 = pd.DataFrame(js_data1.to_py())
+    df2 = pd.DataFrame(js_data2.to_py())
+    
+    result = pd.merge(
+        df1,
+        df2,
+        ${joinKeysCode},
+        how=js_how,
+        suffixes=tuple(js_suffixes.to_py())
+    )
+    
+    result_rows = result.to_dict('records')
+    result_columns = [{'name': col, 'type': 'number' if pd.api.types.is_numeric_dtype(result[col]) else 'string'} for col in result.columns]
+    
+    js_result = {
+        'rows': result_rows,
+        'columns': result_columns
+    }
+except Exception as e:
+    error_traceback = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+    js_result = {
+        '__error__': True,
+        'error_type': type(e).__name__,
+        'error_message': str(e),
+        'error_traceback': error_traceback
+    }
+`;
+
+    await withTimeout(
+      Promise.resolve(py.runPython(code)),
+      timeoutMs,
+      `Python join_data 실행 타임아웃 (${timeoutMs / 1000}초 초과)`
+    );
+
+    const resultPyObj = py.globals.get("js_result");
+    const result = fromPython(resultPyObj);
+
+    if (result && result.__error__) {
+      throw new Error(
+        `Python join_data error:\n${result.error_traceback || result.error_message}`
+      );
+    }
+
+    // 정리
+    py.globals.delete("js_data1");
+    py.globals.delete("js_data2");
+    py.globals.delete("js_how");
+    py.globals.delete("js_suffixes");
+    if (on) {
+      py.globals.delete("js_on");
+    } else {
+      py.globals.delete("js_left_on");
+      py.globals.delete("js_right_on");
+    }
+    py.globals.delete("js_result");
+
+    return {
+      rows: result.rows,
+      columns: result.columns,
+    };
+  } catch (error: any) {
+    // 정리
+    try {
+      const py = pyodide;
+      if (py) {
+        py.globals.delete("js_data1");
+        py.globals.delete("js_data2");
+        py.globals.delete("js_how");
+        py.globals.delete("js_suffixes");
+        if (on) {
+          py.globals.delete("js_on");
+        } else {
+          py.globals.delete("js_left_on");
+          py.globals.delete("js_right_on");
+        }
+        py.globals.delete("js_result");
+      }
+    } catch {}
+
+    const errorMessage = error.message || String(error);
+    throw new Error(`Python join_data error: ${errorMessage}`);
+  }
+}
+
+/**
+ * Concat을 Python으로 실행합니다 (데이터 연결)
+ * 타임아웃: 60초
+ */
+export async function concatDataPython(
+  data1: any[],
+  data2: any[],
+  axis: string,
+  ignoreIndex: boolean,
+  sort: boolean,
+  timeoutMs: number = 60000
+): Promise<{
+  rows: any[];
+  columns: Array<{ name: string; type: string }>;
+}> {
+  try {
+    const py = await withTimeout(
+      loadPyodide(30000),
+      30000,
+      "Pyodide 로딩 타임아웃 (30초 초과)"
+    );
+
+    py.globals.set("js_data1", data1);
+    py.globals.set("js_data2", data2);
+    py.globals.set("js_axis", axis === 'horizontal' ? 1 : 0);
+    py.globals.set("js_ignore_index", ignoreIndex);
+    py.globals.set("js_sort", sort);
+
+    const code = `
+import pandas as pd
+import traceback
+
+try:
+    df1 = pd.DataFrame(js_data1.to_py())
+    df2 = pd.DataFrame(js_data2.to_py())
+    
+    result = pd.concat(
+        [df1, df2],
+        axis=js_axis,
+        ignore_index=js_ignore_index,
+        sort=js_sort
+    )
+    
+    result_rows = result.to_dict('records')
+    result_columns = [{'name': col, 'type': 'number' if pd.api.types.is_numeric_dtype(result[col]) else 'string'} for col in result.columns]
+    
+    js_result = {
+        'rows': result_rows,
+        'columns': result_columns
+    }
+except Exception as e:
+    error_traceback = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+    js_result = {
+        '__error__': True,
+        'error_type': type(e).__name__,
+        'error_message': str(e),
+        'error_traceback': error_traceback
+    }
+`;
+
+    await withTimeout(
+      Promise.resolve(py.runPython(code)),
+      timeoutMs,
+      `Python concat_data 실행 타임아웃 (${timeoutMs / 1000}초 초과)`
+    );
+
+    const resultPyObj = py.globals.get("js_result");
+    const result = fromPython(resultPyObj);
+
+    if (result && result.__error__) {
+      throw new Error(
+        `Python concat_data error:\n${result.error_traceback || result.error_message}`
+      );
+    }
+
+    // 정리
+    py.globals.delete("js_data1");
+    py.globals.delete("js_data2");
+    py.globals.delete("js_axis");
+    py.globals.delete("js_ignore_index");
+    py.globals.delete("js_sort");
+    py.globals.delete("js_result");
+
+    return {
+      rows: result.rows,
+      columns: result.columns,
+    };
+  } catch (error: any) {
+    // 정리
+    try {
+      const py = pyodide;
+      if (py) {
+        py.globals.delete("js_data1");
+        py.globals.delete("js_data2");
+        py.globals.delete("js_axis");
+        py.globals.delete("js_ignore_index");
+        py.globals.delete("js_sort");
+        py.globals.delete("js_result");
+      }
+    } catch {}
+
+    const errorMessage = error.message || String(error);
+    throw new Error(`Python concat_data error: ${errorMessage}`);
+  }
+}
+
+/**
  * EncodeCategorical를 Python으로 실행합니다 (인코딩 매핑 생성)
  * 타임아웃: 60초
  */

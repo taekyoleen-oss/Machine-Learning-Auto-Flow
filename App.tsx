@@ -47,6 +47,8 @@ import {
   CorrelationOutput,
   MortalityModelOutput,
   MortalityResultOutput,
+  JoinOutput,
+  ConcatOutput,
 } from "./types";
 import { DEFAULT_MODULES, TOOLBOX_MODULES, SAMPLE_MODELS } from "./constants";
 import { SAVED_SAMPLES } from "./savedSamples";
@@ -2943,6 +2945,8 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         setViewingEvaluateStat(module);
       } else if (module.outputData.type === "SplitDataOutput") {
         setViewingSplitDataForModule(module);
+      } else if (module.outputData.type === "JoinOutput" || module.outputData.type === "ConcatOutput") {
+        setViewingDataForModule(module);
       } else if (module.outputData.type === "TrainedModelOutput") {
         setViewingTrainedModel(module);
       } else if (module.outputData.type === "XoLPriceOutput") {
@@ -4357,6 +4361,123 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             const errorMessage = error.message || String(error);
             addLog("ERROR", `Python TransitionData 실패: ${errorMessage}`);
             throw new Error(`데이터 변환 실패: ${errorMessage}`);
+          }
+        } else if (module.type === ModuleType.Join) {
+          const inputData1 = getSingleInputData(
+            module.id,
+            "data",
+            "data_in"
+          ) as DataPreview | null;
+          const inputData2 = getSingleInputData(
+            module.id,
+            "data",
+            "data_in2"
+          ) as DataPreview | null;
+
+          if (!inputData1 || !inputData2) {
+            throw new Error("Both input data sources must be connected.");
+          }
+
+          const { join_type, left_on, right_on, on, how, suffixes } = module.parameters;
+
+          // 조인 키 검증
+          if (!on && (!left_on || !right_on)) {
+            throw new Error("Join key must be specified (on or left_on/right_on).");
+          }
+
+          // Pyodide를 사용하여 Python으로 조인 수행
+          try {
+            addLog("INFO", "Pyodide를 사용하여 Python으로 데이터 조인 수행 중...");
+
+            const pyodideModule = await import("./utils/pyodideRunner");
+            const { joinDataPython } = pyodideModule;
+
+            const result = await joinDataPython(
+              inputData1.rows || [],
+              inputData2.rows || [],
+              join_type || "inner",
+              left_on || null,
+              right_on || null,
+              on || null,
+              how || join_type || "inner",
+              suffixes || ["_x", "_y"],
+              60000 // 타임아웃: 60초
+            );
+
+            newOutputData = {
+              type: "JoinOutput",
+              rows: result.rows,
+              columns: result.columns,
+            };
+
+            addLog("SUCCESS", `Python으로 데이터 조인 완료: ${result.rows.length}행 × ${result.columns.length}열`);
+          } catch (error: any) {
+            const errorMessage = error.message || String(error);
+            addLog("ERROR", `Python Join 실패: ${errorMessage}`);
+            throw new Error(`데이터 조인 실패: ${errorMessage}`);
+          }
+        } else if (module.type === ModuleType.Concat) {
+          const inputData1 = getSingleInputData(
+            module.id,
+            "data",
+            "data_in"
+          ) as DataPreview | null;
+          const inputData2 = getSingleInputData(
+            module.id,
+            "data",
+            "data_in2"
+          ) as DataPreview | null;
+
+          if (!inputData1 || !inputData2) {
+            throw new Error("Both input data sources must be connected.");
+          }
+
+          const { axis, ignore_index, sort } = module.parameters;
+          const rows1 = inputData1.rows?.length || 0;
+          const rows2 = inputData2.rows?.length || 0;
+          const cols1 = inputData1.columns?.length || 0;
+          const cols2 = inputData2.columns?.length || 0;
+
+          // 요구사항 검증
+          const isVertical = axis === "vertical";
+          if (isVertical && cols1 !== cols2) {
+            throw new Error(
+              `Column count mismatch: Input 1 has ${cols1} columns, Input 2 has ${cols2} columns. For vertical concatenation, both inputs must have the same number of columns.`
+            );
+          }
+          if (!isVertical && rows1 !== rows2) {
+            throw new Error(
+              `Row count mismatch: Input 1 has ${rows1} rows, Input 2 has ${rows2} rows. For horizontal concatenation, both inputs must have the same number of rows.`
+            );
+          }
+
+          // Pyodide를 사용하여 Python으로 연결 수행
+          try {
+            addLog("INFO", "Pyodide를 사용하여 Python으로 데이터 연결 수행 중...");
+
+            const pyodideModule = await import("./utils/pyodideRunner");
+            const { concatDataPython } = pyodideModule;
+
+            const result = await concatDataPython(
+              inputData1.rows || [],
+              inputData2.rows || [],
+              axis || "vertical",
+              ignore_index || false,
+              sort || false,
+              60000 // 타임아웃: 60초
+            );
+
+            newOutputData = {
+              type: "ConcatOutput",
+              rows: result.rows,
+              columns: result.columns,
+            };
+
+            addLog("SUCCESS", `Python으로 데이터 연결 완료: ${result.rows.length}행 × ${result.columns.length}열`);
+          } catch (error: any) {
+            const errorMessage = error.message || String(error);
+            addLog("ERROR", `Python Concat 실패: ${errorMessage}`);
+            throw new Error(`데이터 연결 실패: ${errorMessage}`);
           }
         } else if (module.type === ModuleType.ResampleData) {
           const inputData = getSingleInputData(module.id) as DataPreview;

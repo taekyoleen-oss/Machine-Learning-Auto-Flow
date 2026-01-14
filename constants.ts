@@ -33,6 +33,18 @@ export const TOOLBOX_MODULES = [
     description: "Loads a dataset from a CSV file.",
   },
   {
+    type: ModuleType.Join,
+    name: "Data Joiner",
+    icon: ShareIcon,
+    description: "Joins two datasets using inner, outer, left, or right join based on key columns.",
+  },
+  {
+    type: ModuleType.Concat,
+    name: "Data Concatenator",
+    icon: ShareIcon,
+    description: "Concatenates two datasets vertically (rows) or horizontally (columns).",
+  },
+  {
     type: ModuleType.Statistics,
     name: "Statistics",
     icon: BarChartIcon,
@@ -525,6 +537,37 @@ export const DEFAULT_MODULES: Omit<CanvasModule, "id" | "position" | "name">[] =
         { name: "train_data_out", type: "data" },
         { name: "test_data_out", type: "data" },
       ],
+    },
+    {
+      type: ModuleType.Join,
+      status: ModuleStatus.Pending,
+      parameters: {
+        join_type: "inner",
+        how: "inner",
+        on: null,
+        left_on: null,
+        right_on: null,
+        suffixes: ["_x", "_y"],
+      },
+      inputs: [
+        { name: "data_in", type: "data" },
+        { name: "data_in2", type: "data" },
+      ],
+      outputs: [{ name: "data_out", type: "data" }],
+    },
+    {
+      type: ModuleType.Concat,
+      status: ModuleStatus.Pending,
+      parameters: {
+        axis: "vertical",
+        ignore_index: false,
+        sort: false,
+      },
+      inputs: [
+        { name: "data_in", type: "data" },
+        { name: "data_in2", type: "data" },
+      ],
+      outputs: [{ name: "data_out", type: "data" }],
     },
     {
       type: ModuleType.LinearRegression,

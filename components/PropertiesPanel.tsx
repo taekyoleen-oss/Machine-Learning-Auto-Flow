@@ -430,6 +430,24 @@ const PropertySelect: React.FC<{
   </div>
 );
 
+const PropertyCheckbox: React.FC<{
+  label: string;
+  value: boolean;
+  onChange: (value: boolean) => void;
+}> = ({ label, value, onChange }) => (
+  <div className="mb-3 last:mb-0">
+    <label className="flex items-center gap-2 cursor-pointer">
+      <input
+        type="checkbox"
+        checked={value}
+        onChange={(e) => onChange(e.target.checked)}
+        className="w-4 h-4 rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-500"
+      />
+      <span className="text-sm text-gray-400">{label}</span>
+    </label>
+  </div>
+);
+
 const PropertyDisplay: React.FC<{ label: string; value: React.ReactNode }> = ({
   label,
   value,
@@ -2306,6 +2324,216 @@ const renderParameters = (
             }
             options={["", ...inputColumns.map((c) => c.name)]}
           />
+        </>
+      );
+    }
+    case ModuleType.Join: {
+      const sourceData1 = getConnectedDataSource(module.id, "data_in");
+      const sourceData2 = getConnectedDataSource(module.id, "data_in2");
+      
+      const columns1 = sourceData1?.columns || [];
+      const columns2 = sourceData2?.columns || [];
+      const rows1 = sourceData1?.rows?.length || 0;
+      const rows2 = sourceData2?.rows?.length || 0;
+      const cols1 = columns1.length;
+      const cols2 = columns2.length;
+      
+      const commonColumns = columns1.filter(c1 => 
+        columns2.some(c2 => c2.name === c1.name)
+      ).map(c => c.name);
+      
+      return (
+        <>
+          {/* 데이터 정보 표시 */}
+          <div className="mb-4 p-3 bg-gray-800 rounded-md">
+            <div className="text-xs text-gray-400 mb-2">Input Data Information</div>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <div className="text-gray-500">Input 1:</div>
+                <div className="text-gray-300">{rows1} rows × {cols1} cols</div>
+              </div>
+              <div>
+                <div className="text-gray-500">Input 2:</div>
+                <div className="text-gray-300">{rows2} rows × {cols2} cols</div>
+              </div>
+            </div>
+          </div>
+          
+          <PropertySelect
+            label="Join Type"
+            value={module.parameters.how || module.parameters.join_type || "inner"}
+            onChange={(v) => {
+              onParamChange("how", v);
+              onParamChange("join_type", v);
+            }}
+            options={[
+              { label: "Inner Join", value: "inner" },
+              { label: "Outer Join", value: "outer" },
+              { label: "Left Join", value: "left" },
+              { label: "Right Join", value: "right" }
+            ]}
+          />
+          
+          {columns1.length > 0 && columns2.length > 0 && (
+            <>
+              <PropertySelect
+                label="Join Key (Both)"
+                value={module.parameters.on || ""}
+                onChange={(v) => {
+                  onParamChange("on", v || null);
+                  if (v) {
+                    onParamChange("left_on", null);
+                    onParamChange("right_on", null);
+                  }
+                }}
+                options={["", ...commonColumns]}
+              />
+              
+              <div className="text-xs text-gray-400 mb-2 text-center">OR</div>
+              
+              <PropertySelect
+                label="Left Key"
+                value={module.parameters.left_on || ""}
+                onChange={(v) => {
+                  onParamChange("left_on", v || null);
+                  if (v) onParamChange("on", null);
+                }}
+                options={["", ...columns1.map(c => c.name)]}
+              />
+              
+              <PropertySelect
+                label="Right Key"
+                value={module.parameters.right_on || ""}
+                onChange={(v) => {
+                  onParamChange("right_on", v || null);
+                  if (v) onParamChange("on", null);
+                }}
+                options={["", ...columns2.map(c => c.name)]}
+              />
+            </>
+          )}
+          
+          <div className="grid grid-cols-2 gap-2">
+            <PropertyInput
+              label="Left Suffix"
+              value={module.parameters.suffixes?.[0] || "_x"}
+              onChange={(v) => {
+                const suffixes = module.parameters.suffixes || ["_x", "_y"];
+                onParamChange("suffixes", [v, suffixes[1]]);
+              }}
+            />
+            <PropertyInput
+              label="Right Suffix"
+              value={module.parameters.suffixes?.[1] || "_y"}
+              onChange={(v) => {
+                const suffixes = module.parameters.suffixes || ["_x", "_y"];
+                onParamChange("suffixes", [suffixes[0], v]);
+              }}
+            />
+          </div>
+          
+          {/* 검증 메시지 */}
+          {(!sourceData1 || !sourceData2) && (
+            <div className="mt-4 p-3 bg-red-900/30 border border-red-700 rounded-md">
+              <div className="text-sm text-red-400 font-semibold">⚠ Cannot Execute</div>
+              <div className="text-xs text-red-300 mt-1">
+                Both input data sources must be connected.
+              </div>
+            </div>
+          )}
+          {sourceData1 && sourceData2 && (!module.parameters.on && !module.parameters.left_on && !module.parameters.right_on) && (
+            <div className="mt-4 p-3 bg-red-900/30 border border-red-700 rounded-md">
+              <div className="text-sm text-red-400 font-semibold">⚠ Cannot Execute</div>
+              <div className="text-xs text-red-300 mt-1">
+                Join key must be specified (on or left_on/right_on).
+              </div>
+            </div>
+          )}
+        </>
+      );
+    }
+    case ModuleType.Concat: {
+      const sourceData1 = getConnectedDataSource(module.id, "data_in");
+      const sourceData2 = getConnectedDataSource(module.id, "data_in2");
+      
+      const rows1 = sourceData1?.rows?.length || 0;
+      const rows2 = sourceData2?.rows?.length || 0;
+      const cols1 = sourceData1?.columns?.length || 0;
+      const cols2 = sourceData2?.columns?.length || 0;
+      
+      const axis = module.parameters.axis || "vertical";
+      const isValid = axis === "vertical" 
+        ? (cols1 === cols2 || cols1 === 0 || cols2 === 0)  // Vertical: 컬럼 수가 같아야 함
+        : (rows1 === rows2 || rows1 === 0 || rows2 === 0); // Horizontal: 행 수가 같아야 함
+      
+      return (
+        <>
+          {/* 데이터 정보 표시 */}
+          <div className="mb-4 p-3 bg-gray-800 rounded-md">
+            <div className="text-xs text-gray-400 mb-2">Input Data Information</div>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <div className="text-gray-500">Input 1:</div>
+                <div className="text-gray-300">{rows1} rows × {cols1} cols</div>
+              </div>
+              <div>
+                <div className="text-gray-500">Input 2:</div>
+                <div className="text-gray-300">{rows2} rows × {cols2} cols</div>
+              </div>
+            </div>
+            {sourceData1 && sourceData2 && (
+              <div className="mt-2 pt-2 border-t border-gray-700">
+                <div className="text-xs text-gray-400">Expected Output:</div>
+                <div className="text-sm text-gray-300">
+                  {axis === "vertical" 
+                    ? `${rows1 + rows2} rows × ${Math.max(cols1, cols2)} cols`
+                    : `${Math.max(rows1, rows2)} rows × ${cols1 + cols2} cols`}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <PropertySelect
+            label="Axis"
+            value={module.parameters.axis || "vertical"}
+            onChange={(v) => onParamChange("axis", v)}
+            options={[
+              { label: "Vertical (Rows)", value: "vertical" },
+              { label: "Horizontal (Columns)", value: "horizontal" }
+            ]}
+          />
+          
+          <PropertyCheckbox
+            label="Ignore Index"
+            value={module.parameters.ignore_index || false}
+            onChange={(v) => onParamChange("ignore_index", v)}
+          />
+          
+          <PropertyCheckbox
+            label="Sort Columns"
+            value={module.parameters.sort || false}
+            onChange={(v) => onParamChange("sort", v)}
+          />
+          
+          {/* 검증 메시지 */}
+          {(!sourceData1 || !sourceData2) && (
+            <div className="mt-4 p-3 bg-red-900/30 border border-red-700 rounded-md">
+              <div className="text-sm text-red-400 font-semibold">⚠ Cannot Execute</div>
+              <div className="text-xs text-red-300 mt-1">
+                Both input data sources must be connected.
+              </div>
+            </div>
+          )}
+          {sourceData1 && sourceData2 && !isValid && (
+            <div className="mt-4 p-3 bg-red-900/30 border border-red-700 rounded-md">
+              <div className="text-sm text-red-400 font-semibold">⚠ Cannot Execute</div>
+              <div className="text-xs text-red-300 mt-1">
+                {axis === "vertical" 
+                  ? `Column count mismatch: Input 1 has ${cols1} columns, Input 2 has ${cols2} columns. For vertical concatenation, both inputs must have the same number of columns.`
+                  : `Row count mismatch: Input 1 has ${rows1} rows, Input 2 has ${rows2} rows. For horizontal concatenation, both inputs must have the same number of rows.`}
+              </div>
+            </div>
+          )}
         </>
       );
     }

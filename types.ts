@@ -16,6 +16,8 @@ export enum ModuleType {
   TransitionData = "TransitionData",
   ResampleData = "ResampleData",
   SplitData = "SplitData",
+  Join = "Join",
+  Concat = "Concat",
 
   // Supervised Learning Models
   LinearRegression = "LinearRegression",
@@ -140,6 +142,18 @@ export interface SplitDataOutput {
   type: "SplitDataOutput";
   train: DataPreview;
   test: DataPreview;
+}
+
+export interface JoinOutput {
+  type: "JoinOutput";
+  rows: any[];
+  columns: Array<{ name: string; type: string }>;
+}
+
+export interface ConcatOutput {
+  type: "ConcatOutput";
+  rows: any[];
+  columns: Array<{ name: string; type: string }>;
 }
 
 export interface TuningCandidateScore {
@@ -490,6 +504,8 @@ export interface CanvasModule {
     | DataPreview
     | StatisticsOutput
     | SplitDataOutput
+    | JoinOutput
+    | ConcatOutput
     | TrainedModelOutput
     | ModelDefinitionOutput
     | StatsModelsResultOutput

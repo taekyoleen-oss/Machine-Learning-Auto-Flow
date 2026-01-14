@@ -11,6 +11,8 @@ import {
   DataPreview,
   ModuleType,
   Connection,
+  JoinOutput,
+  ConcatOutput,
 } from "../types";
 import {
   XCircleIcon,
@@ -1625,6 +1627,79 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
     module.type === ModuleType.HandleMissingValues ||
     module.type === ModuleType.EncodeCategorical ||
     module.type === ModuleType.ScalingTransform;
+  
+  // Join, Concat 모듈 확인
+  const isJoinConcatModule = 
+    module.type === ModuleType.Join || 
+    module.type === ModuleType.Concat;
+  
+  // Join/Concat 모듈용 탭 상태
+  const [joinConcatTab, setJoinConcatTab] = useState<"input1" | "input2" | "output">("input1");
+  
+  // Join/Concat 모듈용 입력 데이터 가져오기
+  const getInputData = (portName: string): DataPreview | null => {
+    if (!isJoinConcatModule || !modules || !connections) return null;
+    const inputConnection = connections.find(
+      (c) => c && c.to && c.to.moduleId === module.id && c.to.portName === portName
+    );
+    if (!inputConnection || !inputConnection.from) return null;
+    const sourceModule = modules.find((m) => m && m.id === inputConnection.from.moduleId);
+    if (!sourceModule?.outputData) return null;
+    
+    if (sourceModule.outputData.type === "DataPreview") {
+      return sourceModule.outputData;
+    }
+    if (sourceModule.outputData.type === "SplitDataOutput") {
+      const fromPortName = inputConnection.from.portName;
+      if (fromPortName === "train_data_out") {
+        return sourceModule.outputData.train;
+      } else if (fromPortName === "test_data_out") {
+        return sourceModule.outputData.test;
+      }
+    }
+    return null;
+  };
+  
+  const input1Data = getInputData("data_in");
+  const input2Data = getInputData("data_in2");
+  const input1Columns = Array.isArray(input1Data?.columns) ? input1Data.columns : [];
+  const input1Rows = Array.isArray(input1Data?.rows) ? input1Data.rows : [];
+  const input2Columns = Array.isArray(input2Data?.columns) ? input2Data.columns : [];
+  const input2Rows = Array.isArray(input2Data?.rows) ? input2Data.rows : [];
+  
+  // Join/Concat 모듈의 출력 데이터
+  const getJoinConcatOutput = (): DataPreview | null => {
+    if (!isJoinConcatModule || !module.outputData) return null;
+    if (module.outputData.type === "JoinOutput" || module.outputData.type === "ConcatOutput") {
+      return {
+        type: "DataPreview",
+        columns: module.outputData.columns,
+        rows: module.outputData.rows,
+        totalRowCount: module.outputData.rows?.length || 0,
+      };
+    }
+    if (module.outputData.type === "DataPreview") {
+      return module.outputData;
+    }
+    return null;
+  };
+  
+  const outputData = getJoinConcatOutput();
+  const outputColumns = Array.isArray(outputData?.columns) ? outputData.columns : [];
+  const outputRows = Array.isArray(outputData?.rows) ? outputData.rows : [];
+  
+  // Join/Concat 모듈의 현재 탭에 따른 데이터
+  const getJoinConcatCurrentData = () => {
+    if (joinConcatTab === "input1") {
+      return { data: input1Data, columns: input1Columns, rows: input1Rows };
+    } else if (joinConcatTab === "input2") {
+      return { data: input2Data, columns: input2Columns, rows: input2Rows };
+    } else {
+      return { data: outputData, columns: outputColumns, rows: outputRows };
+    }
+  };
+  
+  const joinConcatCurrent = getJoinConcatCurrentData();
 
     // 안전한 데이터 가져오기
     const getPreviewData = (): DataPreview | null => {
@@ -1668,9 +1743,28 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
     const rows = Array.isArray(data?.rows) ? data.rows : [];
     
     const [sortConfig, setSortConfig] = useState<SortConfig>(null);
+  
+  // Join/Concat 모듈의 경우 현재 탭에 따라 초기 컬럼 선택
+  const getInitialSelectedColumn = () => {
+    if (isJoinConcatModule) {
+      return joinConcatCurrent.columns[0]?.name || null;
+    }
+    return columns[0]?.name || null;
+  };
+  
   const [selectedColumn, setSelectedColumn] = useState<string | null>(
-    columns[0]?.name || null
+    getInitialSelectedColumn()
   );
+  
+  // Join/Concat 모듈의 탭이 변경되면 selectedColumn 업데이트
+  React.useEffect(() => {
+    if (isJoinConcatModule) {
+      const newSelected = joinConcatCurrent.columns[0]?.name || null;
+      if (newSelected !== selectedColumn) {
+        setSelectedColumn(newSelected);
+      }
+    }
+  }, [isJoinConcatModule, joinConcatTab, joinConcatCurrent.columns]);
     const [yAxisCol, setYAxisCol] = useState<string | null>(null);
     const [showSpreadView, setShowSpreadView] = useState(false);
     
@@ -1683,7 +1777,7 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
   const getOutput2Data = (): DataPreview | null => {
     if (!isPrepModule) return null;
     // modules 배열에서 최신 모듈 상태 가져오기
-    const currentModule = modules.find((m) => m.id === module.id) || module;
+    const currentModule = (modules && modules.find((m) => m.id === module.id)) || module;
     const outputData2 = (currentModule as any).outputData2;
     if (outputData2 && outputData2.type === "DataPreview") {
       // totalRowCount가 없으면 rows.length로 설정
@@ -1753,8 +1847,14 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
 
     const sortedRows = useMemo(() => {
         try {
-      const rowsToSort =
-        isPrepModule && prepTab !== "processing" ? currentRows : rows;
+      let rowsToSort: any[] = [];
+      if (isJoinConcatModule) {
+        rowsToSort = joinConcatCurrent.rows;
+      } else if (isPrepModule && prepTab !== "processing") {
+        rowsToSort = currentRows;
+      } else {
+        rowsToSort = rows;
+      }
       if (!Array.isArray(rowsToSort)) return [];
       let sortableItems = [...rowsToSort];
             if (sortConfig !== null && sortConfig.key) {
@@ -1777,7 +1877,7 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
       console.error("Error sorting rows:", error);
       return Array.isArray(rowsToSort) ? rowsToSort : [];
         }
-  }, [rows, currentRows, isPrepModule, prepTab, sortConfig]);
+  }, [rows, currentRows, isPrepModule, prepTab, sortConfig, isJoinConcatModule, joinConcatCurrent.rows]);
 
     const requestSort = (key: string) => {
     let direction: "ascending" | "descending" = "ascending";
@@ -1793,27 +1893,39 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
 
     const selectedColumnData = useMemo(() => {
         try {
-      const rowsToUse =
-        isPrepModule && prepTab !== "processing" ? currentRows : rows;
+      let rowsToUse: any[] = [];
+      if (isJoinConcatModule) {
+        rowsToUse = joinConcatCurrent.rows;
+      } else if (isPrepModule && prepTab !== "processing") {
+        rowsToUse = currentRows;
+      } else {
+        rowsToUse = rows;
+      }
       if (!selectedColumn || !Array.isArray(rowsToUse)) return null;
       return rowsToUse.map((row) => row[selectedColumn]);
         } catch (error) {
       console.error("Error getting selected column data:", error);
             return null;
         }
-  }, [selectedColumn, rows, currentRows, isPrepModule, prepTab]);
+  }, [selectedColumn, rows, currentRows, isPrepModule, prepTab, isJoinConcatModule, joinConcatCurrent.rows]);
     
     const selectedColInfo = useMemo(() => {
         try {
-      const colsToUse =
-        isPrepModule && prepTab !== "processing" ? currentColumns : columns;
+      let colsToUse: ColumnInfo[] = [];
+      if (isJoinConcatModule) {
+        colsToUse = joinConcatCurrent.columns;
+      } else if (isPrepModule && prepTab !== "processing") {
+        colsToUse = currentColumns;
+      } else {
+        colsToUse = columns;
+      }
       if (!Array.isArray(colsToUse) || !selectedColumn) return null;
       return colsToUse.find((c) => c && c.name === selectedColumn) || null;
         } catch (error) {
       console.error("Error finding selected column info:", error);
             return null;
         }
-  }, [columns, currentColumns, selectedColumn, isPrepModule, prepTab]);
+  }, [columns, currentColumns, selectedColumn, isPrepModule, prepTab, isJoinConcatModule, joinConcatCurrent.columns]);
     
   const isSelectedColNumeric = useMemo(
     () => selectedColInfo?.type === "number",
@@ -1822,8 +1934,14 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
     
     const numericCols = useMemo(() => {
         try {
-      const colsToUse =
-        isPrepModule && prepTab !== "processing" ? currentColumns : columns;
+      let colsToUse: ColumnInfo[] = [];
+      if (isJoinConcatModule) {
+        colsToUse = joinConcatCurrent.columns;
+      } else if (isPrepModule && prepTab !== "processing") {
+        colsToUse = currentColumns;
+      } else {
+        colsToUse = columns;
+      }
       if (!Array.isArray(colsToUse)) return [];
       return colsToUse
         .filter((c) => c && c.type === "number")
@@ -1833,7 +1951,7 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
       console.error("Error getting numeric columns:", error);
             return [];
         }
-  }, [columns, currentColumns, isPrepModule, prepTab]);
+  }, [columns, currentColumns, isPrepModule, prepTab, isJoinConcatModule, joinConcatCurrent.columns]);
 
     useEffect(() => {
         if (isSelectedColNumeric && selectedColumn) {
@@ -1898,7 +2016,8 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
     }, [correlationMatrix, numericCols]);
 
   // Prep Module의 경우 data가 없어도 Processing Info 탭을 보여줄 수 있음
-  if (!data && !isPrepModule) {
+  // Join/Concat 모듈의 경우 입력 데이터가 있으면 표시 가능
+  if (!data && !isPrepModule && !isJoinConcatModule) {
     console.warn(
       "DataPreviewModal: No data available for module",
       module.id,
@@ -2059,6 +2178,43 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
               </nav>
             </div>
           )}
+                    {/* Join/Concat 모듈용 탭 */}
+                    {isJoinConcatModule && (
+                        <div className="flex-shrink-0 border-b border-gray-200">
+                            <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                                <button
+                  onClick={() => setJoinConcatTab("input1")}
+                                    className={`${
+                    joinConcatTab === "input1"
+                      ? "border-indigo-500 text-indigo-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                                >
+                                    Input 1
+                                </button>
+                                <button
+                  onClick={() => setJoinConcatTab("input2")}
+                                    className={`${
+                    joinConcatTab === "input2"
+                      ? "border-indigo-500 text-indigo-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                                >
+                                    Input 2
+                                </button>
+                                <button
+                  onClick={() => setJoinConcatTab("output")}
+                                    className={`${
+                    joinConcatTab === "output"
+                      ? "border-indigo-500 text-indigo-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                                >
+                                    Output
+                                </button>
+                            </nav>
+                        </div>
+                    )}
                     {/* Load Data/Select Data 모듈용 탭 */}
                     {isDataModule && (
                         <div className="flex-shrink-0 border-b border-gray-200">
@@ -2216,8 +2372,23 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                             )}
                         </div>
                     ) : (
-            /* Detail 탭 또는 일반 모듈 또는 Output_1/Output_2 탭 */
+            /* Detail 탭 또는 일반 모듈 또는 Output_1/Output_2 탭 또는 Join/Concat 탭 */
                         <div className="flex-grow flex flex-col gap-4">
+              {/* Join/Concat 모듈의 경우 데이터 정보 표시 */}
+              {isJoinConcatModule && joinConcatCurrent.data && (
+                <div className="flex-shrink-0 bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                  <div className="text-sm text-gray-600">
+                    Showing {Math.min(joinConcatCurrent.rows.length, 1000)} of{" "}
+                    {(
+                      joinConcatCurrent.data.totalRowCount ??
+                      joinConcatCurrent.rows.length ??
+                      0
+                    ).toLocaleString()}{" "}
+                    rows and {joinConcatCurrent.columns.length} columns. Click a column to see
+                    details.
+                  </div>
+                </div>
+              )}
               {/* Prep 모듈의 경우 입력/출력 데이터 행/열 정보 표시 (Output_1/Output_2 탭에서만) */}
               {isPrepModule &&
               prepTab !== "processing" &&
@@ -2305,7 +2476,7 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                     </div>
                   );
                 })()
-              ) : !isPrepModule ? (
+              ) : !isPrepModule && !isJoinConcatModule ? (
                 <div className="flex justify-between items-center flex-shrink-0">
                   <div className="text-sm text-gray-600">
                     Showing {Math.min(rows.length, 1000)} of{" "}
@@ -2318,7 +2489,7 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                     details.
                                 </div>
                             </div>
-                        ) : (
+                        ) : !isJoinConcatModule ? (
                             <div className="flex justify-between items-center flex-shrink-0">
                                 <div className="text-sm text-gray-600">
                     Showing {Math.min(currentRows.length, 1000)} of{" "}
@@ -2331,7 +2502,7 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                     see details.
                                 </div>
                             </div>
-                        )}
+                        ) : null}
               <div
                 className="flex-grow flex gap-4 overflow-hidden"
                 style={{ userSelect: "text" }}
@@ -2342,7 +2513,9 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                                     <table className="min-w-full text-sm text-left">
                                         <thead className="bg-gray-50 sticky top-0">
                                             <tr>
-                          {(isPrepModule && prepTab !== "processing"
+                          {(isJoinConcatModule
+                            ? joinConcatCurrent.columns
+                            : isPrepModule && prepTab !== "processing"
                             ? currentColumns
                             : columns
                           ).map((col) => (
@@ -2372,7 +2545,9 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                             key={rowIndex}
                             className="border-b border-gray-200 last:border-b-0"
                           >
-                            {(isPrepModule && prepTab !== "processing"
+                            {(isJoinConcatModule
+                              ? joinConcatCurrent.columns
+                              : isPrepModule && prepTab !== "processing"
                               ? currentColumns
                               : columns
                             ).map((col) => {
@@ -2414,7 +2589,9 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                                     <table className="min-w-full text-sm text-left">
                                         <thead className="bg-gray-50 sticky top-0 z-10">
                                             <tr>
-                              {(isPrepModule && prepTab !== "processing"
+                              {(isJoinConcatModule
+                                ? joinConcatCurrent.columns
+                                : isPrepModule && prepTab !== "processing"
                                 ? currentColumns
                                 : columns
                               ).map((col) => (
@@ -2444,7 +2621,9 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                                 key={rowIndex}
                                 className="border-b border-gray-200 last:border-b-0"
                               >
-                                {(isPrepModule && prepTab !== "processing"
+                                {(isJoinConcatModule
+                                  ? joinConcatCurrent.columns
+                                  : isPrepModule && prepTab !== "processing"
                                   ? currentColumns
                                   : columns
                                 ).map((col) => {
@@ -2485,7 +2664,9 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                                     {isSelectedColNumeric ? (
                           <HistogramPlot
                             rows={
-                              isPrepModule && prepTab !== "processing"
+                              isJoinConcatModule
+                                ? joinConcatCurrent.rows
+                                : isPrepModule && prepTab !== "processing"
                                 ? currentRows
                                 : rows
                             }

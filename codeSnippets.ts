@@ -583,6 +583,76 @@ train_data, test_data = train_test_split(
 )
 `,
 
+    Join: `
+import pandas as pd
+
+# 두 데이터프레임을 조인합니다.
+# dataframe: 첫 번째 데이터프레임
+# dataframe2: 두 번째 데이터프레임
+
+df1 = dataframe.copy()
+df2 = dataframe2.copy()
+
+# Parameters from UI
+p_how = {how}
+p_on = {on}
+p_left_on = {left_on}
+p_right_on = {right_on}
+p_suffixes = {suffixes}
+
+# 조인 키 설정
+join_keys = {}
+if p_on and p_on != 'None':
+    join_keys['on'] = p_on
+elif p_left_on and p_right_on and p_left_on != 'None' and p_right_on != 'None':
+    join_keys['left_on'] = p_left_on
+    join_keys['right_on'] = p_right_on
+else:
+    raise ValueError("Join key must be specified (on or left_on/right_on)")
+
+# 조인 수행
+result = pd.merge(
+    df1,
+    df2,
+    how=p_how,
+    suffixes=tuple(p_suffixes) if isinstance(p_suffixes, list) else ('_x', '_y'),
+    **join_keys
+)
+
+# 결과 반환
+joined_data = result
+`,
+
+    Concat: `
+import pandas as pd
+
+# 두 데이터프레임을 연결합니다.
+# dataframe: 첫 번째 데이터프레임
+# dataframe2: 두 번째 데이터프레임
+
+df1 = dataframe.copy()
+df2 = dataframe2.copy()
+
+# Parameters from UI
+p_axis = {axis}
+p_ignore_index = {ignore_index}
+p_sort = {sort}
+
+# axis 값 변환 (vertical -> 0, horizontal -> 1)
+axis_value = 0 if p_axis == 'vertical' else 1
+
+# 연결 수행
+result = pd.concat(
+    [df1, df2],
+    axis=axis_value,
+    ignore_index=p_ignore_index,
+    sort=p_sort
+)
+
+# 결과 반환
+concatenated_data = result
+`,
+
     LinearRegression: `
 from sklearn.linear_model import LinearRegression, Lasso, Ridge, ElasticNet
 
