@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { CanvasModule, EvaluationOutput, ConfusionMatrix } from '../types';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { CanvasModule, EvaluationOutput, ConfusionMatrix, DataPreview, Connection } from '../types';
 import { XCircleIcon } from './icons';
 
 interface EvaluationPreviewModalProps {
     module: CanvasModule;
     onClose: () => void;
     onThresholdChange?: (moduleId: string, threshold: number) => void;
+    modules?: CanvasModule[];
+    connections?: Connection[];
 }
 
 interface ThresholdTableRow {
@@ -23,7 +25,9 @@ interface ThresholdTableRow {
 export const EvaluationPreviewModal: React.FC<EvaluationPreviewModalProps> = ({ 
     module, 
     onClose,
-    onThresholdChange 
+    onThresholdChange,
+    modules = [],
+    connections = []
 }) => {
     const output = module.outputData as EvaluationOutput;
     if (!output || output.type !== 'EvaluationOutput') return null;
@@ -178,6 +182,77 @@ export const EvaluationPreviewModal: React.FC<EvaluationPreviewModalProps> = ({
     };
 
     const auc = rocData.length > 0 ? calculateAUC(rocData) : 0;
+
+    // 회귀 모형용 scatter plot 데이터 가져오기
+    const getInputData = useMemo((): DataPreview | null => {
+        if (modelType !== 'regression' || !modules || !connections) return null;
+        
+        const inputConnection = connections.find(
+            (c) =>
+                c && c.to && c.to.moduleId === module.id && c.to.portName === "data_in"
+        );
+        if (!inputConnection || !inputConnection.from) return null;
+        
+        const sourceModule = modules.find(
+            (m) => m && m.id === inputConnection.from.moduleId
+        );
+        if (!sourceModule?.outputData) return null;
+
+        if (sourceModule.outputData.type === "DataPreview") {
+            return sourceModule.outputData;
+        }
+        if (sourceModule.outputData.type === "SplitDataOutput") {
+            const fromPortName = inputConnection.from?.portName;
+            if (fromPortName === "train_data_out") {
+                return sourceModule.outputData.train;
+            } else if (fromPortName === "test_data_out") {
+                return sourceModule.outputData.test;
+            }
+        }
+        return null;
+    }, [module.id, modelType, modules, connections]);
+
+    // 회귀 모형용 scatter plot 이미지 생성
+    const [regressionPlotImage, setRegressionPlotImage] = useState<string | null>(null);
+    const [isGeneratingPlot, setIsGeneratingPlot] = useState(false);
+
+    useEffect(() => {
+        if (modelType === 'regression' && getInputData && module.parameters) {
+            const labelColumn = module.parameters.label_column;
+            const predictionColumn = module.parameters.prediction_column;
+            
+            if (labelColumn && predictionColumn && getInputData.rows) {
+                setIsGeneratingPlot(true);
+                
+                // Pyodide를 사용하여 scatter plot 생성
+                const generatePlot = async () => {
+                    try {
+                        const pyodideModule = await import('../utils/pyodideRunner');
+                        const { generateRegressionPlotPython } = pyodideModule;
+                        
+                        const plotImage = await generateRegressionPlotPython(
+                            getInputData.rows || [],
+                            labelColumn,
+                            predictionColumn
+                        );
+                        
+                        setRegressionPlotImage(plotImage);
+                    } catch (error: any) {
+                        console.error('Failed to generate regression plot:', error);
+                        setRegressionPlotImage(null);
+                    } finally {
+                        setIsGeneratingPlot(false);
+                    }
+                };
+                
+                generatePlot();
+            } else {
+                setRegressionPlotImage(null);
+            }
+        } else {
+            setRegressionPlotImage(null);
+        }
+    }, [modelType, getInputData, module.parameters]);
 
     return (
         <div 
@@ -754,21 +829,47 @@ export const EvaluationPreviewModal: React.FC<EvaluationPreviewModalProps> = ({
 
                     {/* Regression metrics */}
                     {modelType === 'regression' && (
-                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-                        <h3 className="text-lg font-semibold text-gray-700 mb-4 text-center">
-                            Performance Metrics
-                        </h3>
-                        <div className="space-y-3 text-base">
-                            {Object.entries(metrics).map(([key, value]) => (
-                                <div key={key} className="flex justify-between items-center py-2 border-b last:border-b-0">
-                                    <span className="text-gray-600">{key}:</span>
-                                    <span className="font-mono text-gray-800 font-medium">
-                                        {typeof value === 'number' ? value.toFixed(4) : value}
-                                    </span>
+                        <>
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                                <h3 className="text-lg font-semibold text-gray-700 mb-4 text-center">
+                                    Performance Metrics
+                                </h3>
+                                <div className="space-y-3 text-base">
+                                    {Object.entries(metrics).map(([key, value]) => (
+                                        <div key={key} className="flex justify-between items-center py-2 border-b last:border-b-0">
+                                            <span className="text-gray-600">{key}:</span>
+                                            <span className="font-mono text-gray-800 font-medium">
+                                                {typeof value === 'number' ? value.toFixed(4) : value}
+                                            </span>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
-                    </div>
+                            </div>
+                            
+                            {/* Regression Scatter Plot */}
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                                <h3 className="text-lg font-semibold text-gray-700 mb-4 text-center">
+                                    Prediction Result in Test Set
+                                </h3>
+                                {isGeneratingPlot ? (
+                                    <div className="flex items-center justify-center py-8">
+                                        <div className="text-gray-600">Generating plot...</div>
+                                    </div>
+                                ) : regressionPlotImage ? (
+                                    <div className="flex items-center justify-center">
+                                        <img 
+                                            src={`data:image/png;base64,${regressionPlotImage}`} 
+                                            alt="Prediction Result in Test Set"
+                                            className="max-w-full h-auto"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-center py-8 text-gray-500">
+                                        No plot data available
+                                    </div>
+                                )}
+                            </div>
+                        </>
                     )}
                 </main>
             </div>

@@ -45,6 +45,7 @@ import {
   NormalityCheckerOutput,
   NormalityTestType,
   CorrelationOutput,
+  VIFCheckerOutput,
   MortalityModelOutput,
   MortalityResultOutput,
   JoinOutput,
@@ -674,7 +675,14 @@ Respond with ONLY the module type string, for example: 'ScoreModel'`;
     );
 
     connectionsToUse.forEach((conn) => {
-      if (!conn || !conn.from || !conn.to || !conn.from.moduleId || !conn.to.moduleId) return;
+      if (
+        !conn ||
+        !conn.from ||
+        !conn.to ||
+        !conn.from.moduleId ||
+        !conn.to.moduleId
+      )
+        return;
       adj[conn.from.moduleId].push(conn.to.moduleId);
       inDegree[conn.to.moduleId]++;
       outDegree[conn.from.moduleId]++;
@@ -837,7 +845,14 @@ Respond with ONLY the module type string, for example: 'ScoreModel'`;
     while (changed && iterations < maxIterations) {
       changed = false;
       connectionsToUse.forEach((conn) => {
-        if (!conn || !conn.from || !conn.to || !conn.from.moduleId || !conn.to.moduleId) return;
+        if (
+          !conn ||
+          !conn.from ||
+          !conn.to ||
+          !conn.from.moduleId ||
+          !conn.to.moduleId
+        )
+          return;
         const parentId = conn.from.moduleId;
         const childId = conn.to.moduleId;
         const parentLevel = levels[parentId] ?? 0;
@@ -876,7 +891,14 @@ Respond with ONLY the module type string, for example: 'ScoreModel'`;
     while (changed && iterations < maxIterations) {
       changed = false;
       connectionsToUse.forEach((conn) => {
-        if (!conn || !conn.from || !conn.to || !conn.from.moduleId || !conn.to.moduleId) return;
+        if (
+          !conn ||
+          !conn.from ||
+          !conn.to ||
+          !conn.from.moduleId ||
+          !conn.to.moduleId
+        )
+          return;
         const parentId = conn.from.moduleId;
         const childId = conn.to.moduleId;
         const parentLevel = levels[parentId] ?? 0;
@@ -1755,7 +1777,9 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         })),
         connections: connections
           .map((c) => {
-            const fromIndex = modules.findIndex((m) => m.id === c.from.moduleId);
+            const fromIndex = modules.findIndex(
+              (m) => m.id === c.from.moduleId
+            );
             const toIndex = modules.findIndex((m) => m.id === c.to.moduleId);
             if (fromIndex < 0 || toIndex < 0) {
               return null;
@@ -2029,9 +2053,11 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         if (source === "folder" && filename) {
           // 빌드 시점에 생성된 samples.json에서 파일 찾기
           try {
-            const response = await fetch('/samples.json');
+            const response = await fetch("/samples.json");
             if (!response.ok) {
-              throw new Error(`Failed to fetch samples.json: ${response.status}`);
+              throw new Error(
+                `Failed to fetch samples.json: ${response.status}`
+              );
             }
             const samples = await response.json();
             if (Array.isArray(samples)) {
@@ -2159,14 +2185,16 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
     setIsLoadingSamples(true);
     try {
       // 빌드 시점에 생성된 JSON 파일을 직접 로드
-      const response = await fetch('/samples.json');
-      
+      const response = await fetch("/samples.json");
+
       if (!response.ok) {
-        throw new Error(`Failed to fetch samples.json: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Failed to fetch samples.json: ${response.status} ${response.statusText}`
+        );
       }
-      
+
       const samples = await response.json();
-      
+
       if (Array.isArray(samples) && samples.length > 0) {
         console.log(
           `Loaded ${samples.length} samples from samples.json:`,
@@ -2945,7 +2973,10 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         setViewingEvaluateStat(module);
       } else if (module.outputData.type === "SplitDataOutput") {
         setViewingSplitDataForModule(module);
-      } else if (module.outputData.type === "JoinOutput" || module.outputData.type === "ConcatOutput") {
+      } else if (
+        module.outputData.type === "JoinOutput" ||
+        module.outputData.type === "ConcatOutput"
+      ) {
         setViewingDataForModule(module);
       } else if (module.outputData.type === "TrainedModelOutput") {
         setViewingTrainedModel(module);
@@ -2986,6 +3017,9 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         setViewingNormalityChecker(module);
       } else if (module.outputData.type === "CorrelationOutput") {
         setViewingCorrelation(module);
+      } else if (module.outputData.type === "VIFCheckerOutput") {
+        console.log("Setting viewingDataForModule for VIFCheckerOutput");
+        setViewingDataForModule(module);
       } else if (module.outputData.type === "ClusteringDataOutput") {
         console.log("Setting viewingClusteringData for ClusteringDataOutput");
         setViewingClusteringData(module);
@@ -3108,8 +3142,12 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         const upstreamConnections = connections.filter(
           (c) => c && c.to && c.to.moduleId === moduleId
         );
-        const parentModules = currentModules.filter((m) =>
-          m && upstreamConnections.some((c) => c && c.from && c.from.moduleId === m.id)
+        const parentModules = currentModules.filter(
+          (m) =>
+            m &&
+            upstreamConnections.some(
+              (c) => c && c.from && c.from.moduleId === m.id
+            )
         );
         parentModules.forEach((p) => traverse(p.id));
 
@@ -3117,8 +3155,12 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         const downstreamConnections = connections.filter(
           (c) => c && c.from && c.from.moduleId === moduleId
         );
-        const childModules = currentModules.filter((m) =>
-          m && downstreamConnections.some((c) => c && c.to && c.to.moduleId === m.id)
+        const childModules = currentModules.filter(
+          (m) =>
+            m &&
+            downstreamConnections.some(
+              (c) => c && c.to && c.to.moduleId === m.id
+            )
         );
         childModules.forEach((child) => traverse(child.id));
         return; // Don't add model definition to queue
@@ -3128,8 +3170,12 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
       const upstreamConnections = connections.filter(
         (c) => c && c.to && c.to.moduleId === moduleId
       );
-      const parentModules = currentModules.filter((m) =>
-        m && upstreamConnections.some((c) => c && c.from && c.from.moduleId === m.id)
+      const parentModules = currentModules.filter(
+        (m) =>
+          m &&
+          upstreamConnections.some(
+            (c) => c && c.from && c.from.moduleId === m.id
+          )
       );
       parentModules.forEach((p) => traverse(p.id));
 
@@ -3195,7 +3241,11 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         return false;
       });
 
-      if (!inputConnection || !inputConnection.from || !inputConnection.from.moduleId) {
+      if (
+        !inputConnection ||
+        !inputConnection.from ||
+        !inputConnection.from.moduleId
+      ) {
         console.log(
           `getSingleInputData: No input connection found for module ${moduleId}, portType: ${portType}, portName: ${portName}`
         );
@@ -3412,13 +3462,38 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
               .filter(
                 (v) => v !== undefined && v !== null && String(v).trim() !== ""
               );
-            const allAreNumbers =
-              sample.length > 0 &&
-              sample.every((v) => {
-                const num = Number(v);
-                return !isNaN(num) && isFinite(num);
+
+            // 샘플이 없으면 object로 설정 (빈 컬럼)
+            if (sample.length === 0) {
+              return { name, type: "object" };
+            }
+
+            // pandas dtype 결정: 숫자인지 확인
+            // 모든 샘플 값이 유효한 숫자인지 확인
+            const allAreNumbers = sample.every((v) => {
+              const strVal = String(v).trim();
+              // 빈 문자열이면 false
+              if (strVal === "") return false;
+              const num = Number(strVal);
+              // NaN이 아니고 유한한 숫자인지 확인
+              return !isNaN(num) && isFinite(num);
+            });
+
+            if (allAreNumbers) {
+              // 정수만 있는지 확인 (소수점이 없는지)
+              // 문자열에서 직접 정수인지 확인 (더 정확함)
+              const allAreIntegers = sample.every((v) => {
+                const strVal = String(v).trim();
+                const num = Number(strVal);
+                // 숫자이고 정수인지 확인
+                return !isNaN(num) && isFinite(num) && Number.isInteger(num);
               });
-            return { name, type: allAreNumbers ? "number" : "string" };
+              // 정수만 있으면 int64, 실수가 있으면 float64
+              return { name, type: allAreIntegers ? "int64" : "float64" };
+            } else {
+              // 문자열인 경우 object
+              return { name, type: "object" };
+            }
           });
 
           if (columns.length === 0) {
@@ -3430,8 +3505,9 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
               const typedRow: Record<string, string | number | null> = {};
               for (const col of columns) {
                 const val = stringRow[col.name];
-                if (col.type === "number") {
-                  // 빈 문자열은 빈 문자열로 유지 (null로 변환하지 않음)
+                // pandas dtype에 따라 처리
+                if (col.type === "int64" || col.type === "float64") {
+                  // 숫자형 컬럼
                   if (
                     val === undefined ||
                     val === null ||
@@ -3439,12 +3515,15 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                   ) {
                     typedRow[col.name] = "";
                   } else {
-                    const numVal = parseFloat(String(val));
+                    const numVal =
+                      col.type === "int64"
+                        ? parseInt(String(val), 10)
+                        : parseFloat(String(val));
                     typedRow[col.name] =
                       !isNaN(numVal) && isFinite(numVal) ? numVal : "";
                   }
                 } else {
-                  // 빈 문자열은 빈 문자열로 유지 (null로 변환하지 않음)
+                  // 문자열형 컬럼 (object 등)
                   typedRow[col.name] =
                     val !== undefined && val !== null ? val : "";
                 }
@@ -3486,7 +3565,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
               isConfigured,
               selectionsKeys: Object.keys(selections),
               selections,
-              inputColumns: inputData.columns.map(c => c.name),
+              inputColumns: inputData.columns.map((c) => c.name),
             });
 
             const newColumns: ColumnInfo[] = [];
@@ -3502,13 +3581,35 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 // selection이 없으면 기본적으로 선택된 것으로 간주 (새로 추가된 열 등)
                 // selection이 있으면 selected 값에 따라 결정
                 // selected가 명시적으로 false가 아니면 선택 (true 또는 undefined도 선택으로 간주)
-                shouldInclude = selection ? (selection.selected !== false) : true;
+                shouldInclude = selection ? selection.selected !== false : true;
               }
-            
+
               if (shouldInclude) {
+                // selection?.type이 있고 유효한 값이면 사용, 없거나 빈 문자열이면 원본 컬럼 타입 사용
+                // 원본 컬럼 타입이 이미 pandas dtype이므로 그대로 사용
+                let columnType: string;
+                if (selection?.type && selection.type.trim() !== "") {
+                  // selection에 타입이 명시적으로 설정되어 있으면 사용
+                  columnType = selection.type;
+                } else {
+                  // selection이 없거나 타입이 없으면 원본 컬럼 타입 사용
+                  // 이는 pandas dtype (int64, float64, object 등)이어야 함
+                  columnType = col.type;
+                }
+
+                // 디버깅: 컬럼 타입 확인
+                if (col.name === "CHAS" || col.type === "int64") {
+                  console.log("SelectData column type assignment:", {
+                    colName: col.name,
+                    originalType: col.type,
+                    selectionType: selection?.type,
+                    finalType: columnType,
+                  });
+                }
+
                 newColumns.push({
                   name: col.name,
-                  type: selection?.type ?? col.type,
+                  type: columnType,
                 });
               }
             });
@@ -3516,7 +3617,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             // 디버깅: 선택된 열 확인
             console.log("SelectData Debug - Selected columns:", {
               newColumnsCount: newColumns.length,
-              newColumnsNames: newColumns.map(c => c.name),
+              newColumnsNames: newColumns.map((c) => c.name),
             });
 
             if (
@@ -3527,12 +3628,24 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
               console.error("SelectData Error - No columns selected:", {
                 isConfigured,
                 selections,
-                inputColumns: inputData.columns.map(c => c.name),
+                inputColumns: inputData.columns.map((c) => c.name),
               });
               throw new Error(
                 "No columns selected. Please select at least one column in the Properties panel."
               );
             }
+
+            // 디버깅: newColumns 타입 확인
+            console.log("SelectData Debug - newColumns types:", {
+              newColumns: newColumns.map((c) => ({
+                name: c.name,
+                type: c.type,
+              })),
+              inputColumns: inputData.columns.map((c) => ({
+                name: c.name,
+                type: c.type,
+              })),
+            });
 
             const newRows = (inputData.rows || []).map((row) => {
               const newRow: Record<string, any> = {};
@@ -3540,8 +3653,23 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 const originalValue = row[col.name];
                 let newValue = originalValue; // Default to original
 
-                if (col.type === "number") {
-                  // 빈 문자열은 빈 문자열로 유지 (null로 변환하지 않음)
+                // pandas dtype에 따라 변환
+                const dtype = col.type;
+
+                if (dtype.startsWith("int")) {
+                  // int64, int32, int16, int8
+                  if (
+                    originalValue === null ||
+                    originalValue === undefined ||
+                    String(originalValue).trim() === ""
+                  ) {
+                    newValue = "";
+                  } else {
+                    const num = Number(originalValue);
+                    newValue = isNaN(num) ? "" : Math.floor(num);
+                  }
+                } else if (dtype.startsWith("float")) {
+                  // float64, float32
                   if (
                     originalValue === null ||
                     originalValue === undefined ||
@@ -3552,14 +3680,38 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                     const num = Number(originalValue);
                     newValue = isNaN(num) ? "" : num;
                   }
-                } else if (col.type === "string") {
-                  // 빈 문자열은 빈 문자열로 유지 (null로 변환하지 않음)
+                } else if (dtype === "object") {
+                  // 문자열 (object)
+                  newValue =
+                    originalValue === null || originalValue === undefined
+                      ? ""
+                      : String(originalValue);
+                } else if (dtype === "bool") {
+                  // 불리언
+                  if (originalValue === null || originalValue === undefined) {
+                    newValue = false;
+                  } else {
+                    const strVal = String(originalValue).toLowerCase().trim();
+                    newValue =
+                      strVal === "true" || strVal === "1" || strVal === "yes";
+                  }
+                } else if (
+                  dtype === "datetime64" ||
+                  dtype.startsWith("datetime")
+                ) {
+                  // 날짜/시간
+                  newValue =
+                    originalValue === null || originalValue === undefined
+                      ? ""
+                      : String(originalValue);
+                } else if (dtype === "category") {
+                  // 카테고리
                   newValue =
                     originalValue === null || originalValue === undefined
                       ? ""
                       : String(originalValue);
                 }
-                // For any other data types, the original value is preserved by default.
+                // 기타 타입은 원본 값 유지
 
                 newRow[col.name] = newValue;
               });
@@ -3755,7 +3907,9 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             const col = inputData.columns.find((c) => c.name === colName);
             if (!col) {
               invalidColumns.push(colName);
-            } else if (col.type !== "number") {
+            } else if (
+              !(col.type.startsWith("int") || col.type.startsWith("float"))
+            ) {
               invalidColumns.push(colName);
             } else {
               numericColumns.push(colName);
@@ -3945,7 +4099,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             throw new Error(`Column '${column}' not found in input data.`);
           }
 
-          if (col.type !== "number") {
+          if (!(col.type.startsWith("int") || col.type.startsWith("float"))) {
             throw new Error(
               `Column '${column}' must be numeric for normality checking.`
             );
@@ -4003,6 +4157,68 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             addLog("ERROR", `Python Normality Check 실패: ${errorMessage}`);
             throw new Error(`정규성 검정 실패: ${errorMessage}`);
           }
+        } else if (module.type === ModuleType.VIFChecker) {
+          const inputData = getSingleInputData(module.id) as DataPreview;
+          if (!inputData) throw new Error("Input data not available.");
+
+          const { feature_columns = [] } = module.parameters;
+
+          if (!Array.isArray(feature_columns) || feature_columns.length < 2) {
+            throw new Error(
+              "At least 2 feature columns must be selected for VIF calculation."
+            );
+          }
+
+          // 선택된 열이 입력 데이터에 있는지 확인
+          const invalidColumns: string[] = [];
+          feature_columns.forEach((colName: string) => {
+            const col = inputData.columns.find((c) => c.name === colName);
+            if (!col) {
+              invalidColumns.push(colName);
+            } else {
+              // 숫자형 열인지 확인
+              if (
+                !col.type.startsWith("int") &&
+                !col.type.startsWith("float")
+              ) {
+                invalidColumns.push(`${colName} (non-numeric: ${col.type})`);
+              }
+            }
+          });
+
+          if (invalidColumns.length > 0) {
+            throw new Error(
+              `Invalid or non-numeric columns: ${invalidColumns.join(", ")}`
+            );
+          }
+
+          // Pyodide를 사용하여 Python으로 VIF 계산 수행
+          try {
+            addLog(
+              "INFO",
+              `Pyodide를 사용하여 Python으로 VIF 계산 수행 중... (${feature_columns.length}개 열)`
+            );
+
+            const pyodideModule = await import("./utils/pyodideRunner");
+            const { calculateVIFPython } = pyodideModule;
+
+            const vifResults = await calculateVIFPython(
+              inputData.rows || [],
+              feature_columns,
+              120000 // 타임아웃: 120초
+            );
+
+            newOutputData = {
+              type: "VIFCheckerOutput",
+              results: vifResults,
+            } as VIFCheckerOutput;
+
+            addLog("SUCCESS", `VIF 계산 완료 (${vifResults.length}개 열 분석)`);
+          } catch (error: any) {
+            const errorMessage = error.message || String(error);
+            addLog("ERROR", `VIF 계산 실패: ${errorMessage}`);
+            throw new Error(`VIF calculation failed: ${errorMessage}`);
+          }
         } else if (module.type === ModuleType.Correlation) {
           const inputData = getSingleInputData(module.id) as DataPreview;
           if (!inputData) throw new Error("Input data not available.");
@@ -4034,9 +4250,9 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           columns.forEach((colName: string) => {
             const col = inputData.columns.find((c) => c.name === colName);
             if (col) {
-              if (col.type === "number") {
+              if (col.type.startsWith("int") || col.type.startsWith("float")) {
                 numericColumns.push(colName);
-              } else if (col.type === "string") {
+              } else if (col.type === "object") {
                 categoricalColumns.push(colName);
               }
             }
@@ -4146,7 +4362,8 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
               columns || null,
               parseInt(n_neighbors) || 5,
               60000, // 타임아웃: 60초
-              inputData2 ? inputData2.rows || [] : null
+              inputData2 ? inputData2.rows || [] : null,
+              inputData.columns // 입력 컬럼 정보 전달 (원본 dtype 유지용)
             );
 
             newOutputData = {
@@ -4279,7 +4496,12 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             selections && Object.keys(selections).length > 0;
           const columnsToNormalize = inputData.columns
             .filter((col) => {
-              if (!col || col.type !== "number") return false;
+              // pandas dtype이 숫자형인지 확인 (int64, float64 등)
+              if (
+                !col ||
+                !(col.type.startsWith("int") || col.type.startsWith("float"))
+              )
+                return false;
               // columnSelections가 없거나 비어있으면 모든 숫자형 열 선택
               if (!hasSelections) return true;
               // 해당 열이 selections에 없으면 선택된 것으로 간주 (기본값)
@@ -4300,7 +4522,8 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
               method || "MinMax",
               columnsToNormalize,
               60000, // 타임아웃: 60초
-              inputData2 ? inputData2.rows || [] : null
+              inputData2 ? inputData2.rows || [] : null,
+              inputData.columns // 입력 컬럼 정보 전달 (원본 dtype 유지용)
             );
 
             newOutputData = {
@@ -4378,16 +4601,22 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             throw new Error("Both input data sources must be connected.");
           }
 
-          const { join_type, left_on, right_on, on, how, suffixes } = module.parameters;
+          const { join_type, left_on, right_on, on, how, suffixes } =
+            module.parameters;
 
           // 조인 키 검증
           if (!on && (!left_on || !right_on)) {
-            throw new Error("Join key must be specified (on or left_on/right_on).");
+            throw new Error(
+              "Join key must be specified (on or left_on/right_on)."
+            );
           }
 
           // Pyodide를 사용하여 Python으로 조인 수행
           try {
-            addLog("INFO", "Pyodide를 사용하여 Python으로 데이터 조인 수행 중...");
+            addLog(
+              "INFO",
+              "Pyodide를 사용하여 Python으로 데이터 조인 수행 중..."
+            );
 
             const pyodideModule = await import("./utils/pyodideRunner");
             const { joinDataPython } = pyodideModule;
@@ -4410,7 +4639,10 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
               columns: result.columns,
             };
 
-            addLog("SUCCESS", `Python으로 데이터 조인 완료: ${result.rows.length}행 × ${result.columns.length}열`);
+            addLog(
+              "SUCCESS",
+              `Python으로 데이터 조인 완료: ${result.rows.length}행 × ${result.columns.length}열`
+            );
           } catch (error: any) {
             const errorMessage = error.message || String(error);
             addLog("ERROR", `Python Join 실패: ${errorMessage}`);
@@ -4453,7 +4685,10 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
 
           // Pyodide를 사용하여 Python으로 연결 수행
           try {
-            addLog("INFO", "Pyodide를 사용하여 Python으로 데이터 연결 수행 중...");
+            addLog(
+              "INFO",
+              "Pyodide를 사용하여 Python으로 데이터 연결 수행 중..."
+            );
 
             const pyodideModule = await import("./utils/pyodideRunner");
             const { concatDataPython } = pyodideModule;
@@ -4473,7 +4708,10 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
               columns: result.columns,
             };
 
-            addLog("SUCCESS", `Python으로 데이터 연결 완료: ${result.rows.length}행 × ${result.columns.length}열`);
+            addLog(
+              "SUCCESS",
+              `Python으로 데이터 연결 완료: ${result.rows.length}행 × ${result.columns.length}열`
+            );
           } catch (error: any) {
             const errorMessage = error.message || String(error);
             addLog("ERROR", `Python Concat 실패: ${errorMessage}`);
@@ -4578,13 +4816,28 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             const { splitDataPython } = pyodideModule;
 
             // 전체 타임아웃을 포함한 Python 실행 시도
+            // 값이 없으면 undefined로 전달하여 파이썬 기본값 사용
             const executionPromise = splitDataPython(
               inputRows,
-              parseFloat(train_size),
-              parseInt(random_state),
-              shuffle === "True" || shuffle === true,
-              stratify === "True" || stratify === true,
-              stratify_column || null,
+              train_size !== undefined &&
+                train_size !== null &&
+                train_size !== ""
+                ? parseFloat(String(train_size))
+                : undefined,
+              random_state !== undefined &&
+                random_state !== null &&
+                random_state !== ""
+                ? parseInt(String(random_state))
+                : undefined,
+              shuffle === undefined || shuffle === null || shuffle === ""
+                ? undefined
+                : shuffle === "True" || shuffle === true,
+              stratify === undefined || stratify === null || stratify === ""
+                ? undefined
+                : stratify === "True" || stratify === true,
+              stratify_column && stratify_column !== "None"
+                ? stratify_column
+                : null,
               120000 // Python 실행 타임아웃: 120초 (2분)
             );
 
@@ -4622,10 +4875,9 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             const trainRows = trainIndices.map((i: number) => inputRows[i]);
             const testRows = testIndices.map((i: number) => inputRows[i]);
 
-            const totalTrainCount = Math.floor(
-              inputData.totalRowCount * parseFloat(train_size)
-            );
-            const totalTestCount = inputData.totalRowCount - totalTrainCount;
+            // Python에서 반환된 실제 인덱스 개수 사용
+            const totalTrainCount = trainIndices.length;
+            const totalTestCount = testIndices.length;
 
             const trainData: DataPreview = {
               type: "DataPreview",
@@ -4697,11 +4949,32 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   data: inputRows,
-                  train_size: parseFloat(train_size),
-                  random_state: parseInt(random_state),
-                  shuffle: shuffle === "True" || shuffle === true,
-                  stratify: stratify === "True" || stratify === true,
-                  stratify_column: stratify_column || null,
+                  train_size:
+                    train_size !== undefined &&
+                    train_size !== null &&
+                    train_size !== ""
+                      ? parseFloat(String(train_size))
+                      : undefined,
+                  random_state:
+                    random_state !== undefined &&
+                    random_state !== null &&
+                    random_state !== ""
+                      ? parseInt(String(random_state))
+                      : undefined,
+                  shuffle:
+                    shuffle === undefined || shuffle === null || shuffle === ""
+                      ? undefined
+                      : shuffle === "True" || shuffle === true,
+                  stratify:
+                    stratify === undefined ||
+                    stratify === null ||
+                    stratify === ""
+                      ? undefined
+                      : stratify === "True" || stratify === true,
+                  stratify_column:
+                    stratify_column && stratify_column !== "None"
+                      ? stratify_column
+                      : null,
                 }),
               });
 
@@ -4724,11 +4997,9 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 const trainRows = trainIndices.map((i: number) => inputRows[i]);
                 const testRows = testIndices.map((i: number) => inputRows[i]);
 
-                const totalTrainCount = Math.floor(
-                  inputData.totalRowCount * parseFloat(train_size)
-                );
-                const totalTestCount =
-                  inputData.totalRowCount - totalTrainCount;
+                // Python에서 반환된 실제 인덱스 개수 사용
+                const totalTrainCount = trainIndices.length;
+                const totalTestCount = testIndices.length;
 
                 const trainData: DataPreview = {
                   type: "DataPreview",
@@ -5275,9 +5546,14 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 throw new Error(`모델 훈련 실패: ${errorMessage}`);
               }
             } else if (modelSourceModule.type === ModuleType.DecisionTree) {
-              // Pyodide를 사용하여 Python으로 Decision Tree 훈련 (회귀)
-              const modelPurpose = "regression";
-              const criterion = modelSourceModule.parameters.criterion || "mse";
+              // Pyodide를 사용하여 Python으로 Decision Tree 훈련
+              const modelPurpose =
+                modelSourceModule.parameters.model_purpose || "classification";
+              // modelPurpose에 따라 기본 criterion 설정
+              const defaultCriterion =
+                modelPurpose === "classification" ? "gini" : "mse";
+              const criterion =
+                modelSourceModule.parameters.criterion || defaultCriterion;
               const maxDepth =
                 modelSourceModule.parameters.max_depth === "" ||
                 modelSourceModule.parameters.max_depth === null ||
@@ -8401,10 +8677,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
               };
             }
 
-            addLog(
-              "SUCCESS",
-              `Python으로 ${module.type} 모델 피팅 완료`
-            );
+            addLog("SUCCESS", `Python으로 ${module.type} 모델 피팅 완료`);
           } catch (error: any) {
             const errorMessage = error.message || String(error);
             addLog("ERROR", `${module.type} 모델 피팅 실패: ${errorMessage}`);
@@ -8413,7 +8686,12 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         } else if (module.type === ModuleType.MortalityResult) {
           // MortalityResult는 여러 모델 결과를 입력으로 받아 비교
           const connectedModelConnections = connections.filter(
-            (c) => c && c.to && c.to.moduleId === module.id && c.from && c.from.moduleId
+            (c) =>
+              c &&
+              c.to &&
+              c.to.moduleId === module.id &&
+              c.from &&
+              c.from.moduleId
           );
 
           if (connectedModelConnections.length === 0) {
@@ -8422,11 +8700,11 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             );
           }
 
-          const modelResults: Array<{modelType: string; result: any}> = [];
-          
+          const modelResults: Array<{ modelType: string; result: any }> = [];
+
           for (const conn of connectedModelConnections) {
             if (!conn || !conn.from || !conn.from.moduleId) continue;
-            
+
             const sourceModule = currentModules.find(
               (m) => m && m.id === conn.from.moduleId
             );
@@ -8443,9 +8721,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           }
 
           if (modelResults.length === 0) {
-            throw new Error(
-              "연결된 모듈 중 사망률 모델 결과가 없습니다."
-            );
+            throw new Error("연결된 모듈 중 사망률 모델 결과가 없습니다.");
           }
 
           try {
@@ -8555,7 +8831,9 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           if (!feature_columns || feature_columns.length === 0) {
             // 기본값: 모든 숫자형 컬럼 사용
             const numericColumns = inputData.columns
-              .filter((c) => c.type === "number")
+              .filter(
+                (c) => c.type.startsWith("int") || c.type.startsWith("float")
+              )
               .map((c) => c.name);
             if (numericColumns.length === 0) {
               throw new Error("No numeric columns found in the data.");
@@ -9607,23 +9885,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             title="Save Pipeline"
           >
             {saveButtonText === "Save" ? (
-              <CodeBracketIcon className="h-4 w-4" />
-            ) : (
-              <CheckIcon className="h-4 w-4" />
-            )}
-            <span>{saveButtonText}</span>
-          </button>
-          <button
-            disabled={!isDirty}
-            className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-md font-semibold transition-colors flex-shrink-0 ${
-              !isDirty
-                ? "bg-gray-600 cursor-not-allowed opacity-50"
-                : "bg-gray-700 hover:bg-gray-600"
-            }`}
-            title="Save Pipeline"
-          >
-            {saveButtonText === "Save" ? (
-              <CodeBracketIcon className="h-4 w-4" />
+              <ArrowDownTrayIcon className="h-4 w-4" />
             ) : (
               <CheckIcon className="h-4 w-4" />
             )}
@@ -10291,7 +10553,8 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           viewingDataForModule &&
           (viewingDataForModule.outputData?.type === "DataPreview" ||
             viewingDataForModule.outputData?.type === "KMeansOutput" ||
-            viewingDataForModule.outputData?.type === "PCAOutput");
+            viewingDataForModule.outputData?.type === "PCAOutput" ||
+            viewingDataForModule.outputData?.type === "VIFCheckerOutput");
 
         if (shouldShowModal) {
           console.log(
@@ -10582,6 +10845,8 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             <EvaluationPreviewModal
               module={latestModule}
               onClose={handleCloseModal}
+              modules={modules}
+              connections={connections}
               onThresholdChange={async (moduleId, newThreshold) => {
                 // threshold 변경 시 파라미터만 업데이트 (재계산하지 않음)
                 addLog(

@@ -149,10 +149,10 @@ export function fromPython(pythonObj: any): any {
  */
 export async function splitDataPython(
   data: any[],
-  trainSize: number,
-  randomState: number,
-  shuffle: boolean,
-  stratify: boolean,
+  trainSize: number | undefined,
+  randomState: number | undefined,
+  shuffle: boolean | undefined,
+  stratify: boolean | undefined,
   stratifyColumn: string | null,
   timeoutMs: number = 60000
 ): Promise<{ trainIndices: number[]; testIndices: number[] }> {
@@ -185,12 +185,9 @@ export async function splitDataPython(
     // None이면 문자열 'None'으로, 아니면 문자열로 감싸서 전달
     const stratifyColStr = stratifyColumn ? `'${stratifyColumn}'` : "None";
 
-    // JavaScript boolean을 Python boolean으로 변환
-    const shufflePython = shuffle ? "True" : "False";
-    const stratifyPython = stratify ? "True" : "False";
-
     // Python 코드 실행 (에러 처리 포함)
     // 결과를 전역 변수에 저장한 후 가져오는 방식 사용
+    // 값이 없으면 파라미터를 전달하지 않아 파이썬 기본값 사용
     const code = `
 import json
 import traceback
@@ -205,28 +202,55 @@ try:
     # DataFrame 인덱스를 명시적으로 0부터 시작하도록 리셋
     dataframe.index = range(len(dataframe))
     
-    # Parameters from UI
-    p_train_size = ${trainSize}
-    p_random_state = ${randomState}
-    p_shuffle = ${shufflePython}
-    p_stratify = ${stratifyPython}
+    # Parameters from UI (값이 없으면 파라미터를 전달하지 않음)
+${
+  trainSize !== undefined
+    ? `    p_train_size = ${trainSize}`
+    : "    # train_size: using default (None)"
+}
+${
+  randomState !== undefined
+    ? `    p_random_state = ${randomState}`
+    : "    # random_state: using default (None)"
+}
+${
+  shuffle !== undefined
+    ? `    p_shuffle = ${shuffle ? "True" : "False"}`
+    : "    # shuffle: using default (True)"
+}
+${
+  stratify !== undefined
+    ? `    p_stratify = ${stratify ? "True" : "False"}`
+    : "    # stratify: using default (None)"
+}
     p_stratify_column = ${stratifyColStr}
     
     # Stratify 배열 준비
     stratify_array = None
-    if p_stratify and p_stratify_column and p_stratify_column != 'None':
+${
+  stratify !== undefined && stratify
+    ? `    if p_stratify and p_stratify_column and p_stratify_column != 'None':`
+    : `    if p_stratify_column and p_stratify_column != 'None':`
+}
         if p_stratify_column not in dataframe.columns:
             raise ValueError(f"Stratify column '{p_stratify_column}' not found in DataFrame")
         stratify_array = dataframe[p_stratify_column]
     
-    # 데이터 분할
-    train_data, test_data = train_test_split(
-        dataframe,
-        train_size=p_train_size,
-        random_state=p_random_state,
-        shuffle=p_shuffle,
-        stratify=stratify_array
-    )
+    # 데이터 분할 (값이 없으면 파라미터를 전달하지 않음)
+    split_kwargs = {}
+${
+  trainSize !== undefined ? "    split_kwargs['train_size'] = p_train_size" : ""
+}
+${
+  randomState !== undefined
+    ? "    split_kwargs['random_state'] = p_random_state"
+    : ""
+}
+${shuffle !== undefined ? "    split_kwargs['shuffle'] = p_shuffle" : ""}
+    if stratify_array is not None:
+        split_kwargs['stratify'] = stratify_array
+    
+    train_data, test_data = train_test_split(dataframe, **split_kwargs)
     
     result = {
         'train_indices': train_data.index.tolist(),
@@ -1917,7 +1941,7 @@ try:
     # 결과 반환
     js_result = {
         'rows': result_df.to_dict('records'),
-        'columns': [{'name': col, 'type': 'number' if result_df[col].dtype in ['int64', 'float64'] else 'string'} for col in result_df.columns]
+        'columns': [{'name': col, 'type': str(result_df[col].dtype)} for col in result_df.columns]
     }
     
 except Exception as e:
@@ -3740,7 +3764,7 @@ if model_purpose == 'classification':
 
 # 결과를 딕셔너리 리스트로 변환
 result_rows = result_df.to_dict('records')
-result_columns = [{'name': col, 'type': 'number' if pd.api.types.is_numeric_dtype(result_df[col]) else 'string'} for col in result_df.columns]
+result_columns = [{'name': col, 'type': str(result_df[col].dtype)} for col in result_df.columns]
 
 result = {
     'rows': result_rows,
@@ -3904,7 +3928,7 @@ try:
     
     # 결과를 딕셔너리 리스트로 변환
     result_rows = result_df.to_dict('records')
-    result_columns = [{'name': col, 'type': 'number' if pd.api.types.is_numeric_dtype(result_df[col]) else 'string'} for col in result_df.columns]
+    result_columns = [{'name': col, 'type': str(result_df[col].dtype)} for col in result_df.columns]
     
     result = {
         'rows': result_rows,
@@ -4121,7 +4145,7 @@ try:
     
     # 결과를 딕셔너리 리스트로 변환
     result_rows = result_df.to_dict('records')
-    result_columns = [{'name': col, 'type': 'number' if pd.api.types.is_numeric_dtype(result_df[col]) else 'string'} for col in result_df.columns]
+    result_columns = [{'name': col, 'type': str(result_df[col].dtype)} for col in result_df.columns]
     
     result = {
         'rows': result_rows,
@@ -4576,7 +4600,7 @@ if model_type in ['Logistic', 'Logit', 'Poisson', 'NegativeBinomial', 'QuasiPois
 
 # 결과를 딕셔너리 리스트로 변환
 result_rows = result_df.to_dict('records')
-result_columns = [{'name': col, 'type': 'number' if pd.api.types.is_numeric_dtype(result_df[col]) else 'string'} for col in result_df.columns]
+result_columns = [{'name': col, 'type': str(result_df[col].dtype)} for col in result_df.columns]
 
 result = {
     'rows': result_rows,
@@ -5202,7 +5226,8 @@ export async function handleMissingValuesPython(
   columns: string[] | null,
   n_neighbors: number,
   timeoutMs: number = 60000,
-  data2?: any[] | null
+  data2?: any[] | null,
+  inputColumns?: Array<{ name: string; type: string }>
 ): Promise<{
   rows: any[];
   columns: Array<{ name: string; type: string }>;
@@ -5222,6 +5247,7 @@ export async function handleMissingValuesPython(
     py.globals.set("js_strategy", strategy);
     py.globals.set("js_columns", columns);
     py.globals.set("js_n_neighbors", n_neighbors);
+    py.globals.set("js_input_columns", inputColumns || []);
 
     const code = `
 import pandas as pd
@@ -5234,6 +5260,37 @@ method = str(js_method)
 strategy = str(js_strategy)
 columns = js_columns.to_py() if js_columns else None
 n_neighbors = int(js_n_neighbors)
+input_columns = js_input_columns.to_py() if js_input_columns else []
+
+# 입력 컬럼 정보를 기반으로 숫자형 컬럼을 명시적으로 변환
+if input_columns:
+    for col_info in input_columns:
+        col_name = col_info['name']
+        col_type = col_info.get('type', 'object')
+        
+        if col_name in df.columns:
+            # pandas 숫자형 dtype인 경우 숫자로 변환
+            if col_type.startswith('int') or col_type.startswith('float'):
+                df[col_name] = pd.to_numeric(df[col_name], errors='coerce')
+
+# 입력 컬럼의 원본 dtype을 저장 - 입력 컬럼 정보의 타입을 그대로 사용
+original_dtypes = {}
+if input_columns:
+    for col_info in input_columns:
+        col_name = col_info['name']
+        col_type = col_info.get('type', 'object')
+        # 입력 컬럼 정보의 타입을 그대로 사용 (이미 pandas dtype이거나 변환된 타입)
+        original_dtypes[col_name] = col_type
+else:
+    # 입력 컬럼 정보가 없으면 DataFrame의 dtype 사용
+    for col in df.columns:
+        dtype_str = str(df[col].dtype)
+        if dtype_str.startswith('int'):
+            original_dtypes[col] = 'int64'
+        elif dtype_str.startswith('float'):
+            original_dtypes[col] = 'float64'
+        else:
+            original_dtypes[col] = dtype_str
 
 # Statistics 모듈과 동일한 방식으로 빈 문자열을 null로 카운트
 # 빈 문자열을 NaN으로 변환하여 결측치로 처리하되, Statistics 모듈과 동일한 방식으로 카운트
@@ -5258,6 +5315,7 @@ df_result = df.copy()
 
 if method == 'remove_row':
     # 선택된 열에 대해서만 결측치가 있는 행을 제거
+    # remove_row는 모든 타입(숫자, 문자열 모두)에 적용 가능
     if columns:
         # 선택된 열 중 하나라도 결측치가 있는 행을 제거
         df_result = df_result.dropna(subset=columns)
@@ -5388,7 +5446,23 @@ if df2 is not None:
         print(f"두 번째 데이터에 impute 적용 완료")
 
 result_rows = df_result.to_dict('records')
-result_columns = [{'name': col, 'type': 'number' if pd.api.types.is_numeric_dtype(df_result[col]) else 'string'} for col in df_result.columns]
+# 입력 데이터의 원본 dtype을 유지
+result_columns = []
+for col in df_result.columns:
+    if col in original_dtypes:
+        result_columns.append({'name': col, 'type': original_dtypes[col]})
+    else:
+        dtype_str = str(df_result[col].dtype)
+        if dtype_str.startswith('int'):
+            result_columns.append({'name': col, 'type': 'int64'})
+        elif dtype_str.startswith('float'):
+            result_columns.append({'name': col, 'type': 'float64'})
+        elif dtype_str == 'object':
+            result_columns.append({'name': col, 'type': 'object'})
+        elif dtype_str == 'bool':
+            result_columns.append({'name': col, 'type': 'bool'})
+        else:
+            result_columns.append({'name': col, 'type': dtype_str})
 
 result = {
     'rows': result_rows,
@@ -5397,7 +5471,22 @@ result = {
 
 if df2_result is not None:
     result_rows2 = df2_result.to_dict('records')
-    result_columns2 = [{'name': col, 'type': 'number' if pd.api.types.is_numeric_dtype(df2_result[col]) else 'string'} for col in df2_result.columns]
+    result_columns2 = []
+    for col in df2_result.columns:
+        if col in original_dtypes:
+            result_columns2.append({'name': col, 'type': original_dtypes[col]})
+        else:
+            dtype_str = str(df2_result[col].dtype)
+            if dtype_str.startswith('int'):
+                result_columns2.append({'name': col, 'type': 'int64'})
+            elif dtype_str.startswith('float'):
+                result_columns2.append({'name': col, 'type': 'float64'})
+            elif dtype_str == 'object':
+                result_columns2.append({'name': col, 'type': 'object'})
+            elif dtype_str == 'bool':
+                result_columns2.append({'name': col, 'type': 'bool'})
+            else:
+                result_columns2.append({'name': col, 'type': dtype_str})
     result['rows2'] = result_rows2
     result['columns2'] = result_columns2
 
@@ -5418,6 +5507,7 @@ result
     py.globals.delete("js_strategy");
     py.globals.delete("js_columns");
     py.globals.delete("js_n_neighbors");
+    py.globals.delete("js_input_columns");
 
     return result;
   } catch (error: any) {
@@ -5430,6 +5520,7 @@ result
         py.globals.delete("js_strategy");
         py.globals.delete("js_columns");
         py.globals.delete("js_n_neighbors");
+        py.globals.delete("js_input_columns");
       }
     } catch {}
 
@@ -5447,7 +5538,8 @@ export async function normalizeDataPython(
   method: string,
   columns: string[],
   timeoutMs: number = 60000,
-  data2?: any[] | null
+  data2?: any[] | null,
+  inputColumns?: Array<{ name: string; type: string }>
 ): Promise<{
   rows: any[];
   columns: Array<{ name: string; type: string }>;
@@ -5465,6 +5557,7 @@ export async function normalizeDataPython(
     py.globals.set("js_data2", data2 || null);
     py.globals.set("js_method", method);
     py.globals.set("js_columns", columns);
+    py.globals.set("js_input_columns", inputColumns || []);
 
     const code = `
 import pandas as pd
@@ -5475,11 +5568,62 @@ df = pd.DataFrame(js_data.to_py())
 df2 = pd.DataFrame(js_data2.to_py()) if js_data2 else None
 method = str(js_method)
 columns = js_columns.to_py()
+input_columns = js_input_columns.to_py() if js_input_columns else []
+
+# 입력 컬럼의 원본 dtype을 먼저 저장 - 입력 컬럼 정보의 타입을 그대로 사용
+original_dtypes = {}
+if input_columns:
+    for col_info in input_columns:
+        col_name = col_info['name']
+        col_type = col_info.get('type', 'object')
+        # 입력 컬럼 정보의 타입을 그대로 사용 (이미 pandas dtype)
+        original_dtypes[col_name] = col_type
+else:
+    # 입력 컬럼 정보가 없으면 DataFrame의 dtype 사용
+    for col in df.columns:
+        dtype_str = str(df[col].dtype)
+        if dtype_str.startswith('int'):
+            original_dtypes[col] = 'int64'
+        elif dtype_str.startswith('float'):
+            original_dtypes[col] = 'float64'
+        else:
+            original_dtypes[col] = dtype_str
+
+# 입력 컬럼 정보를 기반으로 숫자형 컬럼을 명시적으로 변환
+# JavaScript에서 전달된 데이터는 문자열일 수 있으므로 숫자로 변환
+if input_columns:
+    for col_info in input_columns:
+        col_name = col_info['name']
+        col_type = col_info.get('type', 'object')
+        
+        if col_name in df.columns:
+            # pandas 숫자형 dtype인 경우 숫자로 변환
+            if col_type.startswith('int') or col_type.startswith('float'):
+                # 숫자로 변환 시도
+                converted = pd.to_numeric(df[col_name], errors='coerce')
+                # 변환 후 dtype 확인하여 적절한 타입으로 변환
+                if converted.dtype == 'float64':
+                    # 정수만 있는지 확인
+                    if converted.notna().any() and (converted.dropna() % 1 == 0).all():
+                        # 모든 값이 정수인 경우 int64로 변환
+                        df[col_name] = converted.astype('Int64').astype('float64')
+                        # NaN이 있으면 float64 유지, 없으면 int64로 변환 시도
+                        if df[col_name].isna().any():
+                            df[col_name] = converted
+                        else:
+                            try:
+                                df[col_name] = converted.astype('int64')
+                            except:
+                                df[col_name] = converted
+                    else:
+                        df[col_name] = converted
+                else:
+                    df[col_name] = converted
 
 df_result = df.copy()
 
 # 첫 번째 데이터로 fit하고 transform
-fit_params = {}
+scalers = {}
 for col in columns:
     if col not in df_result.columns:
         continue
@@ -5487,72 +5631,62 @@ for col in columns:
     if df_result[col].dtype not in ['int64', 'float64']:
         continue
     
-    values = df_result[col].values
-    
     if method == 'MinMax':
-        min_val = float(df_result[col].min())
-        max_val = float(df_result[col].max())
-        range_val = max_val - min_val
-        if range_val > 0:
-            df_result[col] = (values - min_val) / range_val
-        else:
-            df_result[col] = 0.5
-        fit_params[col] = {'min': min_val, 'max': max_val, 'range': range_val}
+        scaler = MinMaxScaler()
+        # fit_transform은 2D 배열을 반환하므로 ravel()로 1D로 변환
+        df_result[col] = scaler.fit_transform(df_result[[col]]).ravel()
+        scalers[col] = scaler
         print(f"컬럼 '{col}'에 MinMax 정규화 적용")
     elif method == 'StandardScaler':
-        mean_val = float(df_result[col].mean())
-        std_val = float(df_result[col].std())
-        if std_val > 0:
-            df_result[col] = (values - mean_val) / std_val
-        else:
-            df_result[col] = 0.0
-        fit_params[col] = {'mean': mean_val, 'std': std_val}
+        scaler = StandardScaler()
+        # 사용자 제공 코드와 동일한 방식: fit_transform 사용
+        df_result[col] = scaler.fit_transform(df_result[[col]]).ravel()
+        scalers[col] = scaler
         print(f"컬럼 '{col}'에 StandardScaler 정규화 적용")
     elif method == 'RobustScaler':
-        median_val = float(df_result[col].median())
-        q1 = float(df_result[col].quantile(0.25))
-        q3 = float(df_result[col].quantile(0.75))
-        iqr_val = q3 - q1
-        if iqr_val > 0:
-            df_result[col] = (values - median_val) / iqr_val
-        else:
-            df_result[col] = 0.0
-        fit_params[col] = {'median': median_val, 'q1': q1, 'q3': q3, 'iqr': iqr_val}
+        scaler = RobustScaler()
+        # fit_transform은 2D 배열을 반환하므로 ravel()로 1D로 변환
+        df_result[col] = scaler.fit_transform(df_result[[col]]).ravel()
+        scalers[col] = scaler
         print(f"컬럼 '{col}'에 RobustScaler 정규화 적용")
 
-# 두 번째 데이터에 fit된 파라미터로 transform
+# 두 번째 데이터에 fit된 scaler로 transform
 df2_result = None
 if df2 is not None:
     df2_result = df2.copy()
     for col in columns:
-        if col not in df2_result.columns or col not in fit_params:
+        if col not in df2_result.columns or col not in scalers:
             continue
         
         if df2_result[col].dtype not in ['int64', 'float64']:
             continue
         
-        values2 = df2_result[col].values
-        params = fit_params[col]
-        
-        if method == 'MinMax':
-            if params['range'] > 0:
-                df2_result[col] = (values2 - params['min']) / params['range']
-            else:
-                df2_result[col] = 0.5
-        elif method == 'StandardScaler':
-            if params['std'] > 0:
-                df2_result[col] = (values2 - params['mean']) / params['std']
-            else:
-                df2_result[col] = 0.0
-        elif method == 'RobustScaler':
-            if params['iqr'] > 0:
-                df2_result[col] = (values2 - params['median']) / params['iqr']
-            else:
-                df2_result[col] = 0.0
+        # 첫 번째 데이터에서 fit된 scaler를 사용하여 transform만 수행
+        scaler = scalers[col]
+        df2_result[col] = scaler.transform(df2_result[[col]]).ravel()
     print(f"두 번째 데이터에 정규화 transform 적용 완료")
 
 result_rows = df_result.to_dict('records')
-result_columns = [{'name': col, 'type': 'number' if pd.api.types.is_numeric_dtype(df_result[col]) else 'string'} for col in df_result.columns]
+# 입력 데이터의 원본 dtype을 유지 (없으면 DataFrame의 dtype 사용)
+result_columns = []
+for col in df_result.columns:
+    if col in original_dtypes:
+        # 입력 데이터의 원본 dtype 사용
+        result_columns.append({'name': col, 'type': original_dtypes[col]})
+    else:
+        # 원본 dtype 정보가 없으면 DataFrame의 dtype 사용
+        dtype_str = str(df_result[col].dtype)
+        # pandas dtype을 간단한 타입으로 변환
+        if dtype_str.startswith('int'):
+            result_columns.append({'name': col, 'type': 'int64'})
+        elif dtype_str.startswith('float'):
+            result_columns.append({'name': col, 'type': 'float64'})
+        elif dtype_str == 'object':
+            result_columns.append({'name': col, 'type': 'object'})
+        elif dtype_str == 'bool':
+            result_columns.append({'name': col, 'type': 'bool'})
+        else:
+            result_columns.append({'name': col, 'type': dtype_str})
 
 result = {
     'rows': result_rows,
@@ -5561,7 +5695,23 @@ result = {
 
 if df2_result is not None:
     result_rows2 = df2_result.to_dict('records')
-    result_columns2 = [{'name': col, 'type': 'number' if pd.api.types.is_numeric_dtype(df2_result[col]) else 'string'} for col in df2_result.columns]
+    # 두 번째 데이터도 동일한 방식으로 처리
+    result_columns2 = []
+    for col in df2_result.columns:
+        if col in original_dtypes:
+            result_columns2.append({'name': col, 'type': original_dtypes[col]})
+        else:
+            dtype_str = str(df2_result[col].dtype)
+            if dtype_str.startswith('int'):
+                result_columns2.append({'name': col, 'type': 'int64'})
+            elif dtype_str.startswith('float'):
+                result_columns2.append({'name': col, 'type': 'float64'})
+            elif dtype_str == 'object':
+                result_columns2.append({'name': col, 'type': 'object'})
+            elif dtype_str == 'bool':
+                result_columns2.append({'name': col, 'type': 'bool'})
+            else:
+                result_columns2.append({'name': col, 'type': dtype_str})
     result['rows2'] = result_rows2
     result['columns2'] = result_columns2
 
@@ -5580,6 +5730,7 @@ result
     py.globals.delete("js_data2");
     py.globals.delete("js_method");
     py.globals.delete("js_columns");
+    py.globals.delete("js_input_columns");
 
     return result;
   } catch (error: any) {
@@ -5590,6 +5741,7 @@ result
         py.globals.delete("js_data2");
         py.globals.delete("js_method");
         py.globals.delete("js_columns");
+        py.globals.delete("js_input_columns");
       }
     } catch {}
 
@@ -5649,7 +5801,7 @@ for col, method in transformations.items():
         df_transformed[new_col_name] = np.sqrt((df_transformed[col] - min_val) + 1)
 
 result_rows = df_transformed.to_dict('records')
-result_columns = [{'name': col, 'type': 'number' if pd.api.types.is_numeric_dtype(df_transformed[col]) else 'string'} for col in df_transformed.columns]
+result_columns = [{'name': col, 'type': str(df_transformed[col].dtype)} for col in df_transformed.columns]
 
 result = {
     'rows': result_rows,
@@ -5861,7 +6013,7 @@ try:
         filtered_df = df.copy()
     
     result_rows = filtered_df.to_dict('records')
-    result_columns = [{'name': col, 'type': 'number' if pd.api.types.is_numeric_dtype(filtered_df[col]) else 'string'} for col in filtered_df.columns]
+    result_columns = [{'name': col, 'type': str(filtered_df[col].dtype)} for col in filtered_df.columns]
     
     result = {
         'rows': result_rows,
@@ -5967,7 +6119,7 @@ export async function joinDataPython(
     py.globals.set("js_how", how || joinType || "inner");
     py.globals.set("js_suffixes", suffixes || ["_x", "_y"]);
 
-    let joinKeysCode = '';
+    let joinKeysCode = "";
     if (on) {
       py.globals.set("js_on", on);
       joinKeysCode = `on=js_on`;
@@ -5996,7 +6148,7 @@ try:
     )
     
     result_rows = result.to_dict('records')
-    result_columns = [{'name': col, 'type': 'number' if pd.api.types.is_numeric_dtype(result[col]) else 'string'} for col in result.columns]
+    result_columns = [{'name': col, 'type': str(result[col].dtype)} for col in result.columns]
     
     js_result = {
         'rows': result_rows,
@@ -6023,7 +6175,9 @@ except Exception as e:
 
     if (result && result.__error__) {
       throw new Error(
-        `Python join_data error:\n${result.error_traceback || result.error_message}`
+        `Python join_data error:\n${
+          result.error_traceback || result.error_message
+        }`
       );
     }
 
@@ -6092,7 +6246,7 @@ export async function concatDataPython(
 
     py.globals.set("js_data1", data1);
     py.globals.set("js_data2", data2);
-    py.globals.set("js_axis", axis === 'horizontal' ? 1 : 0);
+    py.globals.set("js_axis", axis === "horizontal" ? 1 : 0);
     py.globals.set("js_ignore_index", ignoreIndex);
     py.globals.set("js_sort", sort);
 
@@ -6112,7 +6266,7 @@ try:
     )
     
     result_rows = result.to_dict('records')
-    result_columns = [{'name': col, 'type': 'number' if pd.api.types.is_numeric_dtype(result[col]) else 'string'} for col in result.columns]
+    result_columns = [{'name': col, 'type': str(result[col].dtype)} for col in result.columns]
     
     js_result = {
         'rows': result_rows,
@@ -6139,7 +6293,9 @@ except Exception as e:
 
     if (result && result.__error__) {
       throw new Error(
-        `Python concat_data error:\n${result.error_traceback || result.error_message}`
+        `Python concat_data error:\n${
+          result.error_traceback || result.error_message
+        }`
       );
     }
 
@@ -6306,7 +6462,7 @@ if df2 is not None:
             print(f"두 번째 데이터 컬럼 '{col}'에 Ordinal Encoding transform 적용")
 
 result_rows = df_result.to_dict('records')
-result_columns = [{'name': col, 'type': 'number' if pd.api.types.is_numeric_dtype(df_result[col]) else 'string'} for col in df_result.columns]
+result_columns = [{'name': col, 'type': str(df_result[col].dtype)} for col in df_result.columns]
 
 result = {
     'rows': result_rows,
@@ -6315,7 +6471,7 @@ result = {
 
 if df2_result is not None:
     result_rows2 = df2_result.to_dict('records')
-    result_columns2 = [{'name': col, 'type': 'number' if pd.api.types.is_numeric_dtype(df2_result[col]) else 'string'} for col in df2_result.columns]
+    result_columns2 = [{'name': col, 'type': str(df2_result[col].dtype)} for col in df2_result.columns]
     result['rows2'] = result_rows2
     result['columns2'] = result_columns2
 
@@ -6408,7 +6564,7 @@ df_resampled = pd.DataFrame(X_resampled, columns=X.columns)
 df_resampled[target_column] = y_resampled
 
 result_rows = df_resampled.to_dict('records')
-result_columns = [{'name': col, 'type': 'number' if pd.api.types.is_numeric_dtype(df_resampled[col]) else 'string'} for col in df_resampled.columns]
+result_columns = [{'name': col, 'type': str(df_resampled[col].dtype)} for col in df_resampled.columns]
 
 result = {
     'rows': result_rows,
@@ -6576,7 +6732,7 @@ elif handler.get('type') == 'EncoderOutput':
             df_result = df_result.drop(columns=[col_name])
 
 result_rows = df_result.to_dict('records')
-result_columns = [{'name': col, 'type': 'number' if pd.api.types.is_numeric_dtype(df_result[col]) else 'string'} for col in df_result.columns]
+result_columns = [{'name': col, 'type': str(df_result[col].dtype)} for col in df_result.columns]
 
 result = {
     'rows': result_rows,
@@ -9193,7 +9349,9 @@ except Exception as e:
 
     return result;
   } catch (error: any) {
-    throw new Error(`Lee-Carter 모델 실행 오류: ${error?.message || String(error)}`);
+    throw new Error(
+      `Lee-Carter 모델 실행 오류: ${error?.message || String(error)}`
+    );
   }
 }
 
@@ -9209,8 +9367,16 @@ export async function fitCBDModelPython(
   timeoutMs: number = 120000
 ): Promise<any> {
   try {
-    const py = await withTimeout(loadPyodide(30000), 30000, "Pyodide 로딩 타임아웃");
-    await withTimeout(py.loadPackage(["numpy", "pandas", "scipy"]), 60000, "패키지 설치 타임아웃");
+    const py = await withTimeout(
+      loadPyodide(30000),
+      30000,
+      "Pyodide 로딩 타임아웃"
+    );
+    await withTimeout(
+      py.loadPackage(["numpy", "pandas", "scipy"]),
+      60000,
+      "패키지 설치 타임아웃"
+    );
 
     const response = await fetch("/data_analysis_modules.py");
     const pythonCode = await response.text();
@@ -9239,7 +9405,11 @@ except Exception as e:
     js_result = {'__error__': True, 'error_type': type(e).__name__, 'error_message': str(e), 'error_traceback': error_traceback}
 `;
 
-    const resultPyObj = await withTimeout(Promise.resolve(py.runPython(code)), timeoutMs, "CBD 모델 실행 타임아웃");
+    const resultPyObj = await withTimeout(
+      Promise.resolve(py.runPython(code)),
+      timeoutMs,
+      "CBD 모델 실행 타임아웃"
+    );
     const result = resultPyObj.toJs({ dict_converter: Object.fromEntries });
 
     if (result.__error__) {
@@ -9263,8 +9433,16 @@ export async function fitAPCModelPython(
   timeoutMs: number = 120000
 ): Promise<any> {
   try {
-    const py = await withTimeout(loadPyodide(30000), 30000, "Pyodide 로딩 타임아웃");
-    await withTimeout(py.loadPackage(["numpy", "pandas", "scipy"]), 60000, "패키지 설치 타임아웃");
+    const py = await withTimeout(
+      loadPyodide(30000),
+      30000,
+      "Pyodide 로딩 타임아웃"
+    );
+    await withTimeout(
+      py.loadPackage(["numpy", "pandas", "scipy"]),
+      60000,
+      "패키지 설치 타임아웃"
+    );
 
     const response = await fetch("/data_analysis_modules.py");
     const pythonCode = await response.text();
@@ -9293,7 +9471,11 @@ except Exception as e:
     js_result = {'__error__': True, 'error_type': type(e).__name__, 'error_message': str(e), 'error_traceback': error_traceback}
 `;
 
-    const resultPyObj = await withTimeout(Promise.resolve(py.runPython(code)), timeoutMs, "APC 모델 실행 타임아웃");
+    const resultPyObj = await withTimeout(
+      Promise.resolve(py.runPython(code)),
+      timeoutMs,
+      "APC 모델 실행 타임아웃"
+    );
     const result = resultPyObj.toJs({ dict_converter: Object.fromEntries });
 
     if (result.__error__) {
@@ -9317,8 +9499,16 @@ export async function fitRHModelPython(
   timeoutMs: number = 120000
 ): Promise<any> {
   try {
-    const py = await withTimeout(loadPyodide(30000), 30000, "Pyodide 로딩 타임아웃");
-    await withTimeout(py.loadPackage(["numpy", "pandas", "scipy"]), 60000, "패키지 설치 타임아웃");
+    const py = await withTimeout(
+      loadPyodide(30000),
+      30000,
+      "Pyodide 로딩 타임아웃"
+    );
+    await withTimeout(
+      py.loadPackage(["numpy", "pandas", "scipy"]),
+      60000,
+      "패키지 설치 타임아웃"
+    );
 
     const response = await fetch("/data_analysis_modules.py");
     const pythonCode = await response.text();
@@ -9347,7 +9537,11 @@ except Exception as e:
     js_result = {'__error__': True, 'error_type': type(e).__name__, 'error_message': str(e), 'error_traceback': error_traceback}
 `;
 
-    const resultPyObj = await withTimeout(Promise.resolve(py.runPython(code)), timeoutMs, "RH 모델 실행 타임아웃");
+    const resultPyObj = await withTimeout(
+      Promise.resolve(py.runPython(code)),
+      timeoutMs,
+      "RH 모델 실행 타임아웃"
+    );
     const result = resultPyObj.toJs({ dict_converter: Object.fromEntries });
 
     if (result.__error__) {
@@ -9371,8 +9565,16 @@ export async function fitPlatModelPython(
   timeoutMs: number = 120000
 ): Promise<any> {
   try {
-    const py = await withTimeout(loadPyodide(30000), 30000, "Pyodide 로딩 타임아웃");
-    await withTimeout(py.loadPackage(["numpy", "pandas", "scipy"]), 60000, "패키지 설치 타임아웃");
+    const py = await withTimeout(
+      loadPyodide(30000),
+      30000,
+      "Pyodide 로딩 타임아웃"
+    );
+    await withTimeout(
+      py.loadPackage(["numpy", "pandas", "scipy"]),
+      60000,
+      "패키지 설치 타임아웃"
+    );
 
     const response = await fetch("/data_analysis_modules.py");
     const pythonCode = await response.text();
@@ -9401,7 +9603,11 @@ except Exception as e:
     js_result = {'__error__': True, 'error_type': type(e).__name__, 'error_message': str(e), 'error_traceback': error_traceback}
 `;
 
-    const resultPyObj = await withTimeout(Promise.resolve(py.runPython(code)), timeoutMs, "Plat 모델 실행 타임아웃");
+    const resultPyObj = await withTimeout(
+      Promise.resolve(py.runPython(code)),
+      timeoutMs,
+      "Plat 모델 실행 타임아웃"
+    );
     const result = resultPyObj.toJs({ dict_converter: Object.fromEntries });
 
     if (result.__error__) {
@@ -9426,8 +9632,16 @@ export async function fitPSplineModelPython(
   timeoutMs: number = 120000
 ): Promise<any> {
   try {
-    const py = await withTimeout(loadPyodide(30000), 30000, "Pyodide 로딩 타임아웃");
-    await withTimeout(py.loadPackage(["numpy", "pandas", "scipy"]), 60000, "패키지 설치 타임아웃");
+    const py = await withTimeout(
+      loadPyodide(30000),
+      30000,
+      "Pyodide 로딩 타임아웃"
+    );
+    await withTimeout(
+      py.loadPackage(["numpy", "pandas", "scipy"]),
+      60000,
+      "패키지 설치 타임아웃"
+    );
 
     const response = await fetch("/data_analysis_modules.py");
     const pythonCode = await response.text();
@@ -9458,7 +9672,11 @@ except Exception as e:
     js_result = {'__error__': True, 'error_type': type(e).__name__, 'error_message': str(e), 'error_traceback': error_traceback}
 `;
 
-    const resultPyObj = await withTimeout(Promise.resolve(py.runPython(code)), timeoutMs, "P-Spline 모델 실행 타임아웃");
+    const resultPyObj = await withTimeout(
+      Promise.resolve(py.runPython(code)),
+      timeoutMs,
+      "P-Spline 모델 실행 타임아웃"
+    );
     const result = resultPyObj.toJs({ dict_converter: Object.fromEntries });
 
     if (result.__error__) {
@@ -9466,20 +9684,183 @@ except Exception as e:
     }
     return result;
   } catch (error: any) {
-    throw new Error(`P-Spline 모델 실행 오류: ${error?.message || String(error)}`);
+    throw new Error(
+      `P-Spline 모델 실행 오류: ${error?.message || String(error)}`
+    );
   }
 }
 
 /**
  * Mortality Result - 여러 모델 비교
  */
+/**
+ * VIF Checker를 Python으로 실행합니다
+ * 타임아웃: 60초
+ */
+export async function calculateVIFPython(
+  data: any[],
+  featureColumns: string[],
+  timeoutMs: number = 60000
+): Promise<Array<{ column: string; vif: number }>> {
+  let py: any = null;
+  try {
+    // Pyodide 로드 (타임아웃: 30초)
+    try {
+      py = await withTimeout(
+        loadPyodide(30000),
+        30000,
+        "Pyodide 로딩 타임아웃 (30초 초과)"
+      );
+    } catch (loadError: any) {
+      const loadErrorMessage = loadError.message || String(loadError);
+      if (
+        loadErrorMessage.includes("Failed to fetch") ||
+        loadErrorMessage.includes("NetworkError")
+      ) {
+        throw new Error(
+          `Pyodide CDN 로드 실패: 네트워크 연결을 확인하거나 인터넷 연결이 필요합니다. ${loadErrorMessage}`
+        );
+      }
+      throw new Error(`Pyodide 로드 실패: ${loadErrorMessage}`);
+    }
+
+    // 패키지 로드
+    await withTimeout(
+      py.loadPackage(["pandas", "numpy", "statsmodels"]),
+      60000,
+      "패키지 설치 타임아웃 (60초 초과)"
+    );
+
+    // 데이터를 Python에 전달
+    py.globals.set("js_data", data);
+    py.globals.set("js_feature_columns", featureColumns);
+
+    // Python 코드 실행 (에러 처리 포함)
+    const code = `
+import json
+import traceback
+import sys
+import pandas as pd
+import numpy as np
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+try:
+    # 데이터프레임 생성
+    dataframe = pd.DataFrame(js_data.to_py())
+    
+    # Feature columns 확인
+    feature_cols = js_feature_columns.to_py()
+    
+    # 선택된 feature columns가 DataFrame에 있는지 확인
+    missing_cols = [col for col in feature_cols if col not in dataframe.columns]
+    if missing_cols:
+        raise ValueError(f"Columns not found in DataFrame: {missing_cols}")
+    
+    # Feature columns만 선택
+    X = dataframe[feature_cols].copy()
+    
+    # 결측치가 있는 행 제거
+    X = X.dropna()
+    
+    if len(X) == 0:
+        raise ValueError("No valid data after removing missing values")
+    
+    if len(feature_cols) < 2:
+        raise ValueError("At least 2 feature columns are required for VIF calculation")
+    
+    # VIF 계산
+    vif_data = pd.DataFrame()
+    vif_data["Column"] = feature_cols
+    vif_data["VIF"] = [
+        variance_inflation_factor(X.values, i)
+        for i in range(len(feature_cols))
+    ]
+    
+    # 결과를 딕셔너리 리스트로 변환
+    result = vif_data.to_dict("records")
+    
+    # 전역 변수에 저장
+    js_result = result
+except Exception as e:
+    error_traceback = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+    error_result = {
+        '__error__': True,
+        'error_type': type(e).__name__,
+        'error_message': str(e),
+        'error_traceback': error_traceback
+    }
+    # 전역 변수에 저장
+    js_result = error_result
+`;
+
+    // Python 코드 실행
+    await withTimeout(
+      Promise.resolve(py.runPython(code)),
+      timeoutMs,
+      `Python VIF calculation 실행 타임아웃 (${timeoutMs / 1000}초 초과)`
+    );
+
+    // 전역 변수에서 결과 가져오기
+    const resultPyObj = py.globals.get("js_result");
+
+    // 결과 객체 검증
+    if (!resultPyObj) {
+      throw new Error(
+        `Python VIF calculation error: Python code returned None or undefined.`
+      );
+    }
+
+    // Python 딕셔너리를 JavaScript 객체로 변환
+    const result = fromPython(resultPyObj);
+
+    // 에러가 발생한 경우 처리
+    if (result && result.__error__) {
+      throw new Error(
+        `Python VIF calculation error:\n${
+          result.error_traceback || result.error_message
+        }`
+      );
+    }
+
+    // 결과 검증
+    if (!Array.isArray(result)) {
+      throw new Error(`Python VIF calculation error: Result is not an array.`);
+    }
+
+    // 결과를 올바른 형식으로 변환
+    const vifResults = result.map((item: any) => ({
+      column: item.Column || item.column,
+      vif: typeof item.VIF === "number" ? item.VIF : parseFloat(item.VIF) || 0,
+    }));
+
+    // 정리
+    py.globals.delete("js_data");
+    py.globals.delete("js_feature_columns");
+    py.globals.delete("js_result");
+
+    return vifResults;
+  } catch (error: any) {
+    throw new Error(
+      `VIF calculation 실행 오류: ${error?.message || String(error)}`
+    );
+  }
+}
+
 export async function compareMortalityModelsPython(
-  modelResults: Array<{modelType: string; result: any}>,
+  modelResults: Array<{ modelType: string; result: any }>,
   timeoutMs: number = 180000
 ): Promise<any> {
   try {
-    const py = await withTimeout(loadPyodide(30000), 30000, "Pyodide 로딩 타임아웃");
-    await withTimeout(py.loadPackage(["numpy", "pandas", "scipy", "matplotlib"]), 60000, "패키지 설치 타임아웃");
+    const py = await withTimeout(
+      loadPyodide(30000),
+      30000,
+      "Pyodide 로딩 타임아웃"
+    );
+    await withTimeout(
+      py.loadPackage(["numpy", "pandas", "scipy", "matplotlib"]),
+      60000,
+      "패키지 설치 타임아웃"
+    );
 
     const response = await fetch("/data_analysis_modules.py");
     const pythonCode = await response.text();
@@ -9502,7 +9883,11 @@ except Exception as e:
     js_result = {'__error__': True, 'error_type': type(e).__name__, 'error_message': str(e), 'error_traceback': error_traceback}
 `;
 
-    const resultPyObj = await withTimeout(Promise.resolve(py.runPython(code)), timeoutMs, "Mortality Result 실행 타임아웃");
+    const resultPyObj = await withTimeout(
+      Promise.resolve(py.runPython(code)),
+      timeoutMs,
+      "Mortality Result 실행 타임아웃"
+    );
     const result = resultPyObj.toJs({ dict_converter: Object.fromEntries });
 
     if (result.__error__) {
@@ -9510,6 +9895,167 @@ except Exception as e:
     }
     return result;
   } catch (error: any) {
-    throw new Error(`Mortality Result 실행 오류: ${error?.message || String(error)}`);
+    throw new Error(
+      `Mortality Result 실행 오류: ${error?.message || String(error)}`
+    );
+  }
+}
+
+/**
+ * 회귀 모형용 scatter plot을 생성하여 base64 이미지로 반환합니다
+ * 타임아웃: 60초
+ */
+export async function generateRegressionPlotPython(
+  data: any[],
+  labelColumn: string,
+  predictionColumn: string,
+  timeoutMs: number = 60000
+): Promise<string> {
+  try {
+    // Pyodide 로드 (타임아웃: 30초)
+    const py = await withTimeout(
+      loadPyodide(30000),
+      30000,
+      "Pyodide 로딩 타임아웃 (30초 초과)"
+    );
+
+    // matplotlib 패키지 설치
+    await withTimeout(
+      py.loadPackage(["matplotlib"]),
+      60000,
+      "matplotlib 패키지 설치 타임아웃 (60초 초과)"
+    );
+
+    // 데이터를 Python에 전달
+    py.globals.set("js_data", data);
+    py.globals.set("js_label_column", labelColumn);
+    py.globals.set("js_prediction_column", predictionColumn);
+
+    // Python 코드 실행
+    const code = `
+import json
+import numpy as np
+import pandas as pd
+import traceback
+import sys
+import base64
+import io
+import matplotlib
+matplotlib.use('Agg')  # GUI 백엔드 사용 안 함
+import matplotlib.pyplot as plt
+
+try:
+    # 데이터 준비
+    df = pd.DataFrame(js_data.to_py())
+    label_column = str(js_label_column)
+    prediction_column = str(js_prediction_column)
+    
+    # 데이터 검증
+    if df.empty:
+        raise ValueError("DataFrame is empty")
+    if label_column not in df.columns:
+        raise ValueError(f"Label column '{label_column}' not found in DataFrame")
+    if prediction_column not in df.columns:
+        raise ValueError(f"Prediction column '{prediction_column}' not found in DataFrame")
+    
+    # 인덱스 리셋 (정렬을 위해)
+    df = df.reset_index(drop=True)
+    
+    # actual 값 정렬 (x축 순서를 위해)
+    df_sorted = df.sort_values(by=label_column).reset_index(drop=True)
+    
+    # scatter plot 생성
+    plt.figure(figsize=(12, 9))
+    plt.scatter(df_sorted.index, df_sorted[prediction_column], marker='x', color='r', label='prediction')
+    plt.scatter(df_sorted.index, df_sorted[label_column], alpha=0.3, marker='o', color='black', label='actual')
+    plt.title("prediction Result in Test Set", fontsize=20)
+    plt.xlabel("Index (sorted by actual)")
+    plt.ylabel("Value")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    
+    # 이미지를 base64로 변환
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+    buf.seek(0)
+    image_base64 = base64.b64encode(buf.read()).decode('utf-8')
+    plt.close()
+    
+    result = {
+        'image_base64': image_base64
+    }
+    
+    # 전역 변수에 저장
+    js_result = result
+except Exception as e:
+    error_traceback = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+    error_result = {
+        '__error__': True,
+        'error_type': type(e).__name__,
+        'error_message': str(e),
+        'error_traceback': error_traceback
+    }
+    # 전역 변수에 저장
+    js_result = error_result
+`;
+
+    // Python 코드 실행
+    await withTimeout(
+      Promise.resolve(py.runPython(code)),
+      timeoutMs,
+      "Python Regression Plot 실행 타임아웃 (60초 초과)"
+    );
+
+    // 전역 변수에서 결과 가져오기
+    const resultPyObj = py.globals.get("js_result");
+
+    // 결과 객체 검증
+    if (!resultPyObj) {
+      throw new Error(
+        `Python Regression Plot error: Python code returned None or undefined.`
+      );
+    }
+
+    // Python 딕셔너리를 JavaScript 객체로 변환
+    const result = fromPython(resultPyObj);
+
+    // 에러가 발생한 경우 처리
+    if (result.__error__) {
+      throw new Error(
+        `Python Regression Plot error:\n${
+          result.error_traceback || result.error_message || "Unknown error"
+        }`
+      );
+    }
+
+    // 필수 속성 검증
+    if (!result.image_base64 || typeof result.image_base64 !== "string") {
+      throw new Error(
+        `Python Regression Plot error: Missing or invalid 'image_base64' in result.`
+      );
+    }
+
+    // 정리
+    py.globals.delete("js_data");
+    py.globals.delete("js_label_column");
+    py.globals.delete("js_prediction_column");
+    py.globals.delete("js_result");
+
+    return result.image_base64;
+  } catch (error: any) {
+    // 정리
+    try {
+      const py = pyodide;
+      if (py) {
+        py.globals.delete("js_data");
+        py.globals.delete("js_label_column");
+        py.globals.delete("js_prediction_column");
+        py.globals.delete("js_result");
+      }
+    } catch {}
+
+    const errorMessage = error.message || String(error);
+    throw new Error(`Python Regression Plot error:\n${errorMessage}`);
   }
 }
