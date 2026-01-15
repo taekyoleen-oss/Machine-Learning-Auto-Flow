@@ -58,6 +58,7 @@ export enum ModuleType {
   NegativeBinomialModel = "NegativeBinomialModel",
   DiversionChecker = "DiversionChecker",
   EvaluateStat = "EvaluateStat",
+  VIFChecker = "VIFChecker",
 
   // Advanced Models - Mortality Models
   MortalityResult = "MortalityResult",
@@ -85,11 +86,7 @@ export enum ModuleStatus {
 
 export interface Port {
   name: string;
-  type:
-    | "data"
-    | "model"
-    | "evaluation"
-    | "handler";
+  type: "data" | "model" | "evaluation" | "handler";
 }
 
 export interface ColumnInfo {
@@ -413,6 +410,14 @@ export interface CorrelationOutput {
   summary?: Record<string, any>; // 요약 통계
 }
 
+export interface VIFCheckerOutput {
+  type: "VIFCheckerOutput";
+  results: Array<{
+    column: string;
+    vif: number;
+  }>;
+}
+
 export type NormalityTestType =
   | "shapiro_wilk"
   | "kolmogorov_smirnov"
@@ -522,6 +527,7 @@ export interface CanvasModule {
     | HypothesisTestingOutput
     | NormalityCheckerOutput
     | CorrelationOutput
+    | VIFCheckerOutput
     | MortalityModelOutput
     | MortalityResultOutput;
   // Shape-specific properties

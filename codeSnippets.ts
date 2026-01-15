@@ -1,17 +1,20 @@
-import { CanvasModule, Connection } from './types';
+import { CanvasModule, Connection } from "./types";
 
-const replacePlaceholders = (template: string, params: Record<string, any>): string => {
+const replacePlaceholders = (
+  template: string,
+  params: Record<string, any>
+): string => {
   let code = template;
   for (const key in params) {
-    const placeholder = new RegExp(`{${key}}`, 'g');
+    const placeholder = new RegExp(`{${key}}`, "g");
     let value = params[key];
     // Stringify only if it's not already a string that looks like code
     if (value === null) {
-        value = 'None';
-    } else if (typeof value !== 'string' || !isNaN(Number(value))) {
-        value = JSON.stringify(value);
+      value = "None";
+    } else if (typeof value !== "string" || !isNaN(Number(value))) {
+      value = JSON.stringify(value);
     } else {
-        value = `'${value}'`; // Wrap strings in quotes for Python
+      value = `'${value}'`; // Wrap strings in quotes for Python
     }
     code = code.replace(placeholder, value);
   }
@@ -19,7 +22,7 @@ const replacePlaceholders = (template: string, params: Record<string, any>): str
 };
 
 const templates: Record<string, string> = {
-    LoadData: `
+  LoadData: `
 import pandas as pd
 
 # CSV 파일을 불러와서 DataFrame으로 반환합니다.
@@ -30,7 +33,7 @@ file_path = {source}
 dataframe = pd.read_csv(file_path)
 `,
 
-    Statistics: `
+  Statistics: `
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -79,7 +82,7 @@ def analyze_statistics(df: pd.DataFrame):
 # descriptive_statistics, correlation_matrix = analyze_statistics(dataframe)
 `,
 
-    SelectData: `
+  SelectData: `
 import pandas as pd
 
 def select_data(df: pd.DataFrame, columns: list):
@@ -100,7 +103,7 @@ selected_columns = [col for col, sel in column_selections.items() if sel.get('se
 # Execution
 # selected_data = select_data(dataframe, selected_columns)
 `,
-    DataFiltering: `
+  DataFiltering: `
 import pandas as pd
 import numpy as np
 
@@ -304,7 +307,7 @@ p_logical_operator = {logical_operator}
 # Execution
 # filtered_data = filter_data(dataframe, p_filter_type, p_conditions, p_logical_operator)
 `,
-    HandleMissingValues: `
+  HandleMissingValues: `
 import pandas as pd
 import numpy as np
 from sklearn.impute import SimpleImputer, KNNImputer
@@ -363,7 +366,7 @@ p_n_neighbors = {n_neighbors}
 # Execution
 # cleaned_data = handle_missing_values(dataframe, p_method, p_strategy, p_columns, p_n_neighbors)
 `,
-    EncodeCategorical: `
+  EncodeCategorical: `
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 
@@ -421,7 +424,7 @@ p_ordinal_mapping = {ordinal_mapping}
 # Execution
 # encoded_data = encode_categorical(dataframe, p_method, p_columns, p_drop, p_handle_unknown, p_ordinal_mapping)
 `,
-    ScalingTransform: `
+  ScalingTransform: `
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
 import pandas as pd
 import numpy as np
@@ -461,7 +464,7 @@ p_columns = [col for col, sel in column_selections.items() if sel.get('selected'
 # Execution
 # normalized_data = normalize_data(dataframe, p_method, p_columns)
 `,
-    TransitionData: `
+  TransitionData: `
 import pandas as pd
 import numpy as np
 
@@ -506,7 +509,7 @@ p_transformations = {transformations}
 # Execution
 # transformed_data = transform_data(dataframe, p_transformations)
 `,
-    ResampleData: `
+  ResampleData: `
 import pandas as pd
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import NearMiss
@@ -549,7 +552,7 @@ p_target_column = {target_column}
 # Execution
 # resampled_data = resample_data(dataframe, p_method, p_target_column)
 `,
-    SplitData: `
+  SplitData: `
 from sklearn.model_selection import train_test_split
 import pandas as pd
 
@@ -561,29 +564,77 @@ import pandas as pd
 df = dataframe.copy()
 df.index = range(len(df))
 
-# Parameters from UI
-p_train_size = {train_size}
-p_random_state = {random_state}
-p_shuffle = {shuffle} == 'True'
-p_stratify = {stratify} == 'True'
+# Parameters from UI (값이 없으면 파라미터를 전달하지 않음)
+{split_train_size}
+{split_random_state}
+{split_shuffle}
+{split_stratify}
 p_stratify_column = {stratify_column}
 
 # Stratify 배열 준비
 stratify_array = None
-if p_stratify and p_stratify_column and p_stratify_column != 'None':
-    stratify_array = df[p_stratify_column]
+{split_stratify_check}
 
-# 데이터 분할
-train_data, test_data = train_test_split(
-    df,
-    train_size=p_train_size,
-    random_state=p_random_state,
-    shuffle=p_shuffle,
-    stratify=stratify_array
-)
+# 데이터 분할 (값이 없으면 파라미터를 전달하지 않음)
+split_kwargs = {}
+{split_train_size_kwarg}
+{split_random_state_kwarg}
+{split_shuffle_kwarg}
+if stratify_array is not None:
+    split_kwargs['stratify'] = stratify_array
+
+train_data, test_data = train_test_split(df, **split_kwargs)
 `,
 
-    Join: `
+  VIFChecker: `
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+import pandas as pd
+import numpy as np
+
+# VIF (Variance Inflation Factor) 계산
+# Assuming 'dataframe' is passed from the previous step
+
+# Parameters from UI
+p_feature_columns = {feature_columns}
+
+# Feature columns 확인
+if not p_feature_columns or len(p_feature_columns) < 2:
+    raise ValueError("At least 2 feature columns are required for VIF calculation")
+
+# 선택된 feature columns가 DataFrame에 있는지 확인
+missing_cols = [col for col in p_feature_columns if col not in dataframe.columns]
+if missing_cols:
+    raise ValueError(f"Columns not found in DataFrame: {missing_cols}")
+
+# Feature columns만 선택
+X = dataframe[p_feature_columns].copy()
+
+# 결측치가 있는 행 제거
+X = X.dropna()
+
+if len(X) == 0:
+    raise ValueError("No valid data after removing missing values")
+
+# VIF 계산
+vif_data = pd.DataFrame()
+vif_data["Column"] = p_feature_columns
+vif_data["VIF"] = [
+    variance_inflation_factor(X.values, i)
+    for i in range(len(p_feature_columns))
+]
+
+# 결과 출력
+print("=" * 60)
+print("VIF (Variance Inflation Factor) Results")
+print("=" * 60)
+print(vif_data.to_string(index=False))
+print("\\nInterpretation:")
+print("  VIF > 10: High multicollinearity (consider removing variable)")
+print("  5 < VIF ≤ 10: Moderate multicollinearity (caution)")
+print("  VIF ≤ 5: Low multicollinearity (acceptable)")
+`,
+
+  Join: `
 import pandas as pd
 
 # 두 데이터프레임을 조인합니다.
@@ -623,7 +674,7 @@ result = pd.merge(
 joined_data = result
 `,
 
-    Concat: `
+  Concat: `
 import pandas as pd
 
 # 두 데이터프레임을 연결합니다.
@@ -653,7 +704,7 @@ result = pd.concat(
 concatenated_data = result
 `,
 
-    LinearRegression: `
+  LinearRegression: `
 from sklearn.linear_model import LinearRegression, Lasso, Ridge, ElasticNet
 
 # This module creates a linear regression model instance.
@@ -688,7 +739,7 @@ if p_model_type == 'ElasticNet':
 # model variable contains the model instance ready for training.
 `,
 
-    DecisionTree: `
+  DecisionTree: `
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
 # This module creates a decision tree model instance.
@@ -734,7 +785,7 @@ if p_model_purpose == 'classification':
 # model variable contains the model instance ready for training.
 `,
 
-    NeuralNetwork: `
+  NeuralNetwork: `
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 
 # This module creates a neural network model instance.
@@ -777,7 +828,7 @@ print(f"  Max Iter: {p_max_iter}")
 # model variable contains the model instance ready for training.
 `,
 
-    LogisticTradition: `
+  LogisticTradition: `
 from sklearn.linear_model import LogisticRegression
 
 def create_logistic_regression_model():
@@ -800,7 +851,7 @@ def create_logistic_regression_model():
 print("sklearn.linear_model.LogisticRegression model configured.")
 `,
 
-    TrainModel: `
+  TrainModel: `
 import pandas as pd
 
 # This module trains a model using the provided data.
@@ -819,7 +870,7 @@ trained_model = model.fit(X_train, y_train)
 
 # The trained_model is now ready for use in Score Model or Evaluate Model modules
 `,
-    ScoreModel: `
+  ScoreModel: `
 import pandas as pd
 
 # This module applies a trained model to a second dataset to generate predictions.
@@ -847,7 +898,7 @@ scored_data['Predict'] = predictions
 
 # The scored_data now contains the original data plus predictions
 `,
-    EvaluateModel: `
+  EvaluateModel: `
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, mean_squared_error, mean_absolute_error, r2_score
 import pandas as pd
 import numpy as np
@@ -907,7 +958,7 @@ else:  # regression
 
 # evaluation_metrics contains all calculated statistics
 `,
-    OLSModel: `
+  OLSModel: `
 import statsmodels.api as sm
 
 # This module defines an OLS (Ordinary Least Squares) regression model.
@@ -917,7 +968,7 @@ import statsmodels.api as sm
 print("OLS Model definition created successfully.")
 print("This model will be instantiated and fitted using statsmodels.OLS in the Result Model module.")
 `,
-    LogisticModel: `
+  LogisticModel: `
 import statsmodels.api as sm
 
 # This module defines a Logistic regression model.
@@ -927,7 +978,7 @@ import statsmodels.api as sm
 print("Logistic Model definition created successfully.")
 print("This model will be instantiated and fitted using statsmodels.Logit in the Result Model module.")
 `,
-    PoissonModel: `
+  PoissonModel: `
 import statsmodels.api as sm
 
 # This module defines a Poisson regression model.
@@ -938,7 +989,7 @@ p_max_iter = {max_iter}
 print(f"Poisson Model definition created successfully (max_iter={p_max_iter}).")
 print("This model will be instantiated and fitted using statsmodels.Poisson in the Result Model module.")
 `,
-    QuasiPoissonModel: `
+  QuasiPoissonModel: `
 import statsmodels.api as sm
 
 # This module defines a Quasi-Poisson regression model.
@@ -949,7 +1000,7 @@ p_max_iter = {max_iter}
 print(f"Quasi-Poisson Model definition created successfully (max_iter={p_max_iter}).")
 print("This model will be instantiated and fitted using statsmodels.GLM with Poisson family in the Result Model module.")
 `,
-    NegativeBinomialModel: `
+  NegativeBinomialModel: `
 import statsmodels.api as sm
 
 # This module defines a Negative Binomial regression model.
@@ -961,7 +1012,7 @@ p_disp = {disp}
 print(f"Negative Binomial Model definition created successfully (max_iter={p_max_iter}, disp={p_disp}).")
 print("This model will be instantiated and fitted using statsmodels.NegativeBinomial in the Result Model module.")
 `,
-    StatModels: `
+  StatModels: `
 import statsmodels.api as sm
 
 # This module configures advanced statistical models (Gamma, Tweedie) from the statsmodels library.
@@ -973,7 +1024,7 @@ print(f"Stat Models definition created successfully (model type: {selected_model
 print("This model will be instantiated and fitted in the Result Model module.")
 `,
 
-    ResultModel: `
+  ResultModel: `
 import pandas as pd
 import numpy as np
 import statsmodels.api as sm
@@ -1047,7 +1098,7 @@ p_label_column = {label_column}
 #     p_label_column
 # )
 `,
-    PredictModel: `
+  PredictModel: `
 import pandas as pd
 import statsmodels.api as sm
 
@@ -1080,7 +1131,7 @@ def predict_with_statsmodel(results, df: pd.DataFrame):
 # Execution
 # predicted_data = predict_with_statsmodel(model_results, data_to_predict)
 `,
-    FitLossDistribution: `
+  FitLossDistribution: `
 from scipy import stats
 import pandas as pd
 
@@ -1112,7 +1163,7 @@ p_dist_type = {distribution_type}
 # fitted_params = fit_loss_distribution(dataframe, p_loss_column, p_dist_type)
 `,
 
-    GenerateExposureCurve: `
+  GenerateExposureCurve: `
 import numpy as np
 from scipy import stats
 
@@ -1146,7 +1197,7 @@ def generate_exposure_curve(dist_type: str, params: tuple, total_loss: float):
 # exposure_curve = generate_exposure_curve(p_dist_type, fitted_params, p_total_loss)
 `,
 
-    PriceXoLLayer: `
+  PriceXoLLayer: `
 import numpy as np
 
 def price_xol_layer(curve_data: list, total_loss: float, retention: float, 
@@ -1182,7 +1233,7 @@ p_loading_factor = {loading_factor}
 # Execution
 # premium, _, _ = price_xol_layer(exposure_curve, p_total_loss, p_retention, p_limit, p_loading_factor)
 `,
-    XolLoading: `
+  XolLoading: `
 import pandas as pd
 
 # This is identical to the standard LoadData module but conceptually used for XoL data.
@@ -1202,7 +1253,7 @@ p_file_path = {source}
 # xol_dataframe = load_xol_data(p_file_path)
 `,
 
-    ApplyThreshold: `
+  ApplyThreshold: `
 import pandas as pd
 
 def apply_loss_threshold(df: pd.DataFrame, threshold: float, loss_col: str):
@@ -1225,7 +1276,7 @@ p_loss_column = {loss_column}
 # large_claims_df = apply_loss_threshold(xol_dataframe, p_threshold, p_loss_column)
 `,
 
-    DefineXolContract: `
+  DefineXolContract: `
 # This module defines the parameters for an Excess of Loss (XoL) reinsurance contract.
 # These parameters are then used by downstream modules.
 
@@ -1248,7 +1299,7 @@ print("XoL Contract terms defined:")
 print(contract_terms)
 `,
 
-    CalculateCededLoss: `
+  CalculateCededLoss: `
 import pandas as pd
 
 def calculate_ceded_loss(df: pd.DataFrame, deductible: float, limit: float, loss_col: str):
@@ -1275,7 +1326,7 @@ p_loss_column = {loss_column}
 # ceded_df = calculate_ceded_loss(large_claims_df, contract_deductible, contract_limit, p_loss_column)
 `,
 
-    PriceXolContract: `
+  PriceXolContract: `
 import pandas as pd
 import numpy as np
 
@@ -1323,7 +1374,7 @@ p_ceded_loss_column = {ceded_loss_column}
 #     p_ceded_loss_column
 # )
 `,
-    DiversionChecker: `
+  DiversionChecker: `
 import pandas as pd
 import numpy as np
 import statsmodels.api as sm
@@ -1351,7 +1402,7 @@ print("4. 포아송 vs 음이항 AIC 비교")
 print("5. Cameron–Trivedi test")
 print("\\n실제 실행은 'Run' 버튼을 클릭하면 수행됩니다.")
 `,
-    KNN: `
+  KNN: `
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 
 def create_knn_model(model_purpose: str = 'classification', n_neighbors: int = 3,
@@ -1396,7 +1447,7 @@ p_metric = {metric}
 print(f"sklearn.neighbors.KNeighbors{'Classifier' if p_model_purpose == 'classification' else 'Regressor'} model configured.")
 `,
 
-    OutlierDetector: `
+  OutlierDetector: `
 # Outlier Detector 모듈
 # 이 모듈은 여러 방법을 사용하여 이상치를 탐지합니다:
 # - IQR (Interquartile Range) 기반 탐지
@@ -1412,7 +1463,7 @@ p_column = {column}
 print(f"Outlier Detector configured for column: {p_column}")
 `,
 
-    NormalityChecker: `
+  NormalityChecker: `
 import pandas as pd
 import numpy as np
 from scipy import stats
@@ -1630,7 +1681,7 @@ else:
     raise ValueError(f"Column '{column}' not found in dataframe")
 `,
 
-    HypothesisTesting: `
+  HypothesisTesting: `
 # Hypothesis Testing 모듈
 # 이 모듈은 다양한 가설 검정을 수행합니다:
 # - t-test (단일/독립/대응)
@@ -1648,7 +1699,7 @@ p_tests = {tests}
 print(f"Hypothesis Testing configured for tests: {p_tests}")
 `,
 
-    Correlation: `
+  Correlation: `
 # Correlation 모듈
 # 이 모듈은 변수 간 상관관계를 분석합니다:
 # - Pearson/Spearman/Kendall 상관계수
@@ -1666,80 +1717,145 @@ print(f"Correlation configured for columns: {p_columns}")
 };
 
 export const getModuleCode = (
-    module: CanvasModule | null,
-    allModules?: CanvasModule[],
-    connections?: Connection[]
+  module: CanvasModule | null,
+  allModules?: CanvasModule[],
+  connections?: Connection[]
 ): string => {
-    if (!module) {
-        return "# Select a module to view its Python code.";
-    }
-    
-    // EvaluateStat의 경우 generateEvaluateStatCode 사용
-    if (module.type === "EvaluateStat") {
-        return generateEvaluateStatCode(module);
-    }
-    
-    // ResultModel의 경우 연결된 모델 타입에 따라 코드 생성
-    if (module.type === "ResultModel" && allModules && connections) {
-        const modelInputConnection = connections.find(
-            (c) => c.to.moduleId === module.id && c.to.portName === "model_in"
-        );
-        
-        if (modelInputConnection) {
-            const modelSourceModule = allModules.find(
-                (m) => m.id === modelInputConnection.from.moduleId
-            );
-            
-            if (modelSourceModule) {
-                // 모델 타입 확인
-                let modelType: string | null = null;
-                
-                if (modelSourceModule.type === "OLSModel") {
-                    modelType = "OLS";
-                } else if (modelSourceModule.type === "LogisticModel") {
-                    modelType = "Logit";
-                } else if (modelSourceModule.type === "PoissonModel") {
-                    modelType = "Poisson";
-                } else if (modelSourceModule.type === "QuasiPoissonModel") {
-                    modelType = "QuasiPoisson";
-                } else if (modelSourceModule.type === "NegativeBinomialModel") {
-                    modelType = "NegativeBinomial";
-                } else if (modelSourceModule.type === "StatModels") {
-                    modelType = modelSourceModule.parameters.model || "Gamma";
-                } else if (modelSourceModule.outputData?.type === "ModelDefinitionOutput") {
-                    modelType = modelSourceModule.outputData.modelType;
-                }
-                
-                if (modelType) {
-                    return generateResultModelCode(module, modelType, modelSourceModule.parameters);
-                }
-            }
+  if (!module) {
+    return "# Select a module to view its Python code.";
+  }
+
+  // EvaluateStat의 경우 generateEvaluateStatCode 사용
+  if (module.type === "EvaluateStat") {
+    return generateEvaluateStatCode(module);
+  }
+
+  // ResultModel의 경우 연결된 모델 타입에 따라 코드 생성
+  if (module.type === "ResultModel" && allModules && connections) {
+    const modelInputConnection = connections.find(
+      (c) => c.to.moduleId === module.id && c.to.portName === "model_in"
+    );
+
+    if (modelInputConnection) {
+      const modelSourceModule = allModules.find(
+        (m) => m.id === modelInputConnection.from.moduleId
+      );
+
+      if (modelSourceModule) {
+        // 모델 타입 확인
+        let modelType: string | null = null;
+
+        if (modelSourceModule.type === "OLSModel") {
+          modelType = "OLS";
+        } else if (modelSourceModule.type === "LogisticModel") {
+          modelType = "Logit";
+        } else if (modelSourceModule.type === "PoissonModel") {
+          modelType = "Poisson";
+        } else if (modelSourceModule.type === "QuasiPoissonModel") {
+          modelType = "QuasiPoisson";
+        } else if (modelSourceModule.type === "NegativeBinomialModel") {
+          modelType = "NegativeBinomial";
+        } else if (modelSourceModule.type === "StatModels") {
+          modelType = modelSourceModule.parameters.model || "Gamma";
+        } else if (
+          modelSourceModule.outputData?.type === "ModelDefinitionOutput"
+        ) {
+          modelType = modelSourceModule.outputData.modelType;
         }
+
+        if (modelType) {
+          return generateResultModelCode(
+            module,
+            modelType,
+            modelSourceModule.parameters
+          );
+        }
+      }
     }
-    
-    const template = templates[module.type] || `# Code for ${module.name} is not available.`;
-    return replacePlaceholders(template.trim(), module.parameters);
+  }
+
+  // SplitData 모듈의 경우 특별한 처리
+  if (module.type === "SplitData") {
+    const { train_size, random_state, shuffle, stratify, stratify_column } =
+      module.parameters;
+
+    // 값이 없으면 파라미터를 전달하지 않도록 처리
+    const params: Record<string, any> = {
+      ...module.parameters,
+      split_train_size:
+        train_size !== undefined && train_size !== null && train_size !== ""
+          ? `p_train_size = ${train_size}`
+          : "# train_size: using default (None)",
+      split_random_state:
+        random_state !== undefined &&
+        random_state !== null &&
+        random_state !== ""
+          ? `p_random_state = ${random_state}`
+          : "# random_state: using default (None)",
+      split_shuffle:
+        shuffle !== undefined && shuffle !== null && shuffle !== ""
+          ? `p_shuffle = ${
+              shuffle === "True" || shuffle === true ? "True" : "False"
+            }`
+          : "# shuffle: using default (True)",
+      split_stratify:
+        stratify !== undefined && stratify !== null && stratify !== ""
+          ? `p_stratify = ${
+              stratify === "True" || stratify === true ? "True" : "False"
+            }`
+          : "# stratify: using default (None)",
+      split_stratify_check:
+        stratify !== undefined &&
+        stratify !== null &&
+        stratify !== "" &&
+        (stratify === "True" || stratify === true)
+          ? `if p_stratify and p_stratify_column and p_stratify_column != 'None':`
+          : `if p_stratify_column and p_stratify_column != 'None':`,
+      split_train_size_kwarg:
+        train_size !== undefined && train_size !== null && train_size !== ""
+          ? "split_kwargs['train_size'] = p_train_size"
+          : "",
+      split_random_state_kwarg:
+        random_state !== undefined &&
+        random_state !== null &&
+        random_state !== ""
+          ? "split_kwargs['random_state'] = p_random_state"
+          : "",
+      split_shuffle_kwarg:
+        shuffle !== undefined && shuffle !== null && shuffle !== ""
+          ? "split_kwargs['shuffle'] = p_shuffle"
+          : "",
+    };
+
+    const template =
+      templates[module.type] || `# Code for ${module.name} is not available.`;
+    return replacePlaceholders(template.trim(), params);
+  }
+
+  const template =
+    templates[module.type] || `# Code for ${module.name} is not available.`;
+  return replacePlaceholders(template.trim(), module.parameters);
 };
 
 /**
  * ResultModel의 모델 타입에 맞는 코드를 생성합니다
  */
 function generateResultModelCode(
-    module: CanvasModule,
-    modelType: string,
-    modelParams: Record<string, any>
+  module: CanvasModule,
+  modelType: string,
+  modelParams: Record<string, any>
 ): string {
-    const { feature_columns, label_column } = module.parameters;
-    const max_iter = modelParams.max_iter || 100;
-    const disp = modelParams.disp || 1.0;
-    
-    let code = `import pandas as pd
+  const { feature_columns, label_column } = module.parameters;
+  const max_iter = modelParams.max_iter || 100;
+  const disp = modelParams.disp || 1.0;
+
+  let code = `import pandas as pd
 import numpy as np
 import statsmodels.api as sm
 
 # Parameters from UI (Result Model)
 p_feature_columns = ${JSON.stringify(feature_columns || [])}
-p_label_column = ${label_column ? `'${label_column}'` : 'None'}
+p_label_column = ${label_column ? `'${label_column}'` : "None"}
 
 # Assuming 'dataframe' is passed from a data module and 'model_definition' is passed from the model definition module.
 # Extract features and label
@@ -1750,9 +1866,9 @@ X = sm.add_constant(X, prepend=True)
 # Create model instance based on the connected model definition module
 `;
 
-    // 모델 타입에 따라 코드 생성 (연결된 모델 정의 모듈의 타입에 따라)
-    if (modelType === "OLS") {
-        code += `# OLS 모델 인스턴스 생성 및 피팅
+  // 모델 타입에 따라 코드 생성 (연결된 모델 정의 모듈의 타입에 따라)
+  if (modelType === "OLS") {
+    code += `# OLS 모델 인스턴스 생성 및 피팅
 # (모델 정의는 OLS Model 모듈에서 제공됨)
 model = sm.OLS(y, X)
 results = model.fit()
@@ -1762,8 +1878,8 @@ print(results.summary())
 
 model_results = results
 `;
-    } else if (modelType === "Logit" || modelType === "Logistic") {
-        code += `# Logistic 모델 인스턴스 생성 및 피팅
+  } else if (modelType === "Logit" || modelType === "Logistic") {
+    code += `# Logistic 모델 인스턴스 생성 및 피팅
 # (모델 정의는 Logistic Model 모듈에서 제공됨)
 model = sm.Logit(y, X)
 results = model.fit()
@@ -1773,8 +1889,8 @@ print(results.summary())
 
 model_results = results
 `;
-    } else if (modelType === "Poisson") {
-        code += `# Poisson 모델 인스턴스 생성 및 피팅
+  } else if (modelType === "Poisson") {
+    code += `# Poisson 모델 인스턴스 생성 및 피팅
 # (모델 정의는 Poisson Model 모듈에서 제공됨, max_iter=${max_iter})
 model = sm.Poisson(y, X)
 results = model.fit(maxiter=${max_iter})
@@ -1784,8 +1900,8 @@ print(results.summary())
 
 model_results = results
 `;
-    } else if (modelType === "QuasiPoisson") {
-        code += `# Quasi-Poisson 모델 인스턴스 생성 및 피팅
+  } else if (modelType === "QuasiPoisson") {
+    code += `# Quasi-Poisson 모델 인스턴스 생성 및 피팅
 # (모델 정의는 Quasi-Poisson Model 모듈에서 제공됨, max_iter=${max_iter})
 model = sm.GLM(y, X, family=sm.families.Poisson())
 results = model.fit(maxiter=${max_iter})
@@ -1801,8 +1917,8 @@ print(results.summary())
 
 model_results = results
 `;
-    } else if (modelType === "NegativeBinomial") {
-        code += `# Negative Binomial 모델 인스턴스 생성 및 피팅
+  } else if (modelType === "NegativeBinomial") {
+    code += `# Negative Binomial 모델 인스턴스 생성 및 피팅
 # (모델 정의는 Negative Binomial Model 모듈에서 제공됨, max_iter=${max_iter}, disp=${disp})
 model = sm.NegativeBinomial(y, X, loglike_method='nb2')
 results = model.fit(maxiter=${max_iter}, disp=${disp})
@@ -1812,8 +1928,8 @@ print(results.summary())
 
 model_results = results
 `;
-    } else if (modelType === "Gamma") {
-        code += `# Gamma 모델 인스턴스 생성 및 피팅
+  } else if (modelType === "Gamma") {
+    code += `# Gamma 모델 인스턴스 생성 및 피팅
 # (모델 정의는 Stat Models 모듈에서 제공됨, model type: Gamma)
 model = sm.GLM(y, X, family=sm.families.Gamma())
 results = model.fit()
@@ -1823,8 +1939,8 @@ print(results.summary())
 
 model_results = results
 `;
-    } else if (modelType === "Tweedie") {
-        code += `# Tweedie 모델 인스턴스 생성 및 피팅
+  } else if (modelType === "Tweedie") {
+    code += `# Tweedie 모델 인스턴스 생성 및 피팅
 # (모델 정의는 Stat Models 모듈에서 제공됨, model type: Tweedie)
 model = sm.GLM(y, X, family=sm.families.Tweedie(var_power=1.5))
 results = model.fit()
@@ -1834,34 +1950,32 @@ print(results.summary())
 
 model_results = results
 `;
-    } else {
-        code += `# 알 수 없는 모델 타입: ${modelType}
+  } else {
+    code += `# 알 수 없는 모델 타입: ${modelType}
 print(f"오류: 알 수 없는 모델 타입 '${modelType}'")
 model_results = None
 `;
-    }
-    
-    return code;
+  }
+
+  return code;
 }
 
 /**
  * EvaluateStat 모듈의 코드를 생성합니다
  */
-function generateEvaluateStatCode(
-    module: CanvasModule
-): string {
-    const { label_column, prediction_column, model_type } = module.parameters;
-    
-    let code = `import pandas as pd
+function generateEvaluateStatCode(module: CanvasModule): string {
+  const { label_column, prediction_column, model_type } = module.parameters;
+
+  let code = `import pandas as pd
 import numpy as np
 import statsmodels.api as sm
 from scipy import stats
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 # Parameters from UI
-p_label_column = ${label_column ? `'${label_column}'` : 'None'}
-p_prediction_column = ${prediction_column ? `'${prediction_column}'` : 'None'}
-p_model_type = ${model_type ? `'${model_type}'` : 'None'}
+p_label_column = ${label_column ? `'${label_column}'` : "None"}
+p_prediction_column = ${prediction_column ? `'${prediction_column}'` : "None"}
+p_model_type = ${model_type ? `'${model_type}'` : "None"}
 
 # Assuming 'dataframe' is passed from a data module.
 # Extract actual and predicted values
@@ -1898,8 +2012,8 @@ print(f"Max Residual: {np.max(residuals_array):.6f}")
 # 모델 타입별 특수 통계량 (선택적)
 `;
 
-    if (model_type) {
-        code += `
+  if (model_type) {
+    code += `
 # 모델 타입: ${model_type}
 if p_model_type and p_model_type != '' and p_model_type != 'None':
     print(f"\\n--- ${model_type} 모델 특수 통계량 ---")
@@ -1992,8 +2106,8 @@ print("\\n" + "=" * 60)
 print("평가 완료")
 print("=" * 60)
 `;
-    } else {
-        code += `
+  } else {
+    code += `
 print("\\n모델 타입이 지정되지 않아 기본 통계량만 계산되었습니다.")
 print("모델 타입을 지정하면 추가 통계량(Deviance, AIC, BIC 등)을 계산할 수 있습니다.")
 
@@ -2001,7 +2115,7 @@ print("\\n" + "=" * 60)
 print("평가 완료")
 print("=" * 60)
 `;
-    }
-    
-    return code;
+  }
+
+  return code;
 }

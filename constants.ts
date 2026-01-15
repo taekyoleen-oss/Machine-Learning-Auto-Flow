@@ -36,13 +36,15 @@ export const TOOLBOX_MODULES = [
     type: ModuleType.Join,
     name: "Data Joiner",
     icon: ShareIcon,
-    description: "Joins two datasets using inner, outer, left, or right join based on key columns.",
+    description:
+      "Joins two datasets using inner, outer, left, or right join based on key columns.",
   },
   {
     type: ModuleType.Concat,
     name: "Data Concatenator",
     icon: ShareIcon,
-    description: "Concatenates two datasets vertically (rows) or horizontally (columns).",
+    description:
+      "Concatenates two datasets vertically (rows) or horizontally (columns).",
   },
   {
     type: ModuleType.Statistics,
@@ -95,6 +97,13 @@ export const TOOLBOX_MODULES = [
     icon: BarChartIcon,
     description:
       "Analyzes correlations between variables (Pearson/Spearman/Kendall, Cramér's V, Heatmap, Pairplot).",
+  },
+  {
+    type: ModuleType.VIFChecker,
+    name: "VIF Checker",
+    icon: CalculatorIcon,
+    description:
+      "Checks Variance Inflation Factor (VIF) to detect multicollinearity in features.",
   },
   {
     type: ModuleType.TransitionData,
@@ -451,6 +460,15 @@ export const DEFAULT_MODULES: Omit<CanvasModule, "id" | "position" | "name">[] =
       status: ModuleStatus.Pending,
       parameters: {
         columns: [],
+      },
+      inputs: [{ name: "data_in", type: "data" }],
+      outputs: [],
+    },
+    {
+      type: ModuleType.VIFChecker,
+      status: ModuleStatus.Pending,
+      parameters: {
+        feature_columns: [],
       },
       inputs: [{ name: "data_in", type: "data" }],
       outputs: [],

@@ -21,6 +21,7 @@ import {
   EncoderOutput,
   NormalizerOutput,
   OutlierDetectorOutput,
+  VIFCheckerOutput,
 } from "../types";
 import {
   PlayIcon,
@@ -387,16 +388,22 @@ const PropertyInput: React.FC<{
   onChange: (value: any) => void;
   type?: string;
   step?: string;
-}> = ({ label, value, onChange, type = "text", step }) => (
+  placeholder?: string;
+}> = ({ label, value, onChange, type = "text", step, placeholder }) => (
   <div className="mb-3 last:mb-0">
     <label className="block text-sm text-gray-400 mb-1">{label}</label>
     <input
       type={type}
-      value={value}
+      value={value === null || value === undefined ? "" : value}
       step={step}
+      placeholder={placeholder}
       onChange={(e) =>
         onChange(
-          type === "number" ? parseFloat(e.target.value) : e.target.value
+          e.target.value === ""
+            ? undefined
+            : type === "number"
+            ? parseFloat(e.target.value)
+            : e.target.value
         )
       }
       className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -488,7 +495,12 @@ const getConnectedDataSourceHelper = (
     });
   }
 
-  if (!inputConnection || !inputConnection.from || !inputConnection.from.moduleId) return undefined;
+  if (
+    !inputConnection ||
+    !inputConnection.from ||
+    !inputConnection.from.moduleId
+  )
+    return undefined;
 
   const sourceModule = allModules.find(
     (m) => m && m.id === inputConnection.from.moduleId
@@ -536,9 +548,13 @@ const renderParameters = (
     case ModuleType.XolLoading: {
       // 현재 데이터를 Example로 저장하는 함수
       const handleSaveAsExample = () => {
-        if (!module || !module.outputData || module.outputData.type !== 'DataPreview') {
-          console.warn('No data available to save as example');
-          alert('데이터를 먼저 로드하고 실행해주세요.');
+        if (
+          !module ||
+          !module.outputData ||
+          module.outputData.type !== "DataPreview"
+        ) {
+          console.warn("No data available to save as example");
+          alert("데이터를 먼저 로드하고 실행해주세요.");
           return;
         }
 
@@ -548,35 +564,43 @@ const renderParameters = (
           const rows = dataPreview.rows || [];
 
           if (columns.length === 0 || rows.length === 0) {
-            console.warn('No data to save');
+            console.warn("No data to save");
             return;
           }
 
           // CSV 형식으로 변환
-          const csvHeader = columns.map((col) => col.name).join(',');
+          const csvHeader = columns.map((col) => col.name).join(",");
           const csvRows = rows.map((row) =>
-            columns.map((col) => {
-              const value = row[col.name];
-              // CSV 형식에 맞게 이스케이프 처리
-              if (value === null || value === undefined) return '';
-              const str = String(value);
-              if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-                return `"${str.replace(/"/g, '""')}"`;
-              }
-              return str;
-            }).join(',')
+            columns
+              .map((col) => {
+                const value = row[col.name];
+                // CSV 형식에 맞게 이스케이프 처리
+                if (value === null || value === undefined) return "";
+                const str = String(value);
+                if (
+                  str.includes(",") ||
+                  str.includes('"') ||
+                  str.includes("\n")
+                ) {
+                  return `"${str.replace(/"/g, '""')}"`;
+                }
+                return str;
+              })
+              .join(",")
           );
 
-          const csvContent = [csvHeader, ...csvRows].join('\n');
+          const csvContent = [csvHeader, ...csvRows].join("\n");
 
           // CSV 파일로 다운로드
-          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const blob = new Blob([csvContent], {
+            type: "text/csv;charset=utf-8;",
+          });
           const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
+          const a = document.createElement("a");
           a.href = url;
-          const safeFilename = (module.name || 'example')
-            .replace(/[^a-zA-Z0-9가-힣\s]/g, '_')
-            .replace(/\s+/g, '_');
+          const safeFilename = (module.name || "example")
+            .replace(/[^a-zA-Z0-9가-힣\s]/g, "_")
+            .replace(/\s+/g, "_");
           a.download = `${safeFilename}.csv`;
           document.body.appendChild(a);
           a.click();
@@ -585,9 +609,9 @@ const renderParameters = (
 
           // 성공 메시지는 App.tsx의 addLog를 통해 표시되도록 하거나
           // 여기서 직접 표시할 수 있습니다
-          console.log('Example CSV file downloaded successfully');
+          console.log("Example CSV file downloaded successfully");
         } catch (error: any) {
-          console.error('Failed to save example:', error);
+          console.error("Failed to save example:", error);
         }
       };
 
@@ -740,18 +764,20 @@ const renderParameters = (
           <div className="mt-4">
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-xs text-gray-500 uppercase font-bold">
-              Examples
-            </h4>
+                Examples
+              </h4>
               <button
                 onClick={handleSaveAsExample}
-                disabled={!module.outputData || module.outputData.type !== 'DataPreview'}
+                disabled={
+                  !module.outputData || module.outputData.type !== "DataPreview"
+                }
                 className={`flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-md transition-colors ${
-                  !module.outputData || module.outputData.type !== 'DataPreview'
+                  !module.outputData || module.outputData.type !== "DataPreview"
                     ? "bg-gray-600 cursor-not-allowed opacity-50"
                     : "bg-green-600 hover:bg-green-700"
                 } text-white`}
                 title={
-                  !module.outputData || module.outputData.type !== 'DataPreview'
+                  !module.outputData || module.outputData.type !== "DataPreview"
                     ? "Load and run data first to save as Example"
                     : "Save current data as Example CSV file"
                 }
@@ -790,15 +816,26 @@ const renderParameters = (
     case ModuleType.SelectData: {
       const sourceData = getConnectedDataSource(module.id);
       const inputColumns = sourceData?.columns || [];
+      // pandas dtype 목록 (파이썬 코드 기준)
       const availableDataTypes = [
-        "string",
-        "number",
-        "boolean",
+        "int64",
+        "int32",
+        "int16",
+        "int8",
+        "float64",
+        "float32",
+        "object",
+        "bool",
+        "datetime64",
         "category",
-        "datetime",
       ];
 
       const currentSelections = module.parameters.columnSelections || {};
+
+      // 입력 컬럼 타입을 그대로 사용 (이미 pandas dtype)
+      const getPandasDtype = (colType: string): string => {
+        return colType;
+      };
 
       const handleSelectionChange = (
         colName: string,
@@ -810,7 +847,9 @@ const renderParameters = (
           [colName]: {
             ...(currentSelections[colName] || {
               selected: true,
-              type: "string",
+              type: getPandasDtype(
+                inputColumns.find((c) => c.name === colName)?.type || "object"
+              ),
             }),
             [key]: value,
           },
@@ -822,7 +861,9 @@ const renderParameters = (
         const newSelections = { ...currentSelections };
         inputColumns.forEach((col) => {
           newSelections[col.name] = {
-            ...(currentSelections[col.name] || { type: col.type }),
+            ...(currentSelections[col.name] || {
+              type: getPandasDtype(col.type),
+            }),
             selected: selectAll,
           };
         });
@@ -861,12 +902,13 @@ const renderParameters = (
               <span className="text-xs font-bold text-gray-400">Data Type</span>
             </div>
             {inputColumns.map((col) => {
-              // selection이 없으면 기본값으로 selected: true, type: col.type 사용 (UI 표시용)
-              // 하지만 실제 저장은 handleSelectionChange에서 처리
+              // selection이 없으면 기본값으로 selected: true, type: pandas dtype 사용
               const selection = currentSelections[col.name];
               const isChecked = selection ? selection.selected : true;
-              const columnType = selection ? selection.type : col.type;
-              
+              const columnType = selection
+                ? selection.type
+                : getPandasDtype(col.type);
+
               return (
                 <div
                   key={col.name}
@@ -1214,7 +1256,7 @@ const renderParameters = (
 
       // 숫자형 컬럼만 필터링
       const numericColumns = inputColumns.filter(
-        (col) => col.type === "number"
+        (col) => col.type.startsWith("int") || col.type.startsWith("float")
       );
 
       const handleColumnToggle = (columnName: string) => {
@@ -1308,7 +1350,7 @@ const renderParameters = (
 
       // 숫자형과 범주형 컬럼 분리
       const numericColumns = inputColumns.filter(
-        (col) => col.type === "number"
+        (col) => col.type.startsWith("int") || col.type.startsWith("float")
       );
       const categoricalColumns = inputColumns.filter(
         (col) => col.type === "string"
@@ -1657,7 +1699,7 @@ const renderParameters = (
 
       // 숫자형 열만 필터링
       const numericColumns = inputColumns.filter(
-        (col) => col.type === "number"
+        (col) => col.type.startsWith("int") || col.type.startsWith("float")
       );
 
       if (numericColumns.length === 0) {
@@ -1766,6 +1808,133 @@ const renderParameters = (
         </div>
       );
     }
+    case ModuleType.VIFChecker: {
+      const sourceData = getConnectedDataSource(module.id);
+      const inputColumns = sourceData?.columns || [];
+      const { feature_columns = [] } = module.parameters;
+
+      if (inputColumns.length === 0) {
+        return (
+          <p className="text-sm text-gray-500">
+            Connect a data source module to configure VIF analysis.
+          </p>
+        );
+      }
+
+      // 숫자형 열만 필터링 (VIF는 숫자형 변수에만 적용)
+      const numericColumns = inputColumns.filter(
+        (col) =>
+          col && (col.type.startsWith("int") || col.type.startsWith("float"))
+      );
+
+      if (numericColumns.length === 0) {
+        return (
+          <p className="text-sm text-gray-500">
+            No numeric columns available for VIF analysis.
+          </p>
+        );
+      }
+
+      const handleColumnToggle = (columnName: string) => {
+        const currentColumns = Array.isArray(feature_columns)
+          ? feature_columns
+          : [];
+        if (currentColumns.includes(columnName)) {
+          onParamChange(
+            "feature_columns",
+            currentColumns.filter((c: string) => c !== columnName)
+          );
+        } else {
+          onParamChange("feature_columns", [...currentColumns, columnName]);
+        }
+      };
+
+      const handleSelectAll = () => {
+        const allColumnNames = numericColumns.map((col) => col.name);
+        onParamChange("feature_columns", allColumnNames);
+      };
+
+      const handleDeselectAll = () => {
+        onParamChange("feature_columns", []);
+      };
+
+      const currentColumns = Array.isArray(feature_columns)
+        ? feature_columns
+        : [];
+      const allSelected =
+        numericColumns.length > 0 &&
+        currentColumns.length === numericColumns.length;
+      const someSelected =
+        currentColumns.length > 0 &&
+        currentColumns.length < numericColumns.length;
+
+      return (
+        <div className="space-y-4">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm text-gray-400">
+                Select Feature Columns
+              </label>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSelectAll}
+                  className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                >
+                  Select All
+                </button>
+                <button
+                  onClick={handleDeselectAll}
+                  className="px-2 py-1 text-xs bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+                >
+                  Deselect All
+                </button>
+              </div>
+            </div>
+            <div className="bg-gray-700 border border-gray-600 rounded px-2 py-2 max-h-60 overflow-y-auto">
+              <div className="space-y-2">
+                {numericColumns.map((col) => {
+                  const isSelected =
+                    Array.isArray(feature_columns) &&
+                    feature_columns.includes(col.name);
+                  return (
+                    <label
+                      key={col.name}
+                      className="flex items-center gap-2 cursor-pointer hover:bg-gray-600 p-1 rounded"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleColumnToggle(col.name)}
+                        className="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-300">
+                        {col.name}
+                        <span className="text-xs text-gray-500 ml-2">
+                          ({col.type})
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 mt-2">
+              Selected: {currentColumns.length} / {numericColumns.length}{" "}
+              column(s)
+            </p>
+          </div>
+          <div className="border-t border-gray-700 pt-4">
+            <p className="text-xs text-gray-500">
+              Select numeric feature columns to calculate Variance Inflation
+              Factor (VIF). VIF values:
+              <br />• VIF &gt; 10: High multicollinearity (red)
+              <br />• 5 &lt; VIF ≤ 10: Moderate multicollinearity (light red)
+              <br />• VIF ≤ 5: Low multicollinearity (normal)
+            </p>
+          </div>
+        </div>
+      );
+    }
     case ModuleType.Correlation: {
       const sourceData = getConnectedDataSource(module.id);
       const inputColumns = sourceData?.columns || [];
@@ -1849,7 +2018,12 @@ const renderParameters = (
                       <span className="text-sm text-gray-300">
                         {col.name}
                         <span className="text-xs text-gray-500 ml-2">
-                          ({col.type === "number" ? "numeric" : "categorical"})
+                          (
+                          {col.type.startsWith("int") ||
+                          col.type.startsWith("float")
+                            ? "numeric"
+                            : "categorical"}
+                          )
                         </span>
                       </span>
                     </label>
@@ -1883,11 +2057,19 @@ const renderParameters = (
 
       // 기본값 초기화는 PropertiesPanel 컴포넌트의 useEffect에서 처리됨
 
+      // 입력 컬럼 타입을 그대로 사용 (이미 pandas dtype)
+      const getPandasDtype = (colType: string): string => {
+        return colType;
+      };
+
       const handleSelectionChange = (colName: string, value: boolean) => {
+        const col = inputColumns.find((c) => c.name === colName);
         const newSelections = {
           ...currentSelections,
           [colName]: {
-            ...(currentSelections[colName] || { type: "string" }),
+            ...(currentSelections[colName] || {
+              type: col ? getPandasDtype(col.type) : "object",
+            }),
             selected: value,
           },
         };
@@ -1897,10 +2079,24 @@ const renderParameters = (
       const handleSelectAll = (selectAll: boolean) => {
         const newSelections = { ...currentSelections };
         inputColumns.forEach((col) => {
-          newSelections[col.name] = {
-            ...(currentSelections[col.name] || { type: col.type }),
-            selected: selectAll,
-          };
+          const pandasDtype = getPandasDtype(col.type);
+          // Method에 따라 선택 가능 여부 결정
+          const isDisabled =
+            (method === "impute" &&
+              !(
+                pandasDtype.startsWith("int") || pandasDtype.startsWith("float")
+              )) ||
+            (method === "knn" &&
+              !(
+                pandasDtype.startsWith("int") || pandasDtype.startsWith("float")
+              ));
+
+          if (!isDisabled) {
+            newSelections[col.name] = {
+              ...(currentSelections[col.name] || { type: pandasDtype }),
+              selected: selectAll,
+            };
+          }
         });
         onParamChange("columnSelections", newSelections);
       };
@@ -1971,27 +2167,51 @@ const renderParameters = (
             </div>
             <div className="space-y-2 max-h-60 overflow-y-auto panel-scrollbar pr-2">
               {inputColumns.map((col) => {
+                // 입력 컬럼 타입을 그대로 사용 (이미 pandas dtype)
+                const getPandasDtype = (colType: string): string => {
+                  return colType;
+                };
+
+                const pandasDtype = getPandasDtype(col.type);
                 const selection = currentSelections[col.name] || {
                   selected: true, // 기본값: 선택됨
-                  type: col.type,
+                  type: pandasDtype,
                 };
+
+                // Method에 따라 선택 가능 여부 결정
+                const isDisabled =
+                  (method === "impute" &&
+                    !(
+                      pandasDtype.startsWith("int") ||
+                      pandasDtype.startsWith("float")
+                    )) ||
+                  (method === "knn" &&
+                    !(
+                      pandasDtype.startsWith("int") ||
+                      pandasDtype.startsWith("float")
+                    ));
+                // remove_row는 모든 타입에 적용 가능
+
                 return (
                   <label
                     key={col.name}
-                    className="flex items-center gap-2 text-sm truncate cursor-pointer hover:bg-gray-700/50 p-1 rounded"
+                    className={`flex items-center gap-2 text-sm truncate cursor-pointer hover:bg-gray-700/50 p-1 rounded ${
+                      isDisabled ? "opacity-50" : ""
+                    }`}
                     title={col.name}
                   >
                     <input
                       type="checkbox"
-                      checked={selection.selected}
+                      checked={selection.selected && !isDisabled}
                       onChange={(e) =>
                         handleSelectionChange(col.name, e.target.checked)
                       }
-                      className="h-4 w-4 rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-500"
+                      disabled={isDisabled}
+                      className="h-4 w-4 rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed"
                     />
                     <span className="truncate">{col.name}</span>
                     <span className="text-xs text-gray-500 ml-auto">
-                      ({col.type === "number" ? "numeric" : "categorical"})
+                      ({pandasDtype})
                     </span>
                   </label>
                 );
@@ -2119,11 +2339,24 @@ const renderParameters = (
       const inputColumns = sourceData?.columns || [];
       const currentSelections = module.parameters.columnSelections || {};
 
+      // 입력 컬럼 타입을 그대로 사용 (이미 pandas dtype)
+      const getPandasDtype = (colType: string): string => {
+        return colType;
+      };
+
+      // pandas dtype이 숫자형인지 확인하는 함수
+      const isNumericDtype = (dtype: string): boolean => {
+        return dtype.startsWith("int") || dtype.startsWith("float");
+      };
+
       const handleSelectionChange = (colName: string, value: boolean) => {
+        const col = inputColumns.find((c) => c.name === colName);
         const newSelections = {
           ...currentSelections,
           [colName]: {
-            ...(currentSelections[colName] || { type: "string" }),
+            ...(currentSelections[colName] || {
+              type: col ? getPandasDtype(col.type) : "object",
+            }),
             selected: value,
           },
         };
@@ -2133,10 +2366,11 @@ const renderParameters = (
       const handleSelectAll = (selectAll: boolean) => {
         const newSelections = { ...currentSelections };
         inputColumns.forEach((col) => {
-          if (col.type === "number") {
+          const pandasDtype = getPandasDtype(col.type);
+          if (isNumericDtype(pandasDtype)) {
             // Only affect numeric columns
             newSelections[col.name] = {
-              ...(currentSelections[col.name] || { type: col.type }),
+              ...(currentSelections[col.name] || { type: pandasDtype }),
               selected: selectAll,
             };
           }
@@ -2186,9 +2420,29 @@ const renderParameters = (
                   </span>
                 </div>
                 {inputColumns.map((col) => {
+                  const pandasDtype = getPandasDtype(col.type);
+                  const isNumeric = isNumericDtype(pandasDtype);
+
+                  // 디버깅: 컬럼 타입 확인 (CHAS 또는 int64인 경우)
+                  if (
+                    col.name === "CHAS" ||
+                    col.type === "int64" ||
+                    col.type === "string"
+                  ) {
+                    console.log(
+                      "ScalingTransform PropertiesPanel - Column type:",
+                      {
+                        colName: col.name,
+                        originalType: col.type,
+                        pandasDtype: pandasDtype,
+                        isNumeric: isNumeric,
+                      }
+                    );
+                  }
+
                   const selection = currentSelections[col.name] || {
                     selected: false,
-                    type: col.type,
+                    type: pandasDtype,
                   };
                   return (
                     <div
@@ -2206,11 +2460,11 @@ const renderParameters = (
                             handleSelectionChange(col.name, e.target.checked)
                           }
                           className="h-4 w-4 rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed"
-                          disabled={col.type !== "number"}
+                          disabled={!isNumeric}
                         />
                         <span
                           className={`truncate ${
-                            col.type !== "number" ? "text-gray-500" : ""
+                            !isNumeric ? "text-gray-500" : ""
                           }`}
                         >
                           {col.name}
@@ -2218,7 +2472,7 @@ const renderParameters = (
                       </label>
                       <div className="col-span-2">
                         <span className="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded-md">
-                          {col.type}
+                          {pandasDtype}
                         </span>
                       </div>
                     </div>
@@ -2330,38 +2584,46 @@ const renderParameters = (
     case ModuleType.Join: {
       const sourceData1 = getConnectedDataSource(module.id, "data_in");
       const sourceData2 = getConnectedDataSource(module.id, "data_in2");
-      
+
       const columns1 = sourceData1?.columns || [];
       const columns2 = sourceData2?.columns || [];
       const rows1 = sourceData1?.rows?.length || 0;
       const rows2 = sourceData2?.rows?.length || 0;
       const cols1 = columns1.length;
       const cols2 = columns2.length;
-      
-      const commonColumns = columns1.filter(c1 => 
-        columns2.some(c2 => c2.name === c1.name)
-      ).map(c => c.name);
-      
+
+      const commonColumns = columns1
+        .filter((c1) => columns2.some((c2) => c2.name === c1.name))
+        .map((c) => c.name);
+
       return (
         <>
           {/* 데이터 정보 표시 */}
           <div className="mb-4 p-3 bg-gray-800 rounded-md">
-            <div className="text-xs text-gray-400 mb-2">Input Data Information</div>
+            <div className="text-xs text-gray-400 mb-2">
+              Input Data Information
+            </div>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
                 <div className="text-gray-500">Input 1:</div>
-                <div className="text-gray-300">{rows1} rows × {cols1} cols</div>
+                <div className="text-gray-300">
+                  {rows1} rows × {cols1} cols
+                </div>
               </div>
               <div>
                 <div className="text-gray-500">Input 2:</div>
-                <div className="text-gray-300">{rows2} rows × {cols2} cols</div>
+                <div className="text-gray-300">
+                  {rows2} rows × {cols2} cols
+                </div>
               </div>
             </div>
           </div>
-          
+
           <PropertySelect
             label="Join Type"
-            value={module.parameters.how || module.parameters.join_type || "inner"}
+            value={
+              module.parameters.how || module.parameters.join_type || "inner"
+            }
             onChange={(v) => {
               onParamChange("how", v);
               onParamChange("join_type", v);
@@ -2370,10 +2632,10 @@ const renderParameters = (
               { label: "Inner Join", value: "inner" },
               { label: "Outer Join", value: "outer" },
               { label: "Left Join", value: "left" },
-              { label: "Right Join", value: "right" }
+              { label: "Right Join", value: "right" },
             ]}
           />
-          
+
           {columns1.length > 0 && columns2.length > 0 && (
             <>
               <PropertySelect
@@ -2388,9 +2650,9 @@ const renderParameters = (
                 }}
                 options={["", ...commonColumns]}
               />
-              
+
               <div className="text-xs text-gray-400 mb-2 text-center">OR</div>
-              
+
               <PropertySelect
                 label="Left Key"
                 value={module.parameters.left_on || ""}
@@ -2398,9 +2660,9 @@ const renderParameters = (
                   onParamChange("left_on", v || null);
                   if (v) onParamChange("on", null);
                 }}
-                options={["", ...columns1.map(c => c.name)]}
+                options={["", ...columns1.map((c) => c.name)]}
               />
-              
+
               <PropertySelect
                 label="Right Key"
                 value={module.parameters.right_on || ""}
@@ -2408,11 +2670,11 @@ const renderParameters = (
                   onParamChange("right_on", v || null);
                   if (v) onParamChange("on", null);
                 }}
-                options={["", ...columns2.map(c => c.name)]}
+                options={["", ...columns2.map((c) => c.name)]}
               />
             </>
           )}
-          
+
           <div className="grid grid-cols-2 gap-2">
             <PropertyInput
               label="Left Suffix"
@@ -2431,94 +2693,111 @@ const renderParameters = (
               }}
             />
           </div>
-          
+
           {/* 검증 메시지 */}
           {(!sourceData1 || !sourceData2) && (
             <div className="mt-4 p-3 bg-red-900/30 border border-red-700 rounded-md">
-              <div className="text-sm text-red-400 font-semibold">⚠ Cannot Execute</div>
+              <div className="text-sm text-red-400 font-semibold">
+                ⚠ Cannot Execute
+              </div>
               <div className="text-xs text-red-300 mt-1">
                 Both input data sources must be connected.
               </div>
             </div>
           )}
-          {sourceData1 && sourceData2 && (!module.parameters.on && !module.parameters.left_on && !module.parameters.right_on) && (
-            <div className="mt-4 p-3 bg-red-900/30 border border-red-700 rounded-md">
-              <div className="text-sm text-red-400 font-semibold">⚠ Cannot Execute</div>
-              <div className="text-xs text-red-300 mt-1">
-                Join key must be specified (on or left_on/right_on).
+          {sourceData1 &&
+            sourceData2 &&
+            !module.parameters.on &&
+            !module.parameters.left_on &&
+            !module.parameters.right_on && (
+              <div className="mt-4 p-3 bg-red-900/30 border border-red-700 rounded-md">
+                <div className="text-sm text-red-400 font-semibold">
+                  ⚠ Cannot Execute
+                </div>
+                <div className="text-xs text-red-300 mt-1">
+                  Join key must be specified (on or left_on/right_on).
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </>
       );
     }
     case ModuleType.Concat: {
       const sourceData1 = getConnectedDataSource(module.id, "data_in");
       const sourceData2 = getConnectedDataSource(module.id, "data_in2");
-      
+
       const rows1 = sourceData1?.rows?.length || 0;
       const rows2 = sourceData2?.rows?.length || 0;
       const cols1 = sourceData1?.columns?.length || 0;
       const cols2 = sourceData2?.columns?.length || 0;
-      
+
       const axis = module.parameters.axis || "vertical";
-      const isValid = axis === "vertical" 
-        ? (cols1 === cols2 || cols1 === 0 || cols2 === 0)  // Vertical: 컬럼 수가 같아야 함
-        : (rows1 === rows2 || rows1 === 0 || rows2 === 0); // Horizontal: 행 수가 같아야 함
-      
+      const isValid =
+        axis === "vertical"
+          ? cols1 === cols2 || cols1 === 0 || cols2 === 0 // Vertical: 컬럼 수가 같아야 함
+          : rows1 === rows2 || rows1 === 0 || rows2 === 0; // Horizontal: 행 수가 같아야 함
+
       return (
         <>
           {/* 데이터 정보 표시 */}
           <div className="mb-4 p-3 bg-gray-800 rounded-md">
-            <div className="text-xs text-gray-400 mb-2">Input Data Information</div>
+            <div className="text-xs text-gray-400 mb-2">
+              Input Data Information
+            </div>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
                 <div className="text-gray-500">Input 1:</div>
-                <div className="text-gray-300">{rows1} rows × {cols1} cols</div>
+                <div className="text-gray-300">
+                  {rows1} rows × {cols1} cols
+                </div>
               </div>
               <div>
                 <div className="text-gray-500">Input 2:</div>
-                <div className="text-gray-300">{rows2} rows × {cols2} cols</div>
+                <div className="text-gray-300">
+                  {rows2} rows × {cols2} cols
+                </div>
               </div>
             </div>
             {sourceData1 && sourceData2 && (
               <div className="mt-2 pt-2 border-t border-gray-700">
                 <div className="text-xs text-gray-400">Expected Output:</div>
                 <div className="text-sm text-gray-300">
-                  {axis === "vertical" 
+                  {axis === "vertical"
                     ? `${rows1 + rows2} rows × ${Math.max(cols1, cols2)} cols`
                     : `${Math.max(rows1, rows2)} rows × ${cols1 + cols2} cols`}
                 </div>
               </div>
             )}
           </div>
-          
+
           <PropertySelect
             label="Axis"
             value={module.parameters.axis || "vertical"}
             onChange={(v) => onParamChange("axis", v)}
             options={[
               { label: "Vertical (Rows)", value: "vertical" },
-              { label: "Horizontal (Columns)", value: "horizontal" }
+              { label: "Horizontal (Columns)", value: "horizontal" },
             ]}
           />
-          
+
           <PropertyCheckbox
             label="Ignore Index"
             value={module.parameters.ignore_index || false}
             onChange={(v) => onParamChange("ignore_index", v)}
           />
-          
+
           <PropertyCheckbox
             label="Sort Columns"
             value={module.parameters.sort || false}
             onChange={(v) => onParamChange("sort", v)}
           />
-          
+
           {/* 검증 메시지 */}
           {(!sourceData1 || !sourceData2) && (
             <div className="mt-4 p-3 bg-red-900/30 border border-red-700 rounded-md">
-              <div className="text-sm text-red-400 font-semibold">⚠ Cannot Execute</div>
+              <div className="text-sm text-red-400 font-semibold">
+                ⚠ Cannot Execute
+              </div>
               <div className="text-xs text-red-300 mt-1">
                 Both input data sources must be connected.
               </div>
@@ -2526,9 +2805,11 @@ const renderParameters = (
           )}
           {sourceData1 && sourceData2 && !isValid && (
             <div className="mt-4 p-3 bg-red-900/30 border border-red-700 rounded-md">
-              <div className="text-sm text-red-400 font-semibold">⚠ Cannot Execute</div>
+              <div className="text-sm text-red-400 font-semibold">
+                ⚠ Cannot Execute
+              </div>
               <div className="text-xs text-red-300 mt-1">
-                {axis === "vertical" 
+                {axis === "vertical"
                   ? `Column count mismatch: Input 1 has ${cols1} columns, Input 2 has ${cols2} columns. For vertical concatenation, both inputs must have the same number of columns.`
                   : `Row count mismatch: Input 1 has ${rows1} rows, Input 2 has ${rows2} rows. For horizontal concatenation, both inputs must have the same number of rows.`}
               </div>
@@ -2552,34 +2833,44 @@ const renderParameters = (
       return (
         <>
           <PropertyInput
-            label="Train Size"
+            label="Train Size (optional, default: None)"
             type="number"
-            value={module.parameters.train_size}
-            onChange={(v) => onParamChange("train_size", v)}
+            value={module.parameters.train_size || ""}
+            onChange={(v) =>
+              onParamChange("train_size", v === "" ? undefined : v)
+            }
+            placeholder="Leave empty for default"
           />
           <PropertyInput
-            label="Random State"
+            label="Random State (optional, default: None)"
             type="number"
-            value={module.parameters.random_state}
-            onChange={(v) => onParamChange("random_state", v)}
+            value={module.parameters.random_state || ""}
+            onChange={(v) =>
+              onParamChange("random_state", v === "" ? undefined : v)
+            }
+            placeholder="Leave empty for default"
           />
           <PropertySelect
-            label="Shuffle"
-            value={module.parameters.shuffle}
-            onChange={(v) => onParamChange("shuffle", v)}
-            options={["True", "False"]}
+            label="Shuffle (optional, default: True)"
+            value={module.parameters.shuffle || ""}
+            onChange={(v) => onParamChange("shuffle", v === "" ? undefined : v)}
+            options={["", "True", "False"]}
           />
           <PropertySelect
-            label="Stratify"
-            value={module.parameters.stratify}
-            onChange={(v) => onParamChange("stratify", v)}
-            options={["False", "True"]}
+            label="Stratify (optional, default: None)"
+            value={module.parameters.stratify || ""}
+            onChange={(v) =>
+              onParamChange("stratify", v === "" ? undefined : v)
+            }
+            options={["", "False", "True"]}
           />
           {module.parameters.stratify === "True" && (
             <PropertySelect
               label="Stratify by Column"
-              value={module.parameters.stratify_column}
-              onChange={(v) => onParamChange("stratify_column", v)}
+              value={module.parameters.stratify_column || "None"}
+              onChange={(v) =>
+                onParamChange("stratify_column", v === "None" ? undefined : v)
+              }
               options={["None", ...inputColumns.map((c) => c.name)]}
             />
           )}
@@ -3927,10 +4218,15 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             string,
             { selected: boolean; type: string }
           > = {};
+          // 입력 컬럼 타입을 그대로 사용 (이미 pandas dtype)
+          const getPandasDtype = (colType: string): string => {
+            return colType;
+          };
+
           inputColumns.forEach((col) => {
             newSelections[col.name] = {
               selected: true,
-              type: col.type,
+              type: getPandasDtype(col.type),
             };
           });
           updateModuleParameters(module.id, {
@@ -3948,6 +4244,96 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     updateModuleParameters,
   ]);
 
+  // SelectData 모듈의 columnSelections 초기화
+  useEffect(() => {
+    if (!module || module.type !== ModuleType.SelectData) return;
+
+    const sourceData = getConnectedDataSourceHelper(
+      module.id,
+      modules,
+      connections
+    );
+    const inputColumns = sourceData?.columns || [];
+    const currentSelections = module.parameters.columnSelections || {};
+
+    // 입력 컬럼 타입을 그대로 사용 (이미 pandas dtype)
+    const getPandasDtype = (colType: string): string => {
+      return colType;
+    };
+
+    // 기본값: 모든 열이 선택되지 않은 경우 모든 열을 선택으로 설정
+    if (
+      inputColumns.length > 0 &&
+      Object.keys(currentSelections).length === 0
+    ) {
+      const hasAnySelection = inputColumns.some(
+        (col) => currentSelections[col.name]?.selected === true
+      );
+      if (!hasAnySelection) {
+        // 모든 열을 기본값으로 선택 (원본 타입 유지)
+        const newSelections: Record<
+          string,
+          { selected: boolean; type: string }
+        > = {};
+
+        inputColumns.forEach((col) => {
+          newSelections[col.name] = {
+            selected: true,
+            type: getPandasDtype(col.type), // 원본 pandas dtype 사용
+          };
+        });
+        updateModuleParameters(module.id, {
+          columnSelections: newSelections,
+        });
+      }
+    }
+  }, [
+    module?.id,
+    module?.type,
+    module?.parameters.columnSelections,
+    modules,
+    connections,
+    updateModuleParameters,
+  ]);
+
+  // VIF Checker 모듈의 feature_columns 초기화
+  useEffect(() => {
+    if (!module || module.type !== ModuleType.VIFChecker) return;
+
+    const sourceData = getConnectedDataSourceHelper(
+      module.id,
+      modules,
+      connections
+    );
+    const inputColumns = sourceData?.columns || [];
+    const currentFeatureColumns = module.parameters.feature_columns || [];
+
+    // 숫자형 열만 필터링
+    const numericColumns = inputColumns.filter(
+      (col) =>
+        col && (col.type.startsWith("int") || col.type.startsWith("float"))
+    );
+
+    // 기본값: feature_columns가 비어있고 숫자형 열이 있으면 모든 숫자형 열을 기본값으로 선택
+    if (
+      numericColumns.length > 0 &&
+      (!Array.isArray(currentFeatureColumns) ||
+        currentFeatureColumns.length === 0)
+    ) {
+      const allNumericColumnNames = numericColumns.map((col) => col.name);
+      updateModuleParameters(module.id, {
+        ...module.parameters,
+        feature_columns: allNumericColumnNames,
+      });
+    }
+  }, [
+    module?.id,
+    module?.type,
+    module?.parameters.feature_columns,
+    modules,
+    connections,
+  ]);
+
   // Prep Normalize 모듈의 columnSelections 초기화
   useEffect(() => {
     if (!module || module.type !== ModuleType.ScalingTransform) return;
@@ -3960,16 +4346,28 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     const inputColumns = sourceData?.columns || [];
     const currentSelections = module.parameters.columnSelections || {};
 
+    // 입력 컬럼 타입을 그대로 사용 (이미 pandas dtype)
+    const getPandasDtype = (colType: string): string => {
+      return colType;
+    };
+
+    // pandas dtype이 숫자형인지 확인하는 함수
+    const isNumericDtype = (dtype: string): boolean => {
+      return dtype.startsWith("int") || dtype.startsWith("float");
+    };
+
     // 기본값: 모든 숫자형 열이 선택되지 않은 경우 모든 숫자형 열을 선택으로 설정
     if (
       inputColumns.length > 0 &&
       Object.keys(currentSelections).length === 0
     ) {
-      const hasAnySelection = inputColumns.some(
-        (col) =>
-          col.type === "number" &&
+      const hasAnySelection = inputColumns.some((col) => {
+        const pandasDtype = getPandasDtype(col.type);
+        return (
+          isNumericDtype(pandasDtype) &&
           currentSelections[col.name]?.selected === true
-      );
+        );
+      });
       if (!hasAnySelection) {
         // 모든 숫자형 열을 기본값으로 선택
         const newSelections: Record<
@@ -3977,10 +4375,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           { selected: boolean; type: string }
         > = {};
         inputColumns.forEach((col) => {
-          if (col.type === "number") {
+          const pandasDtype = getPandasDtype(col.type);
+          if (isNumericDtype(pandasDtype)) {
             newSelections[col.name] = {
               selected: true,
-              type: col.type,
+              type: pandasDtype,
             };
           }
         });
@@ -4013,21 +4412,28 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       setIsLoadingExamples(true);
       try {
         // 빌드 시점에 생성된 JSON 파일을 직접 로드
-        console.log('Loading examples from /examples-in-load.json...');
-        const response = await fetch('/examples-in-load.json', {
-          cache: 'no-cache', // 캐시 방지
+        console.log("Loading examples from /examples-in-load.json...");
+        const response = await fetch("/examples-in-load.json", {
+          cache: "no-cache", // 캐시 방지
         });
-        
-        console.log(`Response status: ${response.status} ${response.statusText}`);
-        
+
+        console.log(
+          `Response status: ${response.status} ${response.statusText}`
+        );
+
         if (!response.ok) {
           throw new Error(
             `Failed to fetch examples-in-load.json: ${response.status} ${response.statusText}`
           );
         }
-        
+
         const examplesData = await response.json();
-        console.log(`Received examples data:`, Array.isArray(examplesData) ? `${examplesData.length} items` : 'not an array');
+        console.log(
+          `Received examples data:`,
+          Array.isArray(examplesData)
+            ? `${examplesData.length} items`
+            : "not an array"
+        );
 
         if (Array.isArray(examplesData)) {
           // JSON 파일에는 이미 name, filename, content가 포함되어 있음
@@ -4035,36 +4441,52 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             name: ex.name || ex.filename,
             content: ex.content,
           }));
-          
+
           // boston_housing.csv가 있는지 확인하고 제거
           const filteredExamples = validExamples.filter((ex: any) => {
-            const name = ex.name || '';
-            const isOldBoston = name.toLowerCase() === 'boston_housing.csv';
+            const name = ex.name || "";
+            const isOldBoston = name.toLowerCase() === "boston_housing.csv";
             if (isOldBoston) {
               console.warn(`⚠ Filtering out old file: ${name}`);
             }
             return !isOldBoston;
           });
-          
+
           setExampleDataList(filteredExamples);
           if (filteredExamples.length === 0) {
             console.warn("No examples loaded from examples-in-load.json");
           } else {
-            console.log(`✓ Loaded ${filteredExamples.length} examples from examples-in-load.json`);
-            console.log(`✓ Example files: ${filteredExamples.map((ex: any) => ex.name).join(', ')}`);
-            const bostonHousing = filteredExamples.find((ex: any) => ex.name === 'BostonHousing.csv');
-            const oldBoston = filteredExamples.find((ex: any) => (ex.name || '').toLowerCase() === 'boston_housing.csv');
+            console.log(
+              `✓ Loaded ${filteredExamples.length} examples from examples-in-load.json`
+            );
+            console.log(
+              `✓ Example files: ${filteredExamples
+                .map((ex: any) => ex.name)
+                .join(", ")}`
+            );
+            const bostonHousing = filteredExamples.find(
+              (ex: any) => ex.name === "BostonHousing.csv"
+            );
+            const oldBoston = filteredExamples.find(
+              (ex: any) =>
+                (ex.name || "").toLowerCase() === "boston_housing.csv"
+            );
             if (bostonHousing) {
               console.log(`✓ BostonHousing.csv is available`);
             } else {
               console.warn(`⚠ BostonHousing.csv NOT found in loaded examples`);
             }
             if (oldBoston) {
-              console.error(`✗ ERROR: boston_housing.csv still exists in examples!`);
+              console.error(
+                `✗ ERROR: boston_housing.csv still exists in examples!`
+              );
             }
           }
         } else {
-          console.warn("Invalid examples-in-load.json format - expected array, got:", typeof examplesData);
+          console.warn(
+            "Invalid examples-in-load.json format - expected array, got:",
+            typeof examplesData
+          );
           setExampleDataList([]);
         }
       } catch (error: any) {
@@ -4385,6 +4807,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     "NormalizerOutput",
     "ColumnPlotOutput",
     "OutlierDetectorOutput",
+    "VIFCheckerOutput",
   ];
 
   const canVisualize = () => {
@@ -4539,6 +4962,52 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 columns={originalData?.columns || []}
                 highlights={highlights}
               />
+            );
+          }
+          break;
+        case ModuleType.VIFChecker:
+          if (outputData.type === "VIFCheckerOutput") {
+            const vifOutput = outputData as VIFCheckerOutput;
+            return (
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-xs text-gray-500 uppercase font-bold mb-2">
+                    VIF Results
+                  </h4>
+                  <div className="bg-gray-900/50 rounded-lg p-3 space-y-2">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-400">Total Columns:</span>
+                      <span className="font-mono text-gray-200 font-medium">
+                        {vifOutput.results.length}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-400">High VIF (&gt; 10):</span>
+                      <span className="font-mono text-red-400 font-medium">
+                        {vifOutput.results.filter((r) => r.vif > 10).length}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-400">
+                        Moderate VIF (5-10):
+                      </span>
+                      <span className="font-mono text-red-300 font-medium">
+                        {
+                          vifOutput.results.filter(
+                            (r) => r.vif > 5 && r.vif <= 10
+                          ).length
+                        }
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-400">Low VIF (≤ 5):</span>
+                      <span className="font-mono text-gray-200 font-medium">
+                        {vifOutput.results.filter((r) => r.vif <= 5).length}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             );
           }
           break;

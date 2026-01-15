@@ -39,6 +39,7 @@ const statLabTypes = [
   ModuleType.OutlierDetector,
   ModuleType.HypothesisTesting,
   ModuleType.Correlation,
+  ModuleType.VIFChecker,
 ];
 
 const analysisOpTypes = [
