@@ -2369,60 +2369,70 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
     [resetModules, addLog, handleFitToView]
   );
 
-  // Samples 폴더의 파일 목록 가져오기 (DB에서 로드)
+  // Samples 폴더의 파일 목록 가져오기 (DB 또는 samples.json에서 로드)
   const loadFolderSamplesLocal = useCallback(async () => {
     setIsLoadingSamples(true);
     try {
-      // DB API에서 샘플 로드
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3002';
-      const response = await fetch(`${API_BASE}/api/samples`);
-
-      if (!response.ok) {
-        // DB 서버가 없으면 기존 JSON 파일로 폴백
-        console.warn('DB API not available, falling back to samples.json');
-        const fallbackResponse = await fetch("/samples.json");
-        if (fallbackResponse.ok) {
-          const samples = await fallbackResponse.json();
+      // 프로덕션 환경(Vercel)에서는 samples.json 사용, 개발 환경에서는 DB API 시도
+      const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+      
+      if (isProduction) {
+        // 프로덕션: samples.json 직접 사용
+        console.log('Production environment: Loading from samples.json');
+        const response = await fetch("/samples.json");
+        if (response.ok) {
+          const samples = await response.json();
           if (Array.isArray(samples) && samples.length > 0) {
+            console.log(`Loaded ${samples.length} samples from samples.json`);
             setFolderSamples(samples);
           } else {
             setFolderSamples([]);
           }
         } else {
+          console.error('Failed to load samples.json:', response.status);
           setFolderSamples([]);
         }
         return;
       }
 
-      const samples = await response.json();
-
-      if (Array.isArray(samples) && samples.length > 0) {
-        console.log(
-          `Loaded ${samples.length} samples from DB:`,
-          samples.map((s: any) => s.name || s.filename)
-        );
-        // DB 형식을 앱 형식으로 변환
-        const formattedSamples = samples.map((s: any) => ({
-          id: s.id, // DB ID 포함
-          filename: s.filename,
-          name: s.name,
-          inputData: s.input_data,
-          description: s.description,
-          data: null, // 필요시 나중에 로드
-        }));
-        setFolderSamples(formattedSamples);
-      } else {
-        console.log("No samples found in DB");
-        setFolderSamples([]);
-      }
-    } catch (error: any) {
-      console.error("Error loading samples from DB:", error);
-      // 에러 발생 시 기존 JSON 파일로 폴백
+      // 개발 환경: DB API 시도
       try {
+        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+        const response = await fetch(`${API_BASE}/api/samples`);
+
+        if (!response.ok) {
+          throw new Error(`DB API returned ${response.status}`);
+        }
+
+        const samples = await response.json();
+
+        if (Array.isArray(samples) && samples.length > 0) {
+          console.log(
+            `Loaded ${samples.length} samples from DB:`,
+            samples.map((s: any) => s.name || s.filename)
+          );
+          // DB 형식을 앱 형식으로 변환
+          const formattedSamples = samples.map((s: any) => ({
+            id: s.id, // DB ID 포함
+            filename: s.filename,
+            name: s.name,
+            inputData: s.input_data,
+            description: s.description,
+            data: null, // 필요시 나중에 로드
+          }));
+          setFolderSamples(formattedSamples);
+        } else {
+          console.log("No samples found in DB, falling back to samples.json");
+          throw new Error("No samples in DB");
+        }
+      } catch (dbError: any) {
+        // DB API 실패 시 samples.json으로 폴백
+        console.warn('DB API not available, falling back to samples.json:', dbError.message);
         const fallbackResponse = await fetch("/samples.json");
         if (fallbackResponse.ok) {
           const samples = await fallbackResponse.json();
           if (Array.isArray(samples) && samples.length > 0) {
+            console.log(`Loaded ${samples.length} samples from samples.json (fallback)`);
             setFolderSamples(samples);
           } else {
             setFolderSamples([]);
@@ -2430,10 +2440,10 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         } else {
           setFolderSamples([]);
         }
-      } catch (fallbackError) {
-        console.error("Fallback also failed:", fallbackError);
-        setFolderSamples([]);
       }
+    } catch (error: any) {
+      console.error("Error loading samples:", error);
+      setFolderSamples([]);
     } finally {
       setIsLoadingSamples(false);
     }
