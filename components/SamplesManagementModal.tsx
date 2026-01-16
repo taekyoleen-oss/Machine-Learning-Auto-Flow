@@ -175,6 +175,7 @@ export const SamplesManagementModal: React.FC<Props> = ({
       <div
         className="bg-gray-900 rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
+        style={{ maxHeight: '90vh' }}
       >
         {/* 헤더 */}
         <div className="p-4 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
@@ -212,7 +213,7 @@ export const SamplesManagementModal: React.FC<Props> = ({
         </div>
 
         {/* 샘플 목록 */}
-        <div className={`flex-1 overflow-y-auto p-4 ${editing ? "pb-0" : ""}`}>
+        <div className={`flex-1 overflow-y-auto p-4 ${editing ? "pb-2" : ""}`} style={{ maxHeight: editing ? 'calc(90vh - 400px)' : 'calc(90vh - 200px)' }}>
           {loading && samples.length === 0 ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-gray-400 text-lg">로딩 중...</div>
@@ -301,10 +302,11 @@ export const SamplesManagementModal: React.FC<Props> = ({
 
         {/* 수정 폼 - 하단 고정 */}
         {editing && (
-          <div className="p-4 border-t-2 border-purple-600 bg-gray-800 flex-shrink-0 shadow-lg">
+          <div className="p-4 border-t-2 border-purple-600 bg-gray-800 flex-shrink-0 shadow-lg overflow-y-auto" style={{ maxHeight: '400px' }}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">샘플 수정</h3>
               <button
+                type="button"
                 onClick={handleCancel}
                 className="text-gray-400 hover:text-white transition-colors"
                 title="닫기"
@@ -368,21 +370,20 @@ export const SamplesManagementModal: React.FC<Props> = ({
                   placeholder="모델에 대한 설명을 입력하세요"
                 />
               </div>
-              <div className="flex gap-3 justify-end pt-4 mt-4 border-t border-gray-700">
+              <div className="flex gap-3 justify-end pt-4 mt-4 border-t-2 border-gray-600 sticky bottom-0 bg-gray-800 pb-2">
                 <button
                   type="button"
                   onClick={handleCancel}
                   disabled={loading}
-                  className="px-5 py-2.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 active:bg-gray-800 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed min-w-[80px]"
+                  className="px-5 py-2.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 active:bg-gray-800 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed min-w-[80px] flex items-center justify-center"
                 >
                   취소
                 </button>
                 <button
                   type="button"
                   onClick={handleSave}
-                  disabled={loading || !formData.name || formData.name.trim() === ""}
+                  disabled={loading}
                   className="px-6 py-2.5 bg-purple-600 text-white rounded-md hover:bg-purple-700 active:bg-purple-800 transition-colors font-semibold shadow-lg shadow-purple-600/30 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-w-[100px]"
-                  style={{ display: 'flex' }}
                 >
                   {loading ? (
                     <>
@@ -409,7 +410,7 @@ export const SamplesManagementModal: React.FC<Props> = ({
                       <span>저장 중...</span>
                     </>
                   ) : (
-                    <span>저장</span>
+                    "저장"
                   )}
                 </button>
               </div>
