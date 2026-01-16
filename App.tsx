@@ -2209,8 +2209,9 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
               ...defaultModule,
               id: moduleId,
               name: m.name || defaultName,
-              position: m.position,
+              position: m.position || { x: 0, y: 0 },
               status: ModuleStatus.Pending,
+              parameters: m.parameters || {}, // 파라미터도 로드
             };
           }
         );
