@@ -2219,72 +2219,111 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         // 연결 형식 처리: 두 가지 형식 지원
         // 1. fromModuleIndex/toModuleIndex 형식 (변환된 형식)
         // 2. from.moduleId/to.moduleId 형식 (원본 .ins 형식)
-        const newConnections: Connection[] = sampleModel.connections
+        console.log("Processing connections, total:", sampleModel.connections?.length || 0);
+        console.log("First connection sample:", sampleModel.connections?.[0]);
+        console.log("Modules count:", sampleModel.modules?.length || 0);
+        console.log("New modules count:", newModules.length);
+        
+        const newConnections: Connection[] = (sampleModel.connections || [])
           .map((conn: any, index: number) => {
-            let fromModule: CanvasModule | undefined;
-            let toModule: CanvasModule | undefined;
-            let fromPort: string;
-            let toPort: string;
+            try {
+              let fromModule: CanvasModule | undefined;
+              let toModule: CanvasModule | undefined;
+              let fromPort: string;
+              let toPort: string;
 
-            // 형식 1: fromModuleIndex/toModuleIndex (변환된 형식)
-            if (
-              typeof conn.fromModuleIndex === "number" &&
-              typeof conn.toModuleIndex === "number"
-            ) {
-              fromModule = newModules[conn.fromModuleIndex];
-              toModule = newModules[conn.toModuleIndex];
-              fromPort = conn.fromPort;
-              toPort = conn.toPort;
-            }
-            // 형식 2: from.moduleId/to.moduleId (원본 .ins 형식)
-            else if (conn.from?.moduleId && conn.to?.moduleId) {
-              // 원본 모듈의 id를 찾아서 새로 생성된 모듈의 id로 매핑
-              const originalFromId = conn.from.moduleId;
-              const originalToId = conn.to.moduleId;
+              // 형식 1: fromModuleIndex/toModuleIndex (변환된 형식)
+              if (
+                typeof conn.fromModuleIndex === "number" &&
+                typeof conn.toModuleIndex === "number"
+              ) {
+                fromModule = newModules[conn.fromModuleIndex];
+                toModule = newModules[conn.toModuleIndex];
+                fromPort = conn.fromPort || conn.from?.portName;
+                toPort = conn.toPort || conn.to?.portName;
+              }
+              // 형식 2: from.moduleId/to.moduleId (원본 .ins 형식)
+              else if (conn.from?.moduleId && conn.to?.moduleId) {
+                // 원본 모듈의 id를 찾아서 새로 생성된 모듈의 id로 매핑
+                const originalFromId = conn.from.moduleId;
+                const originalToId = conn.to.moduleId;
 
-              // sampleModel.modules에서 원본 인덱스 찾기
-              const originalFromIndex = sampleModel.modules.findIndex(
-                (m: any) => m.id === originalFromId
-              );
-              const originalToIndex = sampleModel.modules.findIndex(
-                (m: any) => m.id === originalToId
-              );
+                // sampleModel.modules에서 원본 인덱스 찾기
+                const originalFromIndex = sampleModel.modules.findIndex(
+                  (m: any) => m.id === originalFromId
+                );
+                const originalToIndex = sampleModel.modules.findIndex(
+                  (m: any) => m.id === originalToId
+                );
 
-              if (originalFromIndex >= 0 && originalToIndex >= 0) {
-                fromModule = newModules[originalFromIndex];
-                toModule = newModules[originalToIndex];
-                fromPort = conn.from.portName;
-                toPort = conn.to.portName;
+                if (originalFromIndex >= 0 && originalToIndex >= 0) {
+                  fromModule = newModules[originalFromIndex];
+                  toModule = newModules[originalToIndex];
+                  fromPort = conn.from.portName;
+                  toPort = conn.to.portName;
+                } else {
+                  console.warn(
+                    `Connection at index ${index}: Could not find module IDs`,
+                    { 
+                      originalFromId, 
+                      originalToId,
+                      fromIndex: originalFromIndex,
+                      toIndex: originalToIndex,
+                      availableModuleIds: sampleModel.modules?.map((m: any) => m.id) || []
+                    }
+                  );
+                  return null;
+                }
               } else {
                 console.warn(
-                  `Connection at index ${index}: Could not find module IDs`,
-                  { originalFromId, originalToId }
+                  `Connection at index ${index}: Unknown format`,
+                  { 
+                    conn,
+                    hasFromModuleIndex: typeof conn.fromModuleIndex !== 'undefined',
+                    hasToModuleIndex: typeof conn.toModuleIndex !== 'undefined',
+                    hasFromModuleId: !!conn.from?.moduleId,
+                    hasToModuleId: !!conn.to?.moduleId
+                  }
                 );
                 return null;
               }
-            } else {
-              console.warn(
-                `Connection at index ${index}: Unknown format`,
-                conn
-              );
+
+              if (!fromModule || !toModule) {
+                console.warn(
+                  `Invalid connection at index ${index}: Module not found`,
+                  { 
+                    fromModule: !!fromModule, 
+                    toModule: !!toModule,
+                    fromModuleIndex: conn.fromModuleIndex,
+                    toModuleIndex: conn.toModuleIndex,
+                    fromModuleId: conn.from?.moduleId,
+                    toModuleId: conn.to?.moduleId
+                  }
+                );
+                return null;
+              }
+
+              if (!fromPort || !toPort) {
+                console.warn(
+                  `Invalid connection at index ${index}: Missing port names`,
+                  { fromPort, toPort, conn }
+                );
+                return null;
+              }
+
+              return {
+                id: `connection-${Date.now()}-${index}`,
+                from: { moduleId: fromModule.id, portName: fromPort },
+                to: { moduleId: toModule.id, portName: toPort },
+              };
+            } catch (error: any) {
+              console.error(`Error processing connection at index ${index}:`, error, conn);
               return null;
             }
-
-            if (!fromModule || !toModule) {
-              console.warn(
-                `Invalid connection at index ${index}: Module not found`,
-                { fromModule, toModule }
-              );
-              return null;
-            }
-
-            return {
-              id: `connection-${Date.now()}-${index}`,
-              from: { moduleId: fromModule.id, portName: fromPort },
-              to: { moduleId: toModule.id, portName: toPort },
-            };
           })
           .filter((conn): conn is Connection => conn !== null);
+        
+        console.log(`Successfully processed ${newConnections.length} out of ${sampleModel.connections?.length || 0} connections`);
 
         resetModules(newModules);
         _setConnections(newConnections);
