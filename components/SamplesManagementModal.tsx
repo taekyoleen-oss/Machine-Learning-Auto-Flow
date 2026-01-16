@@ -91,6 +91,11 @@ export const SamplesManagementModal: React.FC<Props> = ({
       return;
     }
 
+    // 이름이 비어있으면 저장하지 않음
+    if (!formData.name.trim()) {
+      return;
+    }
+
     try {
       setLoading(true);
       await samplesApi.update(editing.id, formData);
