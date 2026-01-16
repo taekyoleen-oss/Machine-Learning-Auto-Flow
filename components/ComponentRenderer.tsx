@@ -311,7 +311,8 @@ export const ComponentRenderer: React.FC<ModuleNodeProps> = ({ module, isSelecte
     return statusStyles[status];
   };
   const suggestionClasses = isSuggestion ? 'opacity-70 border-dashed border-purple-500 animate-pulse' : '';
-  const wrapperClasses = `absolute w-48 ${getBackgroundColor()} ${getBorderColor()} border-2 rounded-lg shadow-lg flex flex-col ${isSuggestion ? 'cursor-pointer' : 'cursor-move'} ${isSelected ? 'ring-2 ring-offset-2 ring-offset-gray-900 ring-blue-500' : ''} ${suggestionClasses}`;
+  const ringOffset = theme === 'light' ? 'ring-offset-white' : 'ring-offset-gray-900';
+  const wrapperClasses = `absolute w-48 ${getBackgroundColor()} ${getBorderColor()} border-2 rounded-lg shadow-lg flex flex-col ${isSuggestion ? 'cursor-pointer' : 'cursor-move'} ${isSelected ? `ring-2 ring-offset-2 ${ringOffset} ring-blue-500` : ''} ${suggestionClasses}`;
   
   const componentStyle: React.CSSProperties = {
     transform: `translate(${position.x}px, ${position.y}px)`,
