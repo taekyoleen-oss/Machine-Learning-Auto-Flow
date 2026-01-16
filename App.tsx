@@ -10468,7 +10468,11 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           <div className="flex items-center gap-1 md:gap-2 ml-auto">
             <button
               onClick={() => setIsCodePanelVisible((v) => !v)}
-              className="flex items-center gap-1 md:gap-2 px-1.5 md:px-2 py-0.5 md:py-1 text-[5px] md:text-[8px] bg-gray-600 hover:bg-gray-700 rounded-md font-semibold transition-colors flex-shrink-0"
+              className={`flex items-center gap-1 md:gap-2 px-1.5 md:px-2 py-0.5 md:py-1 text-[5px] md:text-[8px] rounded-md font-semibold transition-colors flex-shrink-0 ${
+                theme === 'light' 
+                  ? 'bg-gray-800 hover:bg-gray-900 text-white border-2 border-gray-900 shadow-md' 
+                  : 'bg-gray-600 hover:bg-gray-700 text-white'
+              }`}
               title="View Full Pipeline Code"
             >
               <CodeBracketIcon className="h-1.5 w-1.5 md:h-2.5 md:w-2.5" />
@@ -10476,7 +10480,11 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             </button>
             <button
               onClick={() => setIsGoalModalOpen(true)}
-              className="flex items-center gap-1 md:gap-2 px-1.5 md:px-2 py-0.5 md:py-1 text-[5px] md:text-[8px] bg-purple-600 hover:bg-purple-700 rounded-md font-semibold transition-colors flex-shrink-0"
+              className={`flex items-center gap-1 md:gap-2 px-1.5 md:px-2 py-0.5 md:py-1 text-[5px] md:text-[8px] rounded-md font-semibold transition-colors flex-shrink-0 ${
+                theme === 'light' 
+                  ? 'bg-purple-700 hover:bg-purple-800 text-white border-2 border-purple-900 shadow-md' 
+                  : 'bg-purple-600 hover:bg-purple-700 text-white'
+              }`}
               title="Generate pipeline from a goal"
             >
               <SparklesIcon className="h-1.5 w-1.5 md:h-2.5 md:w-2.5" />
@@ -10486,7 +10494,11 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             </button>
             <button
               onClick={() => setIsDataModalOpen(true)}
-              className="flex items-center gap-1 md:gap-2 px-1.5 md:px-2 py-0.5 md:py-1 text-[5px] md:text-[8px] bg-indigo-600 hover:bg-indigo-700 rounded-md font-semibold transition-colors flex-shrink-0"
+              className={`flex items-center gap-1 md:gap-2 px-1.5 md:px-2 py-0.5 md:py-1 text-[5px] md:text-[8px] rounded-md font-semibold transition-colors flex-shrink-0 ${
+                theme === 'light' 
+                  ? 'bg-indigo-700 hover:bg-indigo-800 text-white border-2 border-indigo-900 shadow-md' 
+                  : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+              }`}
               title="Generate pipeline from data"
             >
               <SparklesIcon className="h-1.5 w-1.5 md:h-2.5 md:w-2.5" />

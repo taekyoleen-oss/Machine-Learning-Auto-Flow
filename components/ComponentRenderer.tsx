@@ -59,12 +59,6 @@ const statusDotColors = {
     [ModuleStatus.Error]: 'bg-red-400',
 };
 
-const statusIcons = {
-    [ModuleStatus.Pending]: <CogIcon className="w-4 h-4 text-gray-400" />,
-    [ModuleStatus.Running]: <CogIcon className="w-4 h-4 text-blue-400 animate-spin" />,
-    [ModuleStatus.Success]: <CheckCircleIcon className="w-4 h-4 text-green-400" />,
-    [ModuleStatus.Error]: <XCircleIcon className="w-4 h-4 text-red-400" />,
-};
 
 const PortComponent: React.FC<PortComponentProps> = ({ port, isInput, moduleId, portRefs, onStartConnection, onStartSuggestion, onEndConnection, isTappedSource, onTapPort, cancelDragConnection, style, dragConnection }) => {
     const touchStartRef = useRef<{x: number, y: number, time: number, isDragging: boolean} | null>(null);
@@ -433,7 +427,7 @@ export const ComponentRenderer: React.FC<ModuleNodeProps> = ({ module, isSelecte
                       {module.name}
                   </span>
               </div>
-              {statusIcons[status]}
+              <StatusIcons status={status} theme={theme} />
           </div>
       </div>
       
@@ -464,16 +458,16 @@ export const ComponentRenderer: React.FC<ModuleNodeProps> = ({ module, isSelecte
                       const buttonColor = getRunButtonColor();
                       const isDisabled = !canRun && status !== ModuleStatus.Success;
                       const buttonBg = theme === 'light' 
-                          ? (isDisabled ? 'bg-gray-200' : 'bg-gray-100 hover:bg-green-500')
-                          : (isDisabled ? 'bg-gray-800' : 'bg-gray-700 hover:bg-green-600');
+                          ? (isDisabled ? 'bg-gray-200 border-2 border-gray-300' : 'bg-white border-2 border-blue-500 hover:bg-green-500 hover:border-green-600 shadow-lg')
+                          : (isDisabled ? 'bg-gray-800 border-2 border-gray-600' : 'bg-gray-700 border-2 border-blue-400 hover:bg-green-600 hover:border-green-500 shadow-lg');
                       return (
                           <button
                               onClick={(e) => { e.stopPropagation(); onRunModule(module.id); }}
                               disabled={isDisabled}
-                              className={`absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full transition-colors z-10 ${
+                              className={`absolute left-2 top-1/2 -translate-y-1/2 p-2.5 rounded-full transition-all z-10 ${
                                   isDisabled 
                                       ? `${buttonBg} ${buttonColor} cursor-not-allowed opacity-50` 
-                                      : `${buttonBg} ${buttonColor} hover:text-white`
+                                      : `${buttonBg} ${buttonColor} hover:text-white hover:scale-110`
                               }`}
                               title={canRun ? "Run this module" : "Upstream modules must be executed first"}
                           >
@@ -496,7 +490,15 @@ export const ComponentRenderer: React.FC<ModuleNodeProps> = ({ module, isSelecte
                           onViewDetails(module.id);
                         }
                       }}
-                      className={`text-xs disabled:cursor-not-allowed ${theme === 'light' ? 'text-gray-700 hover:text-gray-900 disabled:text-gray-400' : 'text-gray-400 hover:text-white disabled:text-gray-600'}`}
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-md transition-all disabled:cursor-not-allowed ${
+                        theme === 'light' 
+                          ? module.status === ModuleStatus.Success
+                            ? 'bg-blue-600 hover:bg-blue-700 text-white border-2 border-blue-800 shadow-md hover:scale-105'
+                            : 'bg-gray-300 text-gray-800 border-2 border-gray-400 shadow-sm'
+                          : module.status === ModuleStatus.Success
+                            ? 'bg-blue-600 hover:bg-blue-700 text-white border-2 border-blue-400 shadow-md hover:scale-105'
+                            : 'bg-gray-700 text-gray-400 border-2 border-gray-600'
+                      }`}
                       disabled={module.status !== ModuleStatus.Success}
                   >
                       {module.status === ModuleStatus.Success ? 'View Details' : module.status}
