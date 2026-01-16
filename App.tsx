@@ -168,6 +168,7 @@ const isClassification = (
 // These JavaScript implementations have been removed to ensure Python-compatible results
 
 const App: React.FC = () => {
+  const { theme, toggleTheme } = useTheme();
   const [modules, setModules, undo, redo, resetModules, canUndo, canRedo] =
     useHistoryState<CanvasModule[]>([]);
   const [connections, _setConnections] = useState<Connection[]>([]);
@@ -10039,7 +10040,9 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
               ML Auto Flow
             </h1>
             <div className="flex items-center gap-2 flex-shrink-0">
-              <span className="text-gray-400 dark:text-gray-600 hidden md:inline">|</span>
+              <span className="text-gray-400 dark:text-gray-600 hidden md:inline">
+                |
+              </span>
               {isEditingProjectName ? (
                 <input
                   value={projectName}
@@ -10072,9 +10075,11 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           <button
             onClick={toggleTheme}
             className="p-1.5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors flex-shrink-0"
-            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            title={
+              theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"
+            }
           >
-            {theme === 'dark' ? (
+            {theme === "dark" ? (
               <SunIcon className="h-5 w-5 text-yellow-400" />
             ) : (
               <MoonIcon className="h-5 w-5 text-gray-700" />
@@ -10522,7 +10527,9 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
       <div className="flex-grow min-h-0 relative">
         <main
           ref={canvasContainerRef}
-          className={`w-full h-full ${theme === 'dark' ? 'canvas-bg' : 'canvas-bg-light'} relative overflow-hidden`}
+          className={`w-full h-full ${
+            theme === "dark" ? "canvas-bg" : "canvas-bg-light"
+          } relative overflow-hidden`}
         >
           <Canvas
             modules={modules}
