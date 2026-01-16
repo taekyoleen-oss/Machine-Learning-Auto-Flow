@@ -207,7 +207,7 @@ export const SamplesManagementModal: React.FC<Props> = ({
         </div>
 
         {/* 샘플 목록 */}
-        <div className={`flex-1 overflow-y-auto p-4 ${editing ? 'pb-0' : ''}`}>
+        <div className={`flex-1 overflow-y-auto p-4 ${editing ? "pb-0" : ""}`}>
           {loading && samples.length === 0 ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-gray-400 text-lg">로딩 중...</div>
@@ -365,18 +365,19 @@ export const SamplesManagementModal: React.FC<Props> = ({
               </div>
               <div className="flex gap-3 justify-end pt-4 mt-4 border-t border-gray-700">
                 <button
+                  type="button"
                   onClick={handleCancel}
                   disabled={loading}
-                  className="px-5 py-2.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed min-w-[80px]"
+                  className="px-5 py-2.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 active:bg-gray-800 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed min-w-[80px]"
                 >
                   취소
                 </button>
                 <button
+                  type="button"
                   onClick={handleSave}
-                  disabled={
-                    loading || !formData.name || formData.name.trim() === ""
-                  }
-                  className="px-6 py-2.5 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors font-semibold shadow-lg shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-w-[100px]"
+                  disabled={loading || !formData.name || formData.name.trim() === ""}
+                  className="px-6 py-2.5 bg-purple-600 text-white rounded-md hover:bg-purple-700 active:bg-purple-800 transition-colors font-semibold shadow-lg shadow-purple-600/30 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-w-[100px]"
+                  style={{ display: 'flex' }}
                 >
                   {loading ? (
                     <>
@@ -400,10 +401,10 @@ export const SamplesManagementModal: React.FC<Props> = ({
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                         ></path>
                       </svg>
-                      저장 중...
+                      <span>저장 중...</span>
                     </>
                   ) : (
-                    "저장"
+                    <span>저장</span>
                   )}
                 </button>
               </div>
