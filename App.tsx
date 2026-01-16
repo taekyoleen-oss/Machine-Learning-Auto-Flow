@@ -2040,7 +2040,8 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
     async (
       sampleName: string,
       source: "samples" | "mywork" | "folder" = "samples",
-      filename?: string
+      filename?: string,
+      sampleId?: number // DB에서 로드할 때 사용할 ID 추가
     ) => {
       console.log(
         "handleLoadSample called with:",
@@ -2048,12 +2049,29 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         "from:",
         source,
         "filename:",
-        filename
+        filename,
+        "sampleId:",
+        sampleId
       );
       try {
         let sampleModel: any = null;
 
-        if (source === "folder" && filename) {
+        if (source === "folder" && sampleId) {
+          // DB에서 샘플 로드 (ID가 있는 경우)
+          try {
+            const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+            const response = await fetch(`${API_BASE}/api/samples/${sampleId}`);
+            if (!response.ok) {
+              throw new Error(`Failed to fetch sample from DB: ${response.status} ${response.statusText}`);
+            }
+            const dbSample = await response.json();
+            sampleModel = dbSample.file_content; // file_content는 이미 JSON 파싱됨
+          } catch (error: any) {
+            console.error("Error loading sample from DB:", error);
+            addLog("ERROR", `Error loading sample from DB: ${error.message || error}`);
+            return;
+          }
+        } else if (source === "folder" && filename) {
           // DB에서 샘플 찾기
           try {
             const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3002';
