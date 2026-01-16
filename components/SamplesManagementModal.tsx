@@ -207,7 +207,7 @@ export const SamplesManagementModal: React.FC<Props> = ({
         </div>
 
         {/* 샘플 목록 */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className={`flex-1 overflow-y-auto p-4 ${editing ? 'pb-0' : ''}`}>
           {loading && samples.length === 0 ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-gray-400 text-lg">로딩 중...</div>
@@ -294,10 +294,19 @@ export const SamplesManagementModal: React.FC<Props> = ({
           )}
         </div>
 
-        {/* 수정 폼 */}
+        {/* 수정 폼 - 하단 고정 */}
         {editing && (
-          <div className="p-4 border-t border-gray-700 bg-gray-800 flex-shrink-0">
-            <h3 className="text-lg font-semibold text-white mb-4">샘플 수정</h3>
+          <div className="p-4 border-t-2 border-purple-600 bg-gray-800 flex-shrink-0 shadow-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">샘플 수정</h3>
+              <button
+                onClick={handleCancel}
+                className="text-gray-400 hover:text-white transition-colors"
+                title="닫기"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
             <div className="space-y-3">
               <div>
                 <label className="block text-sm text-gray-300 mb-1">이름</label>
@@ -354,18 +363,20 @@ export const SamplesManagementModal: React.FC<Props> = ({
                   placeholder="모델에 대한 설명을 입력하세요"
                 />
               </div>
-              <div className="flex gap-2 justify-end pt-2 border-t border-gray-700 mt-4">
+              <div className="flex gap-3 justify-end pt-4 mt-4 border-t border-gray-700">
                 <button
                   onClick={handleCancel}
                   disabled={loading}
-                  className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-5 py-2.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed min-w-[80px]"
                 >
                   취소
                 </button>
                 <button
                   onClick={handleSave}
-                  disabled={loading || !formData.name || formData.name.trim() === ""}
-                  className="px-6 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors font-semibold shadow-lg shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  disabled={
+                    loading || !formData.name || formData.name.trim() === ""
+                  }
+                  className="px-6 py-2.5 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors font-semibold shadow-lg shadow-purple-600/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-w-[100px]"
                 >
                   {loading ? (
                     <>
