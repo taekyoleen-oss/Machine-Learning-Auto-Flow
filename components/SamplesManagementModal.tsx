@@ -256,6 +256,20 @@ export const SamplesManagementModal: React.FC<Props> = ({
                 />
               </div>
               <div>
+                <label className="block text-sm text-gray-300 mb-1">카테고리</label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-purple-500 focus:outline-none"
+                >
+                  <option value="머신러닝">머신러닝</option>
+                  <option value="딥러닝">딥러닝</option>
+                  <option value="통계분석">통계분석</option>
+                  <option value="DFA">DFA</option>
+                  <option value="프라이싱">프라이싱</option>
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm text-gray-300 mb-1">설명</label>
                 <textarea
                   value={formData.description}
