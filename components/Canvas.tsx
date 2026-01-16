@@ -3,6 +3,7 @@ import { CanvasModule, Connection, ModuleType, DataPreview, ColumnInfo } from '.
 import { ComponentRenderer as ModuleNode } from './ComponentRenderer';
 import { ShapeRenderer } from './ShapeRenderer';
 import { SpreadViewModal } from './SpreadViewModal';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface CanvasProps {
   modules: CanvasModule[];
@@ -37,6 +38,7 @@ export const Canvas: React.FC<CanvasProps> = ({
     onDeleteModule, onUpdateModuleName, onUpdateModule, suggestion, onAcceptSuggestion, 
     onClearSuggestion, onStartSuggestion, areUpstreamModulesReady
 }) => {
+  const { theme } = useTheme();
   const [dragConnection, setDragConnection] = useState<{ from: { moduleId: string, portName: string, isInput: boolean }, to: { x: number, y: number } } | null>(null);
   const [isSuggestionDrag, setIsSuggestionDrag] = useState(false);
   const [tappedSourcePort, setTappedSourcePort] = useState<{ moduleId: string; portName: string; } | null>(null);
@@ -954,7 +956,7 @@ export const Canvas: React.FC<CanvasProps> = ({
       >
         <defs>
             <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="#FFFFFF" />
+                <path d="M 0 0 L 10 5 L 0 10 z" fill={theme === 'light' ? '#1f2937' : '#FFFFFF'} />
             </marker>
              <marker id="arrow-drag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                 <path d="M 0 0 L 10 5 L 0 10 z" fill="#a78bfa" />
@@ -981,8 +983,8 @@ export const Canvas: React.FC<CanvasProps> = ({
                     <g key={conn.id} onDoubleClick={() => handleConnectionDoubleClick(conn.id)}>
                         <path
                             d={pathD}
-                            stroke={isSuggestionConn ? "#a78bfa" : "#FFFFFF"}
-                            strokeWidth="3"
+                            stroke={isSuggestionConn ? "#a78bfa" : (theme === 'light' ? "#1f2937" : "#FFFFFF")}
+                            strokeWidth={theme === 'light' ? "2.5" : "3"}
                             fill="none"
                             strokeDasharray={isSuggestionConn ? "6,6" : undefined}
                             markerEnd="url(#arrow)"
