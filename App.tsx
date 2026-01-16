@@ -2072,78 +2072,29 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             return;
           }
         } else if (source === "folder" && filename) {
-          // DB에서 샘플 찾기
+          // samples.json에서 파일 찾기 (Vercel 배포 환경에서는 samples.json 사용)
           try {
-            const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3002';
-            const response = await fetch(`${API_BASE}/api/samples`);
-            
-            if (response.ok) {
-              const samples = await response.json();
-              if (Array.isArray(samples)) {
-                const foundSample = samples.find(
-                  (s: any) => s.filename === filename || s.name === sampleName
-                );
-                if (foundSample) {
-                  // DB에서 전체 데이터 가져오기
-                  const fullResponse = await fetch(`${API_BASE}/api/samples/${foundSample.id}`);
-                  if (fullResponse.ok) {
-                    const fullSample = await fullResponse.json();
-                    if (fullSample.file_content) {
-                      sampleModel = fullSample.file_content;
-                    } else {
-                      addLog("ERROR", `Sample data not found: ${filename}`);
-                      return;
-                    }
-                  } else {
-                    addLog("ERROR", `Failed to fetch sample data: ${fullResponse.status}`);
-                    return;
-                  }
-                } else {
-                  // DB에 없으면 기존 JSON 파일로 폴백
-                  const fallbackResponse = await fetch("/samples.json");
-                  if (fallbackResponse.ok) {
-                    const fallbackSamples = await fallbackResponse.json();
-                    const foundSample = fallbackSamples.find(
-                      (s: any) => s.filename === filename || s.name === sampleName
-                    );
-                    if (foundSample && foundSample.data) {
-                      sampleModel = foundSample.data;
-                    } else {
-                      addLog("ERROR", `Sample file not found: ${filename}`);
-                      return;
-                    }
-                  } else {
-                    addLog("ERROR", `Sample file not found: ${filename}`);
-                    return;
-                  }
-                }
+            const response = await fetch("/samples.json");
+            if (!response.ok) {
+              throw new Error(
+                `Failed to fetch samples.json: ${response.status}`
+              );
+            }
+            const samples = await response.json();
+            if (Array.isArray(samples)) {
+              const foundSample = samples.find(
+                (s: any) => s.filename === filename || s.name === sampleName
+              );
+              if (foundSample && foundSample.data) {
+                sampleModel = foundSample.data;
+                console.log("Loaded sample from samples.json:", foundSample.name);
               } else {
-                addLog("ERROR", `Invalid samples format`);
+                addLog("ERROR", `Sample file not found: ${filename}`);
                 return;
               }
             } else {
-              // DB 서버가 없으면 기존 JSON 파일로 폴백
-              const fallbackResponse = await fetch("/samples.json");
-              if (!fallbackResponse.ok) {
-                throw new Error(
-                  `Failed to fetch samples.json: ${fallbackResponse.status}`
-                );
-              }
-              const samples = await fallbackResponse.json();
-              if (Array.isArray(samples)) {
-                const foundSample = samples.find(
-                  (s: any) => s.filename === filename || s.name === sampleName
-                );
-                if (foundSample && foundSample.data) {
-                  sampleModel = foundSample.data;
-                } else {
-                  addLog("ERROR", `Sample file not found: ${filename}`);
-                  return;
-                }
-              } else {
-                addLog("ERROR", `Invalid samples.json format`);
-                return;
-              }
+              addLog("ERROR", `Invalid samples.json format`);
+              return;
             }
           } catch (error: any) {
             console.error("Error loading folder sample:", error);
