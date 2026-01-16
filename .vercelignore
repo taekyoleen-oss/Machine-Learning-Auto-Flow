@@ -11,3 +11,12 @@ pages/api/
 **/api/**/*.tsx
 **/pages/api/**/*.ts
 **/pages/api/**/*.tsx
+
+# Ignore server-side code (not needed for Vercel static hosting)
+server/
+**/server/**
+database/
+**/database/**
+*.db
+*.db-shm
+*.db-wal

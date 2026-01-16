@@ -31,3 +31,8 @@ dist-ssr
 # API folders (removed, using static JSON files)
 api/
 pages/api/
+
+# Database files (local development only)
+database/*.db
+database/*.db-shm
+database/*.db-wal
