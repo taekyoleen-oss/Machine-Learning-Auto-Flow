@@ -100,7 +100,7 @@ const ExplanationRenderer: React.FC<{ text: string }> = ({ text }) => {
         parts.push(
           <code
             key={result.index}
-            className="bg-gray-700 text-purple-300 px-1 py-0.5 rounded text-xs"
+            className="bg-gray-200 dark:bg-gray-700 text-purple-600 dark:text-purple-300 px-1 py-0.5 rounded text-xs"
           >
             {result[4]}
           </code>
@@ -267,7 +267,7 @@ ${optionsContext}
           : "AI로 파라미터 설명 보기"}
       </button>
       {show && (
-        <div className="mt-2 p-3 bg-gray-700 rounded-lg">
+        <div className="mt-2 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
           {isLoading && (
             <p className="text-sm text-gray-400">
               AI 설명을 생성하고 있습니다...
@@ -375,7 +375,7 @@ const PropertyGroup: React.FC<{
 }> = ({ title, children, module }) => (
   <div className="mb-4">
     <h4 className="text-xs text-gray-500 uppercase font-bold mb-2">{title}</h4>
-    <div className="bg-gray-800 p-3 rounded-lg">
+    <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg">
       {children}
       <AIModuleExplanation module={module} />
     </div>
@@ -406,7 +406,7 @@ const PropertyInput: React.FC<{
             : e.target.value
         )
       }
-      className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
     />
   </div>
 );
@@ -422,7 +422,7 @@ const PropertySelect: React.FC<{
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
     >
       {options.map((opt) => {
         const optionValue = typeof opt === "string" ? opt : opt.value;
@@ -461,7 +461,7 @@ const PropertyDisplay: React.FC<{ label: string; value: React.ReactNode }> = ({
 }) => (
   <div className="mb-3 last:mb-0">
     <label className="block text-sm text-gray-400 mb-1">{label}</label>
-    <div className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-sm text-gray-300">
+    <div className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 text-sm text-gray-700 dark:text-gray-300">
       {value}
     </div>
   </div>
@@ -1749,7 +1749,7 @@ const renderParameters = (
             <select
               value={column}
               onChange={(e) => onParamChange("column", e.target.value)}
-              className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select a column</option>
               {numericColumns.map((col) => (
@@ -3024,7 +3024,7 @@ const renderParameters = (
             <select
               value={label_column || ""}
               onChange={(e) => handleLabelChange(e.target.value)}
-              className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">공백</option>
               {inputColumns.map((col) => (
@@ -3786,7 +3786,7 @@ const renderParameters = (
             <select
               value={label_column || ""}
               onChange={(e) => handleLabelChange(e.target.value)}
-              className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">공백</option>
               {inputColumns.map((col) => (
@@ -5447,7 +5447,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   };
 
   return (
-    <div className="bg-gray-800 text-white h-full flex flex-col">
+    <div className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white h-full flex flex-col">
       <input
         type="file"
         ref={fileInputRef}
@@ -5522,14 +5522,14 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
         </div>
 
         {module && (
-          <div className="flex-shrink-0 border-b border-gray-700">
+          <div className="flex-shrink-0 border-b border-gray-300 dark:border-gray-700">
             <div className="flex">
               <button
                 onClick={() => setActiveTab("properties")}
                 className={`flex-1 flex items-center justify-center p-3 text-xs font-semibold ${
                   activeTab === "properties"
-                    ? "bg-gray-700 text-white"
-                    : "text-gray-400 hover:bg-gray-700/50"
+                    ? "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
+                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50"
                 }`}
               >
                 Properties
@@ -5538,8 +5538,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 onClick={() => setActiveTab("preview")}
                 className={`flex-1 flex items-center justify-center p-3 text-xs font-semibold ${
                   activeTab === "preview"
-                    ? "bg-gray-700 text-white"
-                    : "text-gray-400 hover:bg-gray-700/50"
+                    ? "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
+                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50"
                 }`}
               >
                 Preview
@@ -5548,8 +5548,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 onClick={() => setActiveTab("code")}
                 className={`flex-1 flex items-center justify-center p-3 text-xs font-semibold ${
                   activeTab === "code"
-                    ? "bg-gray-700 text-white"
-                    : "text-gray-400 hover:bg-gray-700/50"
+                    ? "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
+                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50"
                 }`}
               >
                 Code
@@ -5558,8 +5558,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 onClick={() => setActiveTab("terminal")}
                 className={`flex-1 flex items-center justify-center p-3 text-xs font-semibold ${
                   activeTab === "terminal"
-                    ? "bg-gray-700 text-white"
-                    : "text-gray-400 hover:bg-gray-700/50"
+                    ? "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
+                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50"
                 }`}
               >
                 Terminal

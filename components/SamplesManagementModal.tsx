@@ -182,16 +182,16 @@ export const SamplesManagementModal: React.FC<Props> = ({
       onClick={onClose}
     >
       <div
-        className="bg-gray-900 rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-white dark:bg-gray-900 rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
         style={{ maxHeight: "90vh" }}
       >
         {/* 헤더 */}
-        <div className="p-4 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
-          <h2 className="text-2xl font-bold text-white">샘플 관리</h2>
+        <div className="p-4 border-b border-gray-300 dark:border-gray-700 flex justify-between items-center flex-shrink-0">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">샘플 관리</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-1 rounded-md hover:bg-gray-800"
+            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
             aria-label="Close"
           >
             <XMarkIcon className="w-6 h-6" />
@@ -199,8 +199,8 @@ export const SamplesManagementModal: React.FC<Props> = ({
         </div>
 
         {/* 파일 가져오기 */}
-        <div className="p-4 border-b border-gray-700 flex-shrink-0">
-          <label className="block mb-2 text-sm font-medium text-gray-300">
+        <div className="p-4 border-b border-gray-300 dark:border-gray-700 flex-shrink-0">
+          <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
             파일에서 가져오기 (.ins, .json)
           </label>
           <div className="flex items-center gap-2">
@@ -216,7 +216,7 @@ export const SamplesManagementModal: React.FC<Props> = ({
               />
             </label>
             {loading && (
-              <span className="text-gray-400 text-sm">처리 중...</span>
+              <span className="text-gray-600 dark:text-gray-400 text-sm">처리 중...</span>
             )}
           </div>
         </div>
@@ -230,18 +230,18 @@ export const SamplesManagementModal: React.FC<Props> = ({
         >
           {loading && samples.length === 0 ? (
             <div className="flex items-center justify-center py-12">
-              <div className="text-gray-400 text-lg">로딩 중...</div>
+              <div className="text-gray-600 dark:text-gray-400 text-lg">로딩 중...</div>
             </div>
           ) : samples.length === 0 ? (
             <div className="flex items-center justify-center py-12">
-              <div className="text-gray-400 text-lg">샘플이 없습니다</div>
+              <div className="text-gray-600 dark:text-gray-400 text-lg">샘플이 없습니다</div>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-700">
-                    <th className="text-left p-3 text-gray-300 font-semibold">
+                  <tr className="border-b border-gray-300 dark:border-gray-700">
+                    <th className="text-left p-3 text-gray-700 dark:text-gray-300 font-semibold">
                       이름
                     </th>
                     <th className="text-left p-3 text-gray-300 font-semibold">
@@ -265,23 +265,23 @@ export const SamplesManagementModal: React.FC<Props> = ({
                   {samples.map((sample) => (
                     <tr
                       key={sample.id}
-                      className="border-b border-gray-800 hover:bg-gray-800/50 transition-colors"
+                      className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors"
                     >
-                      <td className="p-3 text-white font-medium">
+                      <td className="p-3 text-gray-900 dark:text-white font-medium">
                         {sample.name}
                       </td>
-                      <td className="p-3 text-gray-400">
+                      <td className="p-3 text-gray-600 dark:text-gray-400">
                         <span className="px-2 py-1 bg-purple-600/20 text-purple-300 rounded text-xs">
                           {sample.category || "머신러닝"}
                         </span>
                       </td>
-                      <td className="p-3 text-gray-400">
+                      <td className="p-3 text-gray-600 dark:text-gray-400">
                         {sample.input_data || "-"}
                       </td>
                       <td className="p-3 text-gray-400 max-w-md truncate">
                         {sample.description || "-"}
                       </td>
-                      <td className="p-3 text-gray-500 text-xs">
+                      <td className="p-3 text-gray-500 dark:text-gray-500 text-xs">
                         {sample.created_at
                           ? new Date(sample.created_at).toLocaleDateString(
                               "ko-KR"
@@ -317,15 +317,15 @@ export const SamplesManagementModal: React.FC<Props> = ({
         {/* 수정 폼 - 하단 고정 */}
         {editing && (
           <div
-            className="p-4 border-t-2 border-purple-600 bg-gray-800 flex-shrink-0 shadow-lg overflow-y-auto"
+            className="p-4 border-t-2 border-purple-600 bg-gray-50 dark:bg-gray-800 flex-shrink-0 shadow-lg overflow-y-auto"
             style={{ maxHeight: "400px" }}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">샘플 수정</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">샘플 수정</h3>
               <button
                 type="button"
                 onClick={handleCancel}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                 title="닫기"
               >
                 <XMarkIcon className="w-5 h-5" />
@@ -333,18 +333,18 @@ export const SamplesManagementModal: React.FC<Props> = ({
             </div>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm text-gray-300 mb-1">이름</label>
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">이름</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  className="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-purple-500 focus:outline-none"
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded border border-gray-300 dark:border-gray-600 focus:border-purple-500 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-300 mb-1">
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
                   입력 데이터
                 </label>
                 <input
@@ -353,12 +353,12 @@ export const SamplesManagementModal: React.FC<Props> = ({
                   onChange={(e) =>
                     setFormData({ ...formData, input_data: e.target.value })
                   }
-                  className="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-purple-500 focus:outline-none"
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded border border-gray-300 dark:border-gray-600 focus:border-purple-500 focus:outline-none"
                   placeholder="예: Boston House"
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-300 mb-1">
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
                   카테고리
                 </label>
                 <select
@@ -366,7 +366,7 @@ export const SamplesManagementModal: React.FC<Props> = ({
                   onChange={(e) =>
                     setFormData({ ...formData, category: e.target.value })
                   }
-                  className="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-purple-500 focus:outline-none"
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded border border-gray-300 dark:border-gray-600 focus:border-purple-500 focus:outline-none"
                 >
                   <option value="머신러닝">머신러닝</option>
                   <option value="딥러닝">딥러닝</option>
@@ -376,18 +376,18 @@ export const SamplesManagementModal: React.FC<Props> = ({
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-gray-300 mb-1">설명</label>
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">설명</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
-                  className="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-purple-500 focus:outline-none"
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded border border-gray-300 dark:border-gray-600 focus:border-purple-500 focus:outline-none"
                   rows={3}
                   placeholder="모델에 대한 설명을 입력하세요"
                 />
               </div>
-              <div className="flex gap-3 justify-end pt-4 mt-4 border-t-2 border-gray-600 sticky bottom-0 bg-gray-800 pb-2">
+              <div className="flex gap-3 justify-end pt-4 mt-4 border-t-2 border-gray-300 dark:border-gray-600 sticky bottom-0 bg-gray-50 dark:bg-gray-800 pb-2">
                 <button
                   type="button"
                   onClick={handleCancel}

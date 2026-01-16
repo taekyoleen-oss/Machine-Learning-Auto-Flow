@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ML Auto Flow</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {}
+        }
+      }
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
       body {
@@ -12,23 +20,39 @@
         overscroll-behavior: none;
       }
       .canvas-bg {
-        background-color: #111827; /* Darker background */
+        background-color: #111827; /* Dark background */
         background-image:
           linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
           linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        background-size: 25px 25px;
+      }
+      .canvas-bg-light {
+        background-color: #f9fafb; /* Light background */
+        background-image:
+          linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
         background-size: 25px 25px;
       }
       .panel-scrollbar::-webkit-scrollbar {
         width: 6px;
       }
       .panel-scrollbar::-webkit-scrollbar-track {
+        background: #e5e7eb;
+      }
+      .dark .panel-scrollbar::-webkit-scrollbar-track {
         background: #374151;
       }
       .panel-scrollbar::-webkit-scrollbar-thumb {
-        background: #6b7280;
+        background: #9ca3af;
         border-radius: 3px;
       }
+      .dark .panel-scrollbar::-webkit-scrollbar-thumb {
+        background: #6b7280;
+      }
       .panel-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #6b7280;
+      }
+      .dark .panel-scrollbar::-webkit-scrollbar-thumb:hover {
         background: #9ca3af;
       }
       .scrollbar-hide {

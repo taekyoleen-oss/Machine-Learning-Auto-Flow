@@ -70,18 +70,18 @@ const SamplesModal: React.FC<SamplesModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-gray-900 rounded-lg shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-white dark:bg-gray-900 rounded-lg shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
-        <div className="sticky top-0 bg-gray-900 border-b border-gray-700 z-10">
+        <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700 z-10">
           <div className="p-4 flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-white">Samples</h2>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Samples</h2>
             <div className="flex items-center gap-2">
               {onManage && (
                 <button
                   onClick={onManage}
-                  className="text-gray-400 hover:text-white transition-colors p-2 rounded-md hover:bg-gray-800"
+                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
                   title="샘플 관리"
                 >
                   <Cog6ToothIcon className="w-5 h-5" />
@@ -106,7 +106,7 @@ const SamplesModal: React.FC<SamplesModalProps> = ({
                 className={`px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap transition-colors ${
                   selectedCategory === category
                     ? "bg-purple-600 text-white"
-                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                    : "bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700"
                 }`}
               >
                 {category}
@@ -134,25 +134,25 @@ const SamplesModal: React.FC<SamplesModalProps> = ({
               {filteredSamples.map((sample) => (
                 <div
                   key={sample.filename}
-                  className="bg-gray-800 rounded-lg border border-gray-700 p-6 hover:border-purple-500 transition-all duration-200 hover:shadow-lg hover:shadow-purple-500/20 flex flex-col"
+                  className="bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700 p-6 hover:border-purple-500 transition-all duration-200 hover:shadow-lg hover:shadow-purple-500/20 flex flex-col"
                 >
                   {/* 카드 헤더 */}
-                  <h3 className="text-xl font-bold text-white mb-4 truncate">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 truncate">
                     {sample.name}
                   </h3>
 
                   {/* 모델 정보 */}
                   <div className="space-y-3 mb-4 flex-1">
                     <div>
-                      <span className="text-gray-400 text-sm font-medium">
+                      <span className="text-gray-600 dark:text-gray-400 text-sm font-medium">
                         카테고리:{" "}
                       </span>
-                      <span className="text-white text-sm">
+                      <span className="text-gray-900 dark:text-white text-sm">
                         {sample.category || "머신러닝"}
                       </span>
                     </div>
                     <div>
-                      <span className="text-gray-400 text-sm font-medium">
+                      <span className="text-gray-600 dark:text-gray-400 text-sm font-medium">
                         모델:{" "}
                       </span>
                       <span className="text-white text-sm truncate">
@@ -160,18 +160,18 @@ const SamplesModal: React.FC<SamplesModalProps> = ({
                       </span>
                     </div>
                     <div>
-                      <span className="text-gray-400 text-sm font-medium">
+                      <span className="text-gray-600 dark:text-gray-400 text-sm font-medium">
                         입력데이터:{" "}
                       </span>
-                      <span className="text-white text-sm">
+                      <span className="text-gray-900 dark:text-white text-sm">
                         {sample.inputData || "N/A"}
                       </span>
                     </div>
                     <div>
-                      <span className="text-gray-400 text-sm font-medium">
+                      <span className="text-gray-600 dark:text-gray-400 text-sm font-medium">
                         모델 설명:
                       </span>
-                      <p className="text-gray-300 text-sm mt-1 line-clamp-3">
+                      <p className="text-gray-700 dark:text-gray-300 text-sm mt-1 line-clamp-3">
                         {sample.description || "설명 없음"}
                       </p>
                     </div>

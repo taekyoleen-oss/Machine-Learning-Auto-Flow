@@ -82,7 +82,10 @@ import {
   ArrowPathIcon,
   StarIcon,
   ArrowDownTrayIcon,
+  SunIcon,
+  MoonIcon,
 } from "./components/icons";
+import { useTheme } from "./contexts/ThemeContext";
 import useHistoryState from "./hooks/useHistoryState";
 import { DataPreviewModal } from "./components/DataPreviewModal";
 import { StatisticsPreviewModal } from "./components/StatisticsPreviewModal";
@@ -9881,13 +9884,13 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
   };
 
   return (
-    <div className="bg-gray-900 text-white h-screen w-screen flex flex-col overflow-hidden">
+    <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white h-screen w-screen flex flex-col overflow-hidden transition-colors duration-200">
       {isAiGenerating && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex flex-col items-center justify-center z-50">
           <div role="status">
             <svg
               aria-hidden="true"
-              className="w-12 h-12 text-gray-200 animate-spin fill-blue-600"
+              className="w-12 h-12 text-gray-700 dark:text-gray-200 animate-spin fill-blue-600"
               viewBox="0 0 100 101"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -9903,22 +9906,22 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             </svg>
             <span className="sr-only">Loading...</span>
           </div>
-          <p className="mt-4 text-lg font-semibold text-white">
+          <p className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
             AI가 최적의 파이프라인을 설계하고 있습니다...
           </p>
         </div>
       )}
 
       {isGeneratingPPTs && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex flex-col items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">
             {pptProgress.status === "generating" && (
               <>
                 <div className="flex flex-col items-center mb-4">
                   <div role="status">
                     <svg
                       aria-hidden="true"
-                      className="w-12 h-12 text-gray-200 animate-spin fill-blue-600"
+                      className="w-12 h-12 text-gray-700 dark:text-gray-200 animate-spin fill-blue-600"
                       viewBox="0 0 100 101"
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
@@ -9935,7 +9938,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                     <span className="sr-only">Loading...</span>
                   </div>
                 </div>
-                <p className="text-lg font-semibold text-white text-center mb-2">
+                <p className="text-lg font-semibold text-gray-900 dark:text-white text-center mb-2">
                   {pptProgress.message}
                 </p>
                 {pptProgress.details && (
@@ -10027,16 +10030,16 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         </div>
       )}
 
-      <header className="flex flex-col px-4 py-1.5 bg-gray-900 border-b border-gray-700 flex-shrink-0 z-20 relative overflow-visible">
+      <header className="flex flex-col px-4 py-1.5 bg-white dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700 flex-shrink-0 z-20 relative overflow-visible">
         {/* 첫 번째 줄: 제목 및 모델 이름 */}
         <div className="flex items-center w-full">
           <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
-            <LogoIcon className="h-5 w-5 md:h-6 md:w-6 text-blue-400 flex-shrink-0" />
-            <h1 className="text-base md:text-xl font-bold text-blue-300 tracking-wide flex-shrink-0">
+            <LogoIcon className="h-5 w-5 md:h-6 md:w-6 text-blue-500 dark:text-blue-400 flex-shrink-0" />
+            <h1 className="text-base md:text-xl font-bold text-blue-600 dark:text-blue-300 tracking-wide flex-shrink-0">
               ML Auto Flow
             </h1>
             <div className="flex items-center gap-2 flex-shrink-0">
-              <span className="text-gray-600 hidden md:inline">|</span>
+              <span className="text-gray-400 dark:text-gray-600 hidden md:inline">|</span>
               {isEditingProjectName ? (
                 <input
                   value={projectName}
@@ -10047,13 +10050,13 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                       setIsEditingProjectName(false);
                     }
                   }}
-                  className="bg-gray-800 text-sm md:text-lg font-semibold text-white px-2 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0"
+                  className="bg-gray-100 dark:bg-gray-800 text-sm md:text-lg font-semibold text-gray-900 dark:text-white px-2 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0"
                   autoFocus
                 />
               ) : (
                 <h2
                   onClick={() => setIsEditingProjectName(true)}
-                  className="text-sm md:text-lg font-semibold text-gray-300 hover:bg-gray-700 px-2 py-1 rounded-md cursor-pointer truncate"
+                  className="text-sm md:text-lg font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-2 py-1 rounded-md cursor-pointer truncate"
                   title="Click to edit project name"
                 >
                   {projectName}
@@ -10065,10 +10068,22 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
 
         {/* 두 번째 줄: Load, Save 등 버튼들 */}
         <div className="flex items-center justify-end gap-2 w-full overflow-x-auto scrollbar-hide mt-1">
+          {/* 테마 전환 버튼 */}
+          <button
+            onClick={toggleTheme}
+            className="p-1.5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors flex-shrink-0"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {theme === 'dark' ? (
+              <SunIcon className="h-5 w-5 text-yellow-400" />
+            ) : (
+              <MoonIcon className="h-5 w-5 text-gray-700" />
+            )}
+          </button>
           <button
             onClick={undo}
             disabled={!canUndo}
-            className="p-1.5 text-gray-300 hover:bg-gray-700 rounded-md disabled:text-gray-600 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+            className="p-1.5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md disabled:text-gray-400 dark:disabled:text-gray-600 disabled:cursor-not-allowed transition-colors flex-shrink-0"
             title="Undo (Ctrl+Z)"
           >
             <ArrowUturnLeftIcon className="h-5 w-5" />
@@ -10076,7 +10091,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           <button
             onClick={redo}
             disabled={!canRedo}
-            className="p-1.5 text-gray-300 hover:bg-gray-700 rounded-md disabled:text-gray-600 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+            className="p-1.5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md disabled:text-gray-400 dark:disabled:text-gray-600 disabled:cursor-not-allowed transition-colors flex-shrink-0"
             title="Redo (Ctrl+Y)"
           >
             <ArrowUturnRightIcon className="h-5 w-5" />
@@ -10084,7 +10099,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           <div className="h-5 border-l border-gray-700"></div>
           <button
             onClick={handleSetFolder}
-            className="flex items-center gap-2 px-3 py-1.5 text-xs bg-gray-700 hover:bg-gray-600 rounded-md font-semibold transition-colors flex-shrink-0"
+            className="flex items-center gap-2 px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-md font-semibold transition-colors flex-shrink-0"
             title="Set Save Folder"
           >
             <FolderOpenIcon className="h-4 w-4" />
@@ -10092,7 +10107,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           </button>
           <button
             onClick={handleLoadPipeline}
-            className="flex items-center gap-2 px-3 py-1.5 text-xs bg-gray-700 hover:bg-gray-600 rounded-md font-semibold transition-colors flex-shrink-0"
+            className="flex items-center gap-2 px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-md font-semibold transition-colors flex-shrink-0"
             title="Load Pipeline"
           >
             <FolderOpenIcon className="h-4 w-4" />
@@ -10101,10 +10116,10 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           <button
             onClick={handleSavePipeline}
             disabled={!isDirty}
-            className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-md font-semibold transition-colors flex-shrink-0 ${
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-md font-semibold transition-colors flex-shrink-0 text-white dark:text-white ${
               !isDirty
-                ? "bg-gray-600 cursor-not-allowed opacity-50"
-                : "bg-gray-700 hover:bg-gray-600"
+                ? "bg-gray-400 dark:bg-gray-600 cursor-not-allowed opacity-50"
+                : "bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600"
             }`}
             title="Save Pipeline"
           >
@@ -10115,7 +10130,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             )}
             <span>{saveButtonText}</span>
           </button>
-          <div className="h-5 border-l border-gray-700"></div>
+          <div className="h-5 border-l border-gray-300 dark:border-gray-700"></div>
           <button
             onClick={handleRunAll}
             className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-md font-semibold transition-colors flex-shrink-0 bg-green-600 hover:bg-green-500 text-white"
@@ -10131,13 +10146,13 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           <div className="flex items-center gap-1 md:gap-2">
             <button
               onClick={() => setIsLeftPanelVisible((v) => !v)}
-              className="p-1.5 text-gray-300 hover:bg-gray-700 rounded-md transition-colors flex-shrink-0"
+              className="p-1.5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors flex-shrink-0"
               aria-label="Toggle modules panel"
               title="Toggle Modules Panel"
             >
               <Bars3Icon className="h-5 w-5" />
             </button>
-            <div className="h-5 border-l border-gray-700"></div>
+            <div className="h-5 border-l border-gray-300 dark:border-gray-700"></div>
             <div
               className="relative flex-shrink-0"
               ref={sampleMenuRef}
@@ -10157,7 +10172,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-md font-semibold transition-colors cursor-pointer ${
                   isSampleMenuOpen
                     ? "bg-purple-600 text-white"
-                    : "bg-gray-700 hover:bg-gray-600 text-gray-200"
+                    : "bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-200"
                 }`}
                 title="Load Sample Model"
                 type="button"
@@ -10180,7 +10195,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-md font-semibold transition-colors cursor-pointer ${
                   isMyWorkMenuOpen
                     ? "bg-purple-600 text-white"
-                    : "bg-gray-700 hover:bg-gray-600 text-gray-200"
+                    : "bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-200"
                 }`}
                 title="My Work"
                 type="button"
@@ -10190,7 +10205,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
               </button>
               {isMyWorkMenuOpen && (
                 <div
-                  className="absolute top-full left-0 mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-xl min-w-[200px]"
+                  className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-xl min-w-[200px]"
                   style={{ zIndex: 9999 }}
                 >
                   {/* 파일에서 불러오기 */}
@@ -10243,7 +10258,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                       };
                       input.click();
                     }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors cursor-pointer flex items-center gap-2 border-b border-gray-700"
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer flex items-center gap-2 border-b border-gray-200 dark:border-gray-700"
                     type="button"
                   >
                     <FolderOpenIcon className="w-4 h-4 text-blue-400" />
@@ -10373,7 +10388,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                         isSavingRef.current = false;
                       }, 500);
                     }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors cursor-pointer flex items-center gap-2 border-b border-gray-700"
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer flex items-center gap-2 border-b border-gray-200 dark:border-gray-700"
                     type="button"
                   >
                     <PlusIcon className="w-4 h-4 text-blue-400" />
@@ -10410,7 +10425,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                       addLog("SUCCESS", "초기 화면으로 설정되었습니다.");
                       setIsMyWorkMenuOpen(false);
                     }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors cursor-pointer flex items-center gap-2 border-b border-gray-700"
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer flex items-center gap-2 border-b border-gray-200 dark:border-gray-700"
                     type="button"
                   >
                     <StarIcon className="w-4 h-4 text-yellow-400" />
@@ -10430,7 +10445,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                           handleLoadSample(saved.name, "mywork");
                           setIsMyWorkMenuOpen(false);
                         }}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 last:rounded-b-md transition-colors cursor-pointer"
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 last:rounded-b-md transition-colors cursor-pointer"
                         type="button"
                       >
                         {saved.name}
@@ -10507,7 +10522,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
       <div className="flex-grow min-h-0 relative">
         <main
           ref={canvasContainerRef}
-          className="w-full h-full canvas-bg relative overflow-hidden"
+          className={`w-full h-full ${theme === 'dark' ? 'canvas-bg' : 'canvas-bg-light'} relative overflow-hidden`}
         >
           <Canvas
             modules={modules}
@@ -10545,7 +10560,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
               cursor: isDraggingControlPanel.current ? "grabbing" : "grab",
               pointerEvents: "auto",
             }}
-            className="bg-gray-900/80 backdrop-blur-md rounded-full px-3 py-1.5 flex items-center gap-3 shadow-2xl z-[100] border border-gray-700 select-none transition-none active:scale-95"
+            className="bg-white/90 dark:bg-gray-900/80 backdrop-blur-md rounded-full px-3 py-1.5 flex items-center gap-3 shadow-2xl z-[100] border border-gray-300 dark:border-gray-700 select-none transition-none active:scale-95"
           >
             <div className="flex items-center gap-1">
               <button
@@ -10553,7 +10568,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                   e.stopPropagation();
                   adjustScale(-0.1);
                 }}
-                className="p-1.5 hover:bg-gray-700/50 rounded-full text-gray-400 hover:text-white transition-colors"
+                className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700/50 rounded-full text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                 title="Zoom Out"
               >
                 <MinusIcon className="w-4 h-4" />
@@ -10564,7 +10579,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                   setScale(1);
                   setPan({ x: 0, y: 0 });
                 }}
-                className="px-2 text-xs font-medium text-gray-300 hover:text-white min-w-[2.5rem] text-center"
+                className="px-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white min-w-[2.5rem] text-center"
                 title="Reset View"
               >
                 {Math.round(scale * 100)}%
@@ -10574,14 +10589,14 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                   e.stopPropagation();
                   adjustScale(0.1);
                 }}
-                className="p-1.5 hover:bg-gray-700/50 rounded-full text-gray-400 hover:text-white transition-colors"
+                className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700/50 rounded-full text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                 title="Zoom In"
               >
                 <PlusIcon className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="w-px h-3 bg-gray-700"></div>
+            <div className="w-px h-3 bg-gray-300 dark:bg-gray-700"></div>
 
             <div className="flex items-center gap-1">
               <button
@@ -10589,7 +10604,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                   e.stopPropagation();
                   handleFitToView();
                 }}
-                className="p-1.5 hover:bg-gray-700/50 rounded-full text-gray-400 hover:text-white transition-colors"
+                className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700/50 rounded-full text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                 title="Fit to View"
               >
                 <ArrowsPointingOutIcon className="w-4 h-4" />
@@ -10599,7 +10614,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                   e.stopPropagation();
                   handleRearrangeModules();
                 }}
-                className="p-1.5 hover:bg-gray-700/50 rounded-full text-gray-400 hover:text-white transition-colors"
+                className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700/50 rounded-full text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                 title="Auto Layout"
               >
                 <SparklesIcon className="w-4 h-4" />
@@ -10641,7 +10656,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           >
             <div
               onMouseDown={handleResizeMouseDown}
-              className="flex-shrink-0 w-1.5 cursor-col-resize bg-gray-700 hover:bg-blue-500 transition-colors"
+              className="flex-shrink-0 w-1.5 cursor-col-resize bg-gray-300 dark:bg-gray-700 hover:bg-blue-500 transition-colors"
               title="Resize Panel"
             />
             <div className="flex-grow h-full min-w-0">

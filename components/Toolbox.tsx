@@ -207,7 +207,7 @@ const ToolboxItem: React.FC<{
       onTouchEnd={(e) => onTouchEnd(type, e)}
       draggable
       title={description}
-      className="flex items-center gap-2 px-3 py-1.5 text-xs bg-gray-700 hover:bg-gray-600 rounded-md font-semibold transition-colors whitespace-nowrap w-full text-left cursor-grab"
+      className="flex items-center gap-2 px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-md font-semibold transition-colors whitespace-nowrap w-full text-left cursor-grab"
     >
       <Icon className="h-4 w-4 flex-shrink-0" />
       <span>{name}</span>
@@ -284,9 +284,9 @@ export const Toolbox: React.FC<ToolboxProps> = ({
   ];
 
   return (
-    <aside className="w-56 bg-gray-900 border-r border-gray-700 flex flex-col h-full">
+    <aside className="w-56 bg-white dark:bg-gray-900 border-r border-gray-300 dark:border-gray-700 flex flex-col h-full">
       <div className="p-3 flex-shrink-0">
-        <h3 className="text-lg font-semibold text-white">Modules</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Modules</h3>
       </div>
       <div className="flex-1 p-2 overflow-y-auto panel-scrollbar min-h-0">
         <div className="flex flex-col gap-2">
@@ -301,11 +301,11 @@ export const Toolbox: React.FC<ToolboxProps> = ({
                       key={type}
                       onClick={() => onModuleDoubleClick(type)}
                       title={name}
-                      className="relative group flex items-center justify-center w-6 h-6 rounded cursor-pointer bg-gray-800 hover:bg-gray-700 hover:text-blue-400 transition-colors"
+                      className="relative group flex items-center justify-center w-6 h-6 rounded cursor-pointer bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
                     >
                       <Icon className="h-3.5 w-3.5" />
                       {/* Tooltip */}
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity">
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 dark:bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity">
                         {name}
                         <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900"></div>
                       </div>
@@ -324,7 +324,7 @@ export const Toolbox: React.FC<ToolboxProps> = ({
                     onTouchEnd={(e) => handleTouchEnd(type, e)}
                     draggable
                     title={name}
-                    className="relative group flex items-center justify-center w-6 h-6 rounded cursor-grab bg-gray-800 hover:bg-gray-700 hover:text-blue-400 transition-colors"
+                    className="relative group flex items-center justify-center w-6 h-6 rounded cursor-grab bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
                   >
                     <Icon className="h-3.5 w-3.5" />
                     {/* Tooltip */}
@@ -339,14 +339,14 @@ export const Toolbox: React.FC<ToolboxProps> = ({
               <div className="flex gap-1 ml-auto">
                 <button
                   onClick={() => onFontSizeChange(true)}
-                  className="p-1 bg-gray-700 hover:bg-gray-600 rounded transition-colors"
+                  className="p-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded transition-colors"
                   title="글자 크게"
                 >
                   <FontSizeIncreaseIcon className="h-4 w-4 text-gray-300" />
                 </button>
                 <button
                   onClick={() => onFontSizeChange(false)}
-                  className="p-1 bg-gray-700 hover:bg-gray-600 rounded transition-colors"
+                  className="p-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded transition-colors"
                   title="글자 작게"
                 >
                   <FontSizeDecreaseIcon className="h-4 w-4 text-gray-300" />
@@ -358,7 +358,7 @@ export const Toolbox: React.FC<ToolboxProps> = ({
             <div key={category.name}>
               <button
                 onClick={() => toggleCategory(category.name)}
-                className="w-full flex items-center justify-between p-2 rounded-lg text-left text-sm font-semibold text-gray-300 hover:bg-gray-800 transition-colors"
+                className="w-full flex items-center justify-between p-2 rounded-lg text-left text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
                 <span>{category.name}</span>
                 {expandedCategories[category.name] ? (
@@ -423,8 +423,8 @@ export const Toolbox: React.FC<ToolboxProps> = ({
           ))}
         </div>
       </div>
-      <div className="p-2 border-t border-gray-700 flex-shrink-0">
-        <p className="text-sm text-gray-400 text-center mb-2">
+      <div className="p-2 border-t border-gray-300 dark:border-gray-700 flex-shrink-0">
+        <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-2">
           Developed by TKLEEN
         </p>
         <a
@@ -432,7 +432,7 @@ export const Toolbox: React.FC<ToolboxProps> = ({
           target="_blank"
           rel="noopener noreferrer"
           title="Go to ai4insurance.com"
-          className="mx-auto flex items-center justify-center w-6 h-6 bg-gray-600 hover:bg-gray-500 rounded-md text-white transition-colors"
+          className="mx-auto flex items-center justify-center w-6 h-6 bg-gray-500 dark:bg-gray-600 hover:bg-gray-600 dark:hover:bg-gray-500 rounded-md text-white transition-colors"
         >
           <LinkIcon className="w-5 h-5" />
         </a>

@@ -48,5 +48,7 @@ export {
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon,
   ArrowsPointingOutIcon,
+  SunIcon,
+  MoonIcon,
   ArrowPathIcon,
 } from "@heroicons/react/24/outline";
