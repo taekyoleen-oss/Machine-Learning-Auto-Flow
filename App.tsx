@@ -2418,7 +2418,12 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             console.log(
               `Loaded ${samples.length} samples from samples.json (fallback)`
             );
-            setFolderSamples(samples);
+            // samples.json에서 로드한 샘플들도 카테고리 정보 보장
+            const formattedSamples = samples.map((s: any) => ({
+              ...s,
+              category: s.category || "머신러닝", // 기본값: 머신러닝
+            }));
+            setFolderSamples(formattedSamples);
           } else {
             setFolderSamples([]);
           }

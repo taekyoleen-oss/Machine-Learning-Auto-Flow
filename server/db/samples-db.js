@@ -55,6 +55,18 @@ try {
       `CREATE INDEX IF NOT EXISTS idx_samples_category ON samples(category)`
     );
     console.log("Category column added to existing database");
+  } else {
+    // 카테고리 컬럼이 이미 존재하는 경우, NULL이거나 빈 문자열인 샘플들을 업데이트
+    const updateResult = db
+      .prepare(
+        `UPDATE samples SET category = '머신러닝' WHERE category IS NULL OR category = ''`
+      )
+      .run();
+    if (updateResult.changes > 0) {
+      console.log(
+        `Updated ${updateResult.changes} samples with default category '머신러닝'`
+      );
+    }
   }
 } catch (error) {
   console.warn("Error checking/adding category column:", error.message);
