@@ -161,11 +161,11 @@ const SamplesModal: React.FC<SamplesModalProps> = ({
                     </div>
                     <div>
                       <span className="text-gray-400 text-sm font-medium">
-                        입력데이터:
+                        입력데이터:{" "}
                       </span>
-                      <div className="text-white text-sm mt-1">
+                      <span className="text-white text-sm">
                         {sample.inputData || "N/A"}
-                      </div>
+                      </span>
                     </div>
                     <div>
                       <span className="text-gray-400 text-sm font-medium">
