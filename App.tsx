@@ -224,7 +224,13 @@ const App: React.FC = () => {
   const [isSamplesManagementOpen, setIsSamplesManagementOpen] = useState(false);
   const sampleMenuRef = useRef<HTMLDivElement>(null);
   const [folderSamples, setFolderSamples] = useState<
-    Array<{ filename: string; name: string; data: any; inputData?: string; description?: string }>
+    Array<{
+      filename: string;
+      name: string;
+      data: any;
+      inputData?: string;
+      description?: string;
+    }>
   >([]);
   const [isLoadingSamples, setIsLoadingSamples] = useState(false);
   const [isMyWorkMenuOpen, setIsMyWorkMenuOpen] = useState(false);
@@ -2059,16 +2065,22 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         if (source === "folder" && sampleId) {
           // DB에서 샘플 로드 (ID가 있는 경우)
           try {
-            const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+            const API_BASE =
+              import.meta.env.VITE_API_URL || "http://localhost:3002";
             const response = await fetch(`${API_BASE}/api/samples/${sampleId}`);
             if (!response.ok) {
-              throw new Error(`Failed to fetch sample from DB: ${response.status} ${response.statusText}`);
+              throw new Error(
+                `Failed to fetch sample from DB: ${response.status} ${response.statusText}`
+              );
             }
             const dbSample = await response.json();
             sampleModel = dbSample.file_content; // file_content는 이미 JSON 파싱됨
           } catch (error: any) {
             console.error("Error loading sample from DB:", error);
-            addLog("ERROR", `Error loading sample from DB: ${error.message || error}`);
+            addLog(
+              "ERROR",
+              `Error loading sample from DB: ${error.message || error}`
+            );
             return;
           }
         } else if (source === "folder" && filename) {
@@ -2087,7 +2099,10 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
               );
               if (foundSample && foundSample.data) {
                 sampleModel = foundSample.data;
-                console.log("Loaded sample from samples.json:", foundSample.name);
+                console.log(
+                  "Loaded sample from samples.json:",
+                  foundSample.name
+                );
               } else {
                 addLog("ERROR", `Sample file not found: ${filename}`);
                 return;
@@ -2147,12 +2162,12 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           (m: any, index: number) => {
             const moduleId = `module-${Date.now()}-${index}`;
             const originalId = m.id; // 원본 모듈 ID 저장
-            
+
             // 원본 ID가 있으면 매핑에 추가
             if (originalId) {
               originalIdToNewIdMap.set(originalId, moduleId);
             }
-            
+
             const defaultModule = DEFAULT_MODULES.find(
               (dm) => dm.type === m.type
             );
@@ -2179,11 +2194,14 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         // 연결 형식 처리: 두 가지 형식 지원
         // 1. fromModuleIndex/toModuleIndex 형식 (변환된 형식)
         // 2. from.moduleId/to.moduleId 형식 (원본 .ins 형식)
-        console.log("Processing connections, total:", sampleModel.connections?.length || 0);
+        console.log(
+          "Processing connections, total:",
+          sampleModel.connections?.length || 0
+        );
         console.log("First connection sample:", sampleModel.connections?.[0]);
         console.log("Modules count:", sampleModel.modules?.length || 0);
         console.log("New modules count:", newModules.length);
-        
+
         const newConnections: Connection[] = (sampleModel.connections || [])
           .map((conn: any, index: number) => {
             try {
@@ -2235,44 +2253,43 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                   } else {
                     console.warn(
                       `Connection at index ${index}: Could not find module IDs`,
-                      { 
-                        originalFromId, 
+                      {
+                        originalFromId,
                         originalToId,
                         newFromId,
                         newToId,
                         fromIndex: originalFromIndex,
                         toIndex: originalToIndex,
-                        availableModuleIds: sampleModel.modules?.map((m: any) => m.id) || [],
-                        mapSize: originalIdToNewIdMap.size
+                        availableModuleIds:
+                          sampleModel.modules?.map((m: any) => m.id) || [],
+                        mapSize: originalIdToNewIdMap.size,
                       }
                     );
                     return null;
                   }
                 }
               } else {
-                console.warn(
-                  `Connection at index ${index}: Unknown format`,
-                  { 
-                    conn,
-                    hasFromModuleIndex: typeof conn.fromModuleIndex !== 'undefined',
-                    hasToModuleIndex: typeof conn.toModuleIndex !== 'undefined',
-                    hasFromModuleId: !!conn.from?.moduleId,
-                    hasToModuleId: !!conn.to?.moduleId
-                  }
-                );
+                console.warn(`Connection at index ${index}: Unknown format`, {
+                  conn,
+                  hasFromModuleIndex:
+                    typeof conn.fromModuleIndex !== "undefined",
+                  hasToModuleIndex: typeof conn.toModuleIndex !== "undefined",
+                  hasFromModuleId: !!conn.from?.moduleId,
+                  hasToModuleId: !!conn.to?.moduleId,
+                });
                 return null;
               }
 
               if (!fromModule || !toModule) {
                 console.warn(
                   `Invalid connection at index ${index}: Module not found`,
-                  { 
-                    fromModule: !!fromModule, 
+                  {
+                    fromModule: !!fromModule,
                     toModule: !!toModule,
                     fromModuleIndex: conn.fromModuleIndex,
                     toModuleIndex: conn.toModuleIndex,
                     fromModuleId: conn.from?.moduleId,
-                    toModuleId: conn.to?.moduleId
+                    toModuleId: conn.to?.moduleId,
                   }
                 );
                 return null;
@@ -2292,13 +2309,21 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 to: { moduleId: toModule.id, portName: toPort },
               };
             } catch (error: any) {
-              console.error(`Error processing connection at index ${index}:`, error, conn);
+              console.error(
+                `Error processing connection at index ${index}:`,
+                error,
+                conn
+              );
               return null;
             }
           })
           .filter((conn): conn is Connection => conn !== null);
-        
-        console.log(`Successfully processed ${newConnections.length} out of ${sampleModel.connections?.length || 0} connections`);
+
+        console.log(
+          `Successfully processed ${newConnections.length} out of ${
+            sampleModel.connections?.length || 0
+          } connections`
+        );
 
         resetModules(newModules);
         _setConnections(newConnections);
@@ -2325,11 +2350,13 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
     setIsLoadingSamples(true);
     try {
       // 프로덕션 환경(Vercel)에서는 samples.json 사용, 개발 환경에서는 DB API 시도
-      const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-      
+      const isProduction =
+        window.location.hostname !== "localhost" &&
+        window.location.hostname !== "127.0.0.1";
+
       if (isProduction) {
         // 프로덕션: samples.json 직접 사용
-        console.log('Production environment: Loading from samples.json');
+        console.log("Production environment: Loading from samples.json");
         const response = await fetch("/samples.json");
         if (response.ok) {
           const samples = await response.json();
@@ -2340,7 +2367,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             setFolderSamples([]);
           }
         } else {
-          console.error('Failed to load samples.json:', response.status);
+          console.error("Failed to load samples.json:", response.status);
           setFolderSamples([]);
         }
         return;
@@ -2348,7 +2375,8 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
 
       // 개발 환경: DB API 시도
       try {
-        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+        const API_BASE =
+          import.meta.env.VITE_API_URL || "http://localhost:3002";
         const response = await fetch(`${API_BASE}/api/samples`);
 
         if (!response.ok) {
@@ -2369,7 +2397,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             name: s.name,
             inputData: s.input_data,
             description: s.description,
-            category: s.category || '머신러닝', // 기본값: 머신러닝
+            category: s.category || "머신러닝", // 기본값: 머신러닝
             data: null, // 필요시 나중에 로드
           }));
           setFolderSamples(formattedSamples);
@@ -2379,12 +2407,17 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         }
       } catch (dbError: any) {
         // DB API 실패 시 samples.json으로 폴백
-        console.warn('DB API not available, falling back to samples.json:', dbError.message);
+        console.warn(
+          "DB API not available, falling back to samples.json:",
+          dbError.message
+        );
         const fallbackResponse = await fetch("/samples.json");
         if (fallbackResponse.ok) {
           const samples = await fallbackResponse.json();
           if (Array.isArray(samples) && samples.length > 0) {
-            console.log(`Loaded ${samples.length} samples from samples.json (fallback)`);
+            console.log(
+              `Loaded ${samples.length} samples from samples.json (fallback)`
+            );
             setFolderSamples(samples);
           } else {
             setFolderSamples([]);
@@ -10993,30 +11026,30 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             />
           );
         })()}
-        
-        {/* Samples Modal */}
-        <SamplesModal
-          isOpen={isSampleMenuOpen}
-          onClose={() => setIsSampleMenuOpen(false)}
-          samples={folderSamples}
-          onLoadSample={(sampleName, filename, sampleId) => {
-            handleLoadSample(sampleName, "folder", filename, sampleId);
-          }}
-          onManage={() => {
-            setIsSampleMenuOpen(false);
-            setIsSamplesManagementOpen(true);
-          }}
-          isLoading={isLoadingSamples}
-        />
-        
-        {/* Samples Management Modal */}
-        <SamplesManagementModal
-          isOpen={isSamplesManagementOpen}
-          onClose={() => setIsSamplesManagementOpen(false)}
-          onRefresh={() => {
-            loadFolderSamplesLocal();
-          }}
-        />
+
+      {/* Samples Modal */}
+      <SamplesModal
+        isOpen={isSampleMenuOpen}
+        onClose={() => setIsSampleMenuOpen(false)}
+        samples={folderSamples}
+        onLoadSample={(sampleName, filename, sampleId) => {
+          handleLoadSample(sampleName, "folder", filename, sampleId);
+        }}
+        onManage={() => {
+          setIsSampleMenuOpen(false);
+          setIsSamplesManagementOpen(true);
+        }}
+        isLoading={isLoadingSamples}
+      />
+
+      {/* Samples Management Modal */}
+      <SamplesManagementModal
+        isOpen={isSamplesManagementOpen}
+        onClose={() => setIsSamplesManagementOpen(false)}
+        onRefresh={() => {
+          loadFolderSamplesLocal();
+        }}
+      />
     </div>
   );
 };

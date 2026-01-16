@@ -151,7 +151,7 @@ export const samplesApi = {
       const url = `${API_BASE}/api/samples/${id}`;
       const body = JSON.stringify(sample);
       console.log("samplesApi.update - Request", { url, id, sample, body });
-      
+
       const response = await fetch(url, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },

@@ -1,5 +1,5 @@
-import React from 'react';
-import { XMarkIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
+import React from "react";
+import { XMarkIcon, Cog6ToothIcon } from "@heroicons/react/24/outline";
 
 interface Sample {
   id?: number; // DB에서 로드할 때 사용
@@ -14,13 +14,32 @@ interface Sample {
 interface SamplesModalProps {
   isOpen: boolean;
   onClose: () => void;
-  samples: Array<{ id?: number; filename: string; name: string; data: any; inputData?: string; description?: string; category?: string }>;
-  onLoadSample: (sampleName: string, filename: string, sampleId?: number) => void;
+  samples: Array<{
+    id?: number;
+    filename: string;
+    name: string;
+    data: any;
+    inputData?: string;
+    description?: string;
+    category?: string;
+  }>;
+  onLoadSample: (
+    sampleName: string,
+    filename: string,
+    sampleId?: number
+  ) => void;
   onManage?: () => void;
   isLoading?: boolean;
 }
 
-const CATEGORIES = ['전체', '머신러닝', '딥러닝', '통계분석', 'DFA', '프라이싱'] as const;
+const CATEGORIES = [
+  "전체",
+  "머신러닝",
+  "딥러닝",
+  "통계분석",
+  "DFA",
+  "프라이싱",
+] as const;
 
 const SamplesModal: React.FC<SamplesModalProps> = ({
   isOpen,
@@ -30,7 +49,8 @@ const SamplesModal: React.FC<SamplesModalProps> = ({
   onManage,
   isLoading = false,
 }) => {
-  const [selectedCategory, setSelectedCategory] = React.useState<string>('전체');
+  const [selectedCategory, setSelectedCategory] =
+    React.useState<string>("전체");
 
   if (!isOpen) return null;
 
@@ -39,9 +59,10 @@ const SamplesModal: React.FC<SamplesModalProps> = ({
   };
 
   // 카테고리별 필터링
-  const filteredSamples = selectedCategory === '전체'
-    ? samples
-    : samples.filter(sample => sample.category === selectedCategory);
+  const filteredSamples =
+    selectedCategory === "전체"
+      ? samples
+      : samples.filter((sample) => sample.category === selectedCategory);
 
   return (
     <div
@@ -75,7 +96,7 @@ const SamplesModal: React.FC<SamplesModalProps> = ({
               </button>
             </div>
           </div>
-          
+
           {/* 카테고리 필터 */}
           <div className="px-4 pb-4 flex gap-2 overflow-x-auto">
             {CATEGORIES.map((category) => (
@@ -84,8 +105,8 @@ const SamplesModal: React.FC<SamplesModalProps> = ({
                 onClick={() => setSelectedCategory(category)}
                 className={`px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap transition-colors ${
                   selectedCategory === category
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                    ? "bg-purple-600 text-white"
+                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                 }`}
               >
                 {category}
@@ -103,8 +124,8 @@ const SamplesModal: React.FC<SamplesModalProps> = ({
           ) : filteredSamples.length === 0 ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-gray-400 text-lg">
-                {selectedCategory === '전체' 
-                  ? 'No samples available' 
+                {selectedCategory === "전체"
+                  ? "No samples available"
                   : `'${selectedCategory}' 카테고리에 샘플이 없습니다.`}
               </div>
             </div>
@@ -135,7 +156,7 @@ const SamplesModal: React.FC<SamplesModalProps> = ({
                         입력데이터:
                       </span>
                       <div className="text-white text-sm mt-1">
-                        {sample.inputData || 'N/A'}
+                        {sample.inputData || "N/A"}
                       </div>
                     </div>
                     <div>
@@ -143,7 +164,7 @@ const SamplesModal: React.FC<SamplesModalProps> = ({
                         모델 설명:
                       </span>
                       <p className="text-gray-300 text-sm mt-1 line-clamp-3">
-                        {sample.description || '설명 없음'}
+                        {sample.description || "설명 없음"}
                       </p>
                     </div>
                   </div>
