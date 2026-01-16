@@ -2285,6 +2285,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         );
         // DB 형식을 앱 형식으로 변환
         const formattedSamples = samples.map((s: any) => ({
+          id: s.id, // DB ID 포함
           filename: s.filename,
           name: s.name,
           inputData: s.input_data,
