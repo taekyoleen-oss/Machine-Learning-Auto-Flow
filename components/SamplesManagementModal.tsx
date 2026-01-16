@@ -83,7 +83,10 @@ export const SamplesManagementModal: React.FC<Props> = ({
   };
 
   const handleSave = async () => {
-    if (!editing || !editing.id) return;
+    if (!editing || !editing.id) {
+      console.error("handleSave: No editing sample or ID");
+      return;
+    }
 
     // 필수 필드 검증
     if (!formData.name || formData.name.trim() === "") {
@@ -98,7 +101,12 @@ export const SamplesManagementModal: React.FC<Props> = ({
 
     try {
       setLoading(true);
-      await samplesApi.update(editing.id, formData);
+      console.log("handleSave: Updating sample", {
+        id: editing.id,
+        formData: formData,
+      });
+      const result = await samplesApi.update(editing.id, formData);
+      console.log("handleSave: Update successful", result);
       setEditing(null);
       setFormData({
         name: "",
@@ -110,6 +118,7 @@ export const SamplesManagementModal: React.FC<Props> = ({
       onRefresh();
       alert("저장되었습니다.");
     } catch (error: any) {
+      console.error("handleSave: Update failed", error);
       alert("저장 실패: " + error.message);
     } finally {
       setLoading(false);
@@ -175,7 +184,7 @@ export const SamplesManagementModal: React.FC<Props> = ({
       <div
         className="bg-gray-900 rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxHeight: '90vh' }}
+        style={{ maxHeight: "90vh" }}
       >
         {/* 헤더 */}
         <div className="p-4 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
@@ -213,7 +222,12 @@ export const SamplesManagementModal: React.FC<Props> = ({
         </div>
 
         {/* 샘플 목록 */}
-        <div className={`flex-1 overflow-y-auto p-4 ${editing ? "pb-2" : ""}`} style={{ maxHeight: editing ? 'calc(90vh - 400px)' : 'calc(90vh - 200px)' }}>
+        <div
+          className={`flex-1 overflow-y-auto p-4 ${editing ? "pb-2" : ""}`}
+          style={{
+            maxHeight: editing ? "calc(90vh - 400px)" : "calc(90vh - 200px)",
+          }}
+        >
           {loading && samples.length === 0 ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-gray-400 text-lg">로딩 중...</div>
@@ -302,7 +316,10 @@ export const SamplesManagementModal: React.FC<Props> = ({
 
         {/* 수정 폼 - 하단 고정 */}
         {editing && (
-          <div className="p-4 border-t-2 border-purple-600 bg-gray-800 flex-shrink-0 shadow-lg overflow-y-auto" style={{ maxHeight: '400px' }}>
+          <div
+            className="p-4 border-t-2 border-purple-600 bg-gray-800 flex-shrink-0 shadow-lg overflow-y-auto"
+            style={{ maxHeight: "400px" }}
+          >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">샘플 수정</h3>
               <button

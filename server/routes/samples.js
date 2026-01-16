@@ -216,14 +216,19 @@ router.post("/import", upload.single("file"), (req, res) => {
 // 샘플 수정
 router.put("/:id", (req, res) => {
   try {
+    const id = parseInt(req.params.id);
     const { name, input_data, description, category, file_content } = req.body;
 
+    console.log("PUT /api/samples/:id - Request received", {
+      id: id,
+      body: req.body,
+    });
+
     // 기존 샘플 확인
-    const existing = db
-      .prepare("SELECT id FROM samples WHERE id = ?")
-      .get(parseInt(req.params.id));
+    const existing = db.prepare("SELECT id FROM samples WHERE id = ?").get(id);
 
     if (!existing) {
+      console.log("PUT /api/samples/:id - Sample not found", { id });
       return res.status(404).json({ error: "Sample not found" });
     }
 
@@ -252,10 +257,16 @@ router.put("/:id", (req, res) => {
     }
 
     if (updateFields.length === 0) {
+      console.log("PUT /api/samples/:id - No fields to update");
       return res.status(400).json({ error: "No fields to update" });
     }
 
-    updateValues.push(parseInt(req.params.id));
+    updateValues.push(id);
+
+    console.log("PUT /api/samples/:id - Updating with", {
+      fields: updateFields,
+      values: updateValues,
+    });
 
     const result = db
       .prepare(
@@ -266,6 +277,10 @@ router.put("/:id", (req, res) => {
     `
       )
       .run(...updateValues);
+
+    console.log("PUT /api/samples/:id - Update successful", {
+      changes: result.changes,
+    });
 
     res.json({ message: "Sample updated successfully" });
   } catch (error) {
