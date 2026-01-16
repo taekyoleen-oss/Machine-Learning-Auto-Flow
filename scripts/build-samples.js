@@ -41,6 +41,10 @@ if (fs.existsSync(SAMPLES_DIR)) {
 
   const sampleFiles = files
     .filter((file) => {
+      // samples-metadata.json은 제외
+      if (file === 'samples-metadata.json' || file === 'README.md' || file === 'FILE_FORMAT_GUIDE.md') {
+        return false;
+      }
       return file.endsWith('.json') || file.endsWith('.ins');
     })
     .map((file) => {
