@@ -145,19 +145,19 @@ const SamplesModal: React.FC<SamplesModalProps> = ({
                   <div className="space-y-3 mb-4 flex-1">
                     <div>
                       <span className="text-gray-400 text-sm font-medium">
-                        카테고리:
+                        카테고리:{" "}
                       </span>
-                      <div className="text-white text-sm mt-1">
+                      <span className="text-white text-sm">
                         {sample.category || "머신러닝"}
-                      </div>
+                      </span>
                     </div>
                     <div>
                       <span className="text-gray-400 text-sm font-medium">
-                        모델 파일:
+                        모델:{" "}
                       </span>
-                      <div className="text-white text-sm mt-1 truncate">
+                      <span className="text-white text-sm truncate">
                         {sample.name}
-                      </div>
+                      </span>
                     </div>
                     <div>
                       <span className="text-gray-400 text-sm font-medium">
