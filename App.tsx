@@ -10900,8 +10900,8 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           isOpen={isSampleMenuOpen}
           onClose={() => setIsSampleMenuOpen(false)}
           samples={folderSamples}
-          onLoadSample={(sampleName, filename) => {
-            handleLoadSample(sampleName, "folder", filename);
+          onLoadSample={(sampleName, filename, sampleId) => {
+            handleLoadSample(sampleName, "folder", filename, sampleId);
           }}
           onManage={() => {
             setIsSampleMenuOpen(false);

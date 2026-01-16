@@ -2,6 +2,7 @@ import React from 'react';
 import { XMarkIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 
 interface Sample {
+  id?: number; // DB에서 로드할 때 사용
   filename: string;
   name: string;
   data: any;
@@ -12,8 +13,8 @@ interface Sample {
 interface SamplesModalProps {
   isOpen: boolean;
   onClose: () => void;
-  samples: Array<{ filename: string; name: string; data: any; inputData?: string; description?: string }>;
-  onLoadSample: (sampleName: string, filename: string) => void;
+  samples: Array<{ id?: number; filename: string; name: string; data: any; inputData?: string; description?: string }>;
+  onLoadSample: (sampleName: string, filename: string, sampleId?: number) => void;
   onManage?: () => void;
   isLoading?: boolean;
 }
@@ -29,7 +30,7 @@ const SamplesModal: React.FC<SamplesModalProps> = ({
   if (!isOpen) return null;
 
   const handleLoad = (sample: Sample) => {
-    onLoadSample(sample.name, sample.filename);
+    onLoadSample(sample.name, sample.filename, sample.id);
   };
 
   return (
