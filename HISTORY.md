@@ -31,7 +31,7 @@
 - 샘플 추가/수정/삭제 기능을 UI로 제공하여 사용자 편의성 개선
 - 카드 형식 UI로 샘플 정보를 더 명확하게 표시
 
-**Commit Hash:** (커밋 후 업데이트)
+**Commit Hash:** fd9e7b4
 
 **Recovery Command:**
 ```bash
