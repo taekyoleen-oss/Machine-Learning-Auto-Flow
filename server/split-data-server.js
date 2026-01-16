@@ -11,6 +11,7 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import samplesRouter from './routes/samples.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,6 +21,9 @@ const PORT = process.env.SERVER_PORT || 3002;
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
+
+// 샘플 관리 API 라우트
+app.use('/api/samples', samplesRouter);
 
 app.post('/api/split-data', async (req, res) => {
     try {
@@ -487,4 +491,5 @@ app.listen(PORT, () => {
     console.log(`서버가 포트 ${PORT}에서 실행 중입니다.`);
     console.log(`- SplitData API: http://localhost:${PORT}/api/split-data`);
     console.log(`- PPT 생성 API: http://localhost:${PORT}/api/generate-ppts`);
+    console.log(`- Samples API: http://localhost:${PORT}/api/samples`);
 });

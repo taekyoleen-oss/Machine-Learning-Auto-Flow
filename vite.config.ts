@@ -36,6 +36,9 @@ export default defineConfig(({ mode }) => {
       },
       optimizeDeps: {
         include: ['xlsx']
+      },
+      build: {
+        chunkSizeWarningLimit: 1000
       }
     };
 });

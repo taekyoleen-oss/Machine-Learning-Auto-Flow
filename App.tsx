@@ -107,6 +107,8 @@ import { AIPipelineFromDataModal } from "./components/AIPipelineFromDataModal";
 import { AIPlanDisplayModal } from "./components/AIPlanDisplayModal";
 import { PipelineCodePanel } from "./components/PipelineCodePanel";
 import { ErrorModal } from "./components/ErrorModal";
+import SamplesModal from "./components/SamplesModal";
+import { SamplesManagementModal } from "./components/SamplesManagementModal";
 import { GoogleGenAI, Type } from "@google/genai";
 import { savePipeline, loadPipeline } from "./utils/fileOperations";
 // Samples와 Examples는 빌드 시점에 생성된 JSON 파일에서 직접 로드하므로 import 제거
@@ -219,9 +221,10 @@ const App: React.FC = () => {
     file?: { content: string; name: string };
   } | null>(null);
   const [isSampleMenuOpen, setIsSampleMenuOpen] = useState(false);
+  const [isSamplesManagementOpen, setIsSamplesManagementOpen] = useState(false);
   const sampleMenuRef = useRef<HTMLDivElement>(null);
   const [folderSamples, setFolderSamples] = useState<
-    Array<{ filename: string; name: string; data: any }>
+    Array<{ filename: string; name: string; data: any; inputData?: string; description?: string }>
   >([]);
   const [isLoadingSamples, setIsLoadingSamples] = useState(false);
   const [isMyWorkMenuOpen, setIsMyWorkMenuOpen] = useState(false);
@@ -2051,28 +2054,78 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         let sampleModel: any = null;
 
         if (source === "folder" && filename) {
-          // 빌드 시점에 생성된 samples.json에서 파일 찾기
+          // DB에서 샘플 찾기
           try {
-            const response = await fetch("/samples.json");
-            if (!response.ok) {
-              throw new Error(
-                `Failed to fetch samples.json: ${response.status}`
-              );
-            }
-            const samples = await response.json();
-            if (Array.isArray(samples)) {
-              const foundSample = samples.find(
-                (s: any) => s.filename === filename || s.name === sampleName
-              );
-              if (foundSample && foundSample.data) {
-                sampleModel = foundSample.data;
+            const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+            const response = await fetch(`${API_BASE}/api/samples`);
+            
+            if (response.ok) {
+              const samples = await response.json();
+              if (Array.isArray(samples)) {
+                const foundSample = samples.find(
+                  (s: any) => s.filename === filename || s.name === sampleName
+                );
+                if (foundSample) {
+                  // DB에서 전체 데이터 가져오기
+                  const fullResponse = await fetch(`${API_BASE}/api/samples/${foundSample.id}`);
+                  if (fullResponse.ok) {
+                    const fullSample = await fullResponse.json();
+                    if (fullSample.file_content) {
+                      sampleModel = fullSample.file_content;
+                    } else {
+                      addLog("ERROR", `Sample data not found: ${filename}`);
+                      return;
+                    }
+                  } else {
+                    addLog("ERROR", `Failed to fetch sample data: ${fullResponse.status}`);
+                    return;
+                  }
+                } else {
+                  // DB에 없으면 기존 JSON 파일로 폴백
+                  const fallbackResponse = await fetch("/samples.json");
+                  if (fallbackResponse.ok) {
+                    const fallbackSamples = await fallbackResponse.json();
+                    const foundSample = fallbackSamples.find(
+                      (s: any) => s.filename === filename || s.name === sampleName
+                    );
+                    if (foundSample && foundSample.data) {
+                      sampleModel = foundSample.data;
+                    } else {
+                      addLog("ERROR", `Sample file not found: ${filename}`);
+                      return;
+                    }
+                  } else {
+                    addLog("ERROR", `Sample file not found: ${filename}`);
+                    return;
+                  }
+                }
               } else {
-                addLog("ERROR", `Sample file not found: ${filename}`);
+                addLog("ERROR", `Invalid samples format`);
                 return;
               }
             } else {
-              addLog("ERROR", `Invalid samples.json format`);
-              return;
+              // DB 서버가 없으면 기존 JSON 파일로 폴백
+              const fallbackResponse = await fetch("/samples.json");
+              if (!fallbackResponse.ok) {
+                throw new Error(
+                  `Failed to fetch samples.json: ${fallbackResponse.status}`
+                );
+              }
+              const samples = await fallbackResponse.json();
+              if (Array.isArray(samples)) {
+                const foundSample = samples.find(
+                  (s: any) => s.filename === filename || s.name === sampleName
+                );
+                if (foundSample && foundSample.data) {
+                  sampleModel = foundSample.data;
+                } else {
+                  addLog("ERROR", `Sample file not found: ${filename}`);
+                  return;
+                }
+              } else {
+                addLog("ERROR", `Invalid samples.json format`);
+                return;
+              }
             }
           } catch (error: any) {
             console.error("Error loading folder sample:", error);
@@ -2180,36 +2233,70 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
     [resetModules, addLog, handleFitToView]
   );
 
-  // Samples 폴더의 파일 목록 가져오기
+  // Samples 폴더의 파일 목록 가져오기 (DB에서 로드)
   const loadFolderSamplesLocal = useCallback(async () => {
     setIsLoadingSamples(true);
     try {
-      // 빌드 시점에 생성된 JSON 파일을 직접 로드
-      const response = await fetch("/samples.json");
+      // DB API에서 샘플 로드
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+      const response = await fetch(`${API_BASE}/api/samples`);
 
       if (!response.ok) {
-        throw new Error(
-          `Failed to fetch samples.json: ${response.status} ${response.statusText}`
-        );
+        // DB 서버가 없으면 기존 JSON 파일로 폴백
+        console.warn('DB API not available, falling back to samples.json');
+        const fallbackResponse = await fetch("/samples.json");
+        if (fallbackResponse.ok) {
+          const samples = await fallbackResponse.json();
+          if (Array.isArray(samples) && samples.length > 0) {
+            setFolderSamples(samples);
+          } else {
+            setFolderSamples([]);
+          }
+        } else {
+          setFolderSamples([]);
+        }
+        return;
       }
 
       const samples = await response.json();
 
       if (Array.isArray(samples) && samples.length > 0) {
         console.log(
-          `Loaded ${samples.length} samples from samples.json:`,
+          `Loaded ${samples.length} samples from DB:`,
           samples.map((s: any) => s.name || s.filename)
         );
-        setFolderSamples(samples);
+        // DB 형식을 앱 형식으로 변환
+        const formattedSamples = samples.map((s: any) => ({
+          filename: s.filename,
+          name: s.name,
+          inputData: s.input_data,
+          description: s.description,
+          data: null, // 필요시 나중에 로드
+        }));
+        setFolderSamples(formattedSamples);
       } else {
-        console.log("No samples found or empty array");
+        console.log("No samples found in DB");
         setFolderSamples([]);
       }
     } catch (error: any) {
-      console.error("Error loading folder samples:", error);
-      console.error("Error details:", error.message, error.stack);
-      // 에러 발생 시 빈 배열로 설정 (서버 없이도 작동하도록)
-      setFolderSamples([]);
+      console.error("Error loading samples from DB:", error);
+      // 에러 발생 시 기존 JSON 파일로 폴백
+      try {
+        const fallbackResponse = await fetch("/samples.json");
+        if (fallbackResponse.ok) {
+          const samples = await fallbackResponse.json();
+          if (Array.isArray(samples) && samples.length > 0) {
+            setFolderSamples(samples);
+          } else {
+            setFolderSamples([]);
+          }
+        } else {
+          setFolderSamples([]);
+        }
+      } catch (fallbackError) {
+        console.error("Fallback also failed:", fallbackError);
+        setFolderSamples([]);
+      }
     } finally {
       setIsLoadingSamples(false);
     }
@@ -9928,10 +10015,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                     "SAMPLE_MODELS:",
                     SAMPLE_MODELS
                   );
-                  setIsSampleMenuOpen((prev) => {
-                    console.log("Toggling from", prev, "to", !prev);
-                    return !prev;
-                  });
+                  setIsSampleMenuOpen(true);
                 }}
                 className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-md font-semibold transition-colors cursor-pointer ${
                   isSampleMenuOpen
@@ -9944,78 +10028,6 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 <SparklesIcon className="h-4 w-4" />
                 <span>Samples</span>
               </button>
-              {isSampleMenuOpen && (
-                <div
-                  className="absolute top-full left-0 mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-xl min-w-[200px] max-h-[600px] overflow-y-auto"
-                  style={{ zIndex: 9999 }}
-                >
-                  {/* Sample로 저장 버튼 */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSaveAsSample();
-                      setIsSampleMenuOpen(false);
-                    }}
-                    disabled={modules.length === 0}
-                    className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer flex items-center gap-2 border-b border-gray-700 ${
-                      modules.length === 0
-                        ? "text-gray-500 cursor-not-allowed"
-                        : "text-green-400 hover:bg-gray-700"
-                    }`}
-                    type="button"
-                    title={
-                      modules.length === 0
-                        ? "모듈을 추가한 후 저장할 수 있습니다"
-                        : "현재 파이프라인을 Sample로 저장"
-                    }
-                  >
-                    <ArrowDownTrayIcon className="w-4 h-4" />
-                    <span>Sample로 저장</span>
-                  </button>
-                  {/* Samples 폴더의 파일 목록만 표시 */}
-                  {isLoadingSamples ? (
-                    <div className="px-4 py-2 text-sm text-gray-400">
-                      Loading samples...
-                    </div>
-                  ) : folderSamples.length > 0 ? (
-                    folderSamples.map((sample) => {
-                      // 파일 이름에서 확장자 제거
-                      const displayName = sample.filename.replace(
-                        /\.(ins|json)$/i,
-                        ""
-                      );
-                      return (
-                        <button
-                          key={sample.filename}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            console.log(
-                              "Loading sample:",
-                              sample.name,
-                              "from file:",
-                              sample.filename
-                            );
-                            handleLoadSample(
-                              sample.name,
-                              "folder",
-                              sample.filename
-                            );
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors cursor-pointer"
-                          type="button"
-                          title={sample.filename}
-                        >
-                          {displayName}
-                        </button>
-                      );
-                    })
-                  ) : (
-                    <div className="px-4 py-2 text-sm text-gray-400">
-                      No samples available
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
             {/* My Work 버튼 */}
             <div
@@ -10882,6 +10894,30 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             />
           );
         })()}
+        
+        {/* Samples Modal */}
+        <SamplesModal
+          isOpen={isSampleMenuOpen}
+          onClose={() => setIsSampleMenuOpen(false)}
+          samples={folderSamples}
+          onLoadSample={(sampleName, filename) => {
+            handleLoadSample(sampleName, "folder", filename);
+          }}
+          onManage={() => {
+            setIsSampleMenuOpen(false);
+            setIsSamplesManagementOpen(true);
+          }}
+          isLoading={isLoadingSamples}
+        />
+        
+        {/* Samples Management Modal */}
+        <SamplesManagementModal
+          isOpen={isSamplesManagementOpen}
+          onClose={() => setIsSamplesManagementOpen(false)}
+          onRefresh={() => {
+            loadFolderSamplesLocal();
+          }}
+        />
     </div>
   );
 };

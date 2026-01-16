@@ -1,6 +1,49 @@
 # Change History
 
-## 2026-01-13 (현재 작업)
+## 2026-01-16 (현재 작업)
+
+### feat(samples): DB 기반 샘플 관리 시스템 구현
+
+**Description:**
+- SQLite 데이터베이스를 사용한 샘플 관리 시스템 구현
+- Samples 버튼 클릭 시 팝업 모달로 카드 형식 샘플 표시
+- 샘플 관리 모달에서 파일 업로드, 수정, 삭제 기능 추가
+- Express API 서버에 샘플 관리 엔드포인트 추가
+- 기존 파일 기반 샘플을 DB로 마이그레이션하는 스크립트 추가
+
+**Files Affected:**
+- `components/SamplesModal.tsx` - 샘플 카드 형식 모달 컴포넌트 (신규)
+- `components/SamplesManagementModal.tsx` - 샘플 관리 모달 컴포넌트 (신규)
+- `utils/samples-api.ts` - 샘플 API 클라이언트 (신규)
+- `server/db/samples-db.js` - SQLite 데이터베이스 초기화 모듈 (신규)
+- `server/routes/samples.js` - 샘플 관리 API 라우터 (신규)
+- `scripts/migrate-samples-to-db.js` - 샘플 마이그레이션 스크립트 (신규)
+- `samples/samples-metadata.json` - 샘플 메타데이터 파일 (신규)
+- `samples/FILE_FORMAT_GUIDE.md` - 샘플 파일 형식 가이드 (신규)
+- `App.tsx` - DB에서 샘플 로드하도록 수정, 관리 모달 통합
+- `server/split-data-server.js` - 샘플 API 라우터 연결
+- `scripts/build-samples.js` - 메타데이터 병합 로직 추가
+- `package.json` - better-sqlite3 패키지 추가, migrate:samples 스크립트 추가
+- `README.md` - 앱 실행 방법 및 시스템 구성 설명 추가
+
+**Reason:**
+- 샘플을 파일 기반에서 DB 기반으로 전환하여 관리 용이성 향상
+- 샘플 추가/수정/삭제 기능을 UI로 제공하여 사용자 편의성 개선
+- 카드 형식 UI로 샘플 정보를 더 명확하게 표시
+
+**Commit Hash:** (커밋 후 업데이트)
+
+**Recovery Command:**
+```bash
+# Backup and recover
+git stash push -u -m "백업"
+git reset --hard <커밋해시>
+
+# Or direct recovery
+git reset --hard <커밋해시>
+```
+
+## 2026-01-13 (이전 작업)
 
 ### fix(vercel): Add package-lock.json and restore npm ci command
 

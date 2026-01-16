@@ -20,6 +20,19 @@ if (!fs.existsSync(PUBLIC_DIR)) {
 
 console.log('Building samples and examples JSON files...');
 
+// 0. 메타데이터 파일 읽기
+const metadataPath = path.join(SAMPLES_DIR, 'samples-metadata.json');
+let metadata = {};
+if (fs.existsSync(metadataPath)) {
+  try {
+    const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
+    metadata = JSON.parse(metadataContent);
+    console.log(`Loaded metadata for ${Object.keys(metadata).length} samples`);
+  } catch (error) {
+    console.warn(`Failed to load metadata file: ${error.message}`);
+  }
+}
+
 // 1. Samples 폴더 처리
 const samplesList = [];
 if (fs.existsSync(SAMPLES_DIR)) {
@@ -52,9 +65,13 @@ if (fs.existsSync(SAMPLES_DIR)) {
           const projectName =
             data.name || data.projectName || file.replace(ext, '');
 
+          // 메타데이터 병합
+          const fileMetadata = metadata[file] || {};
           return {
             filename: file,
             name: projectName,
+            inputData: fileMetadata.inputData || '',
+            description: fileMetadata.description || '',
             data: {
               name: projectName,
               modules: data.modules.map((m) => ({
@@ -87,11 +104,15 @@ if (fs.existsSync(SAMPLES_DIR)) {
         }
 
         // .json 파일 형식
+        // 메타데이터 병합
+        const fileMetadata = metadata[file] || {};
         return {
           filename: file,
           name:
             data.name ||
             file.replace('.json', '').replace('.ins', ''),
+          inputData: fileMetadata.inputData || '',
+          description: fileMetadata.description || '',
           data: data,
         };
       } catch (error) {
