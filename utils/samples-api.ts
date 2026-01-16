@@ -10,6 +10,7 @@ export interface Sample {
   name: string;
   input_data?: string;
   description?: string;
+  category?: string;
   file_content?: any;
   created_at?: string;
   updated_at?: string;
@@ -20,6 +21,7 @@ export interface CreateSampleRequest {
   name: string;
   input_data?: string;
   description?: string;
+  category?: string;
   file_content: any;
 }
 
@@ -27,6 +29,7 @@ export interface UpdateSampleRequest {
   name?: string;
   input_data?: string;
   description?: string;
+  category?: string;
   file_content?: any;
 }
 

@@ -29,7 +29,7 @@ const upload = multer({
 router.get('/', (req, res) => {
   try {
     const samples = db.prepare(`
-      SELECT id, filename, name, input_data, description, 
+      SELECT id, filename, name, input_data, description, category,
              created_at, updated_at
       FROM samples
       ORDER BY created_at DESC
@@ -71,7 +71,7 @@ router.get('/:id', (req, res) => {
 // 샘플 생성 (JSON 직접 전송)
 router.post('/', (req, res) => {
   try {
-    const { filename, name, input_data, description, file_content } = req.body;
+    const { filename, name, input_data, description, category, file_content } = req.body;
     
     if (!filename || !name || !file_content) {
       return res.status(400).json({ 
@@ -80,13 +80,14 @@ router.post('/', (req, res) => {
     }
     
     const result = db.prepare(`
-      INSERT INTO samples (filename, name, input_data, description, file_content)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO samples (filename, name, input_data, description, category, file_content)
+      VALUES (?, ?, ?, ?, ?, ?)
     `).run(
       filename,
       name,
       input_data || '',
       description || '',
+      category || '머신러닝',
       JSON.stringify(file_content)
     );
     
@@ -144,13 +145,14 @@ router.post('/import', upload.single('file'), (req, res) => {
     
     // DB에 저장
     const result = db.prepare(`
-      INSERT INTO samples (filename, name, input_data, description, file_content)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO samples (filename, name, input_data, description, category, file_content)
+      VALUES (?, ?, ?, ?, ?, ?)
     `).run(
       filename,
       name,
       fileMetadata.inputData || fileMetadata.input_data || '',
       fileMetadata.description || '',
+      fileMetadata.category || '머신러닝',
       fileContent
     );
     
@@ -210,6 +212,10 @@ router.put('/:id', (req, res) => {
     if (description !== undefined) {
       updateFields.push('description = ?');
       updateValues.push(description);
+    }
+    if (category !== undefined) {
+      updateFields.push('category = ?');
+      updateValues.push(category);
     }
     if (file_content) {
       updateFields.push('file_content = ?');

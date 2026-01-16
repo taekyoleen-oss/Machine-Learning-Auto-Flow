@@ -70,13 +70,14 @@ for (const file of files) {
     
     // DB에 저장
     const result = db.prepare(`
-      INSERT INTO samples (filename, name, input_data, description, file_content)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO samples (filename, name, input_data, description, category, file_content)
+      VALUES (?, ?, ?, ?, ?, ?)
     `).run(
       file,
       name,
       fileMetadata.inputData || fileMetadata.input_data || '',
       fileMetadata.description || '',
+      fileMetadata.category || '머신러닝',
       content
     );
     

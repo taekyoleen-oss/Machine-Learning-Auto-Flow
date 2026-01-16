@@ -8,16 +8,19 @@ interface Sample {
   data: any;
   inputData?: string;
   description?: string;
+  category?: string;
 }
 
 interface SamplesModalProps {
   isOpen: boolean;
   onClose: () => void;
-  samples: Array<{ id?: number; filename: string; name: string; data: any; inputData?: string; description?: string }>;
+  samples: Array<{ id?: number; filename: string; name: string; data: any; inputData?: string; description?: string; category?: string }>;
   onLoadSample: (sampleName: string, filename: string, sampleId?: number) => void;
   onManage?: () => void;
   isLoading?: boolean;
 }
+
+const CATEGORIES = ['전체', '머신러닝', '딥러닝', '통계분석', 'DFA', '프라이싱'] as const;
 
 const SamplesModal: React.FC<SamplesModalProps> = ({
   isOpen,
@@ -27,11 +30,18 @@ const SamplesModal: React.FC<SamplesModalProps> = ({
   onManage,
   isLoading = false,
 }) => {
+  const [selectedCategory, setSelectedCategory] = React.useState<string>('전체');
+
   if (!isOpen) return null;
 
   const handleLoad = (sample: Sample) => {
     onLoadSample(sample.name, sample.filename, sample.id);
   };
+
+  // 카테고리별 필터링
+  const filteredSamples = selectedCategory === '전체'
+    ? samples
+    : samples.filter(sample => sample.category === selectedCategory);
 
   return (
     <div
@@ -43,25 +53,44 @@ const SamplesModal: React.FC<SamplesModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
-        <div className="sticky top-0 bg-gray-900 border-b border-gray-700 p-4 flex justify-between items-center z-10">
-          <h2 className="text-2xl font-bold text-white">Samples</h2>
-          <div className="flex items-center gap-2">
-            {onManage && (
+        <div className="sticky top-0 bg-gray-900 border-b border-gray-700 z-10">
+          <div className="p-4 flex justify-between items-center">
+            <h2 className="text-2xl font-bold text-white">Samples</h2>
+            <div className="flex items-center gap-2">
+              {onManage && (
+                <button
+                  onClick={onManage}
+                  className="text-gray-400 hover:text-white transition-colors p-2 rounded-md hover:bg-gray-800"
+                  title="샘플 관리"
+                >
+                  <Cog6ToothIcon className="w-5 h-5" />
+                </button>
+              )}
               <button
-                onClick={onManage}
-                className="text-gray-400 hover:text-white transition-colors p-2 rounded-md hover:bg-gray-800"
-                title="샘플 관리"
+                onClick={onClose}
+                className="text-gray-400 hover:text-white transition-colors p-1 rounded-md hover:bg-gray-800"
+                aria-label="Close"
               >
-                <Cog6ToothIcon className="w-5 h-5" />
+                <XMarkIcon className="w-6 h-6" />
               </button>
-            )}
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors p-1 rounded-md hover:bg-gray-800"
-              aria-label="Close"
-            >
-              <XMarkIcon className="w-6 h-6" />
-            </button>
+            </div>
+          </div>
+          
+          {/* 카테고리 필터 */}
+          <div className="px-4 pb-4 flex gap-2 overflow-x-auto">
+            {CATEGORIES.map((category) => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap transition-colors ${
+                  selectedCategory === category
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                }`}
+              >
+                {category}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -71,13 +100,17 @@ const SamplesModal: React.FC<SamplesModalProps> = ({
             <div className="flex items-center justify-center py-12">
               <div className="text-gray-400 text-lg">Loading samples...</div>
             </div>
-          ) : samples.length === 0 ? (
+          ) : filteredSamples.length === 0 ? (
             <div className="flex items-center justify-center py-12">
-              <div className="text-gray-400 text-lg">No samples available</div>
+              <div className="text-gray-400 text-lg">
+                {selectedCategory === '전체' 
+                  ? 'No samples available' 
+                  : `'${selectedCategory}' 카테고리에 샘플이 없습니다.`}
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {samples.map((sample) => (
+              {filteredSamples.map((sample) => (
                 <div
                   key={sample.filename}
                   className="bg-gray-800 rounded-lg border border-gray-700 p-6 hover:border-purple-500 transition-all duration-200 hover:shadow-lg hover:shadow-purple-500/20 flex flex-col"

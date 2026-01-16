@@ -2369,6 +2369,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             name: s.name,
             inputData: s.input_data,
             description: s.description,
+            category: s.category || '머신러닝', // 기본값: 머신러닝
             data: null, // 필요시 나중에 로드
           }));
           setFolderSamples(formattedSamples);

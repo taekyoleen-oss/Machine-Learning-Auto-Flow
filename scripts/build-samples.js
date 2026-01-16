@@ -76,6 +76,7 @@ if (fs.existsSync(SAMPLES_DIR)) {
             name: projectName,
             inputData: fileMetadata.inputData || '',
             description: fileMetadata.description || '',
+            category: fileMetadata.category || '머신러닝',
             data: {
               name: projectName,
               modules: data.modules.map((m) => ({
@@ -117,6 +118,7 @@ if (fs.existsSync(SAMPLES_DIR)) {
             file.replace('.json', '').replace('.ins', ''),
           inputData: fileMetadata.inputData || '',
           description: fileMetadata.description || '',
+          category: fileMetadata.category || '머신러닝',
           data: data,
         };
       } catch (error) {

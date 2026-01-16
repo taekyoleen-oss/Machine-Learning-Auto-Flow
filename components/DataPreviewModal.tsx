@@ -27,15 +27,15 @@ import { MarkdownRenderer } from "./MarkdownRenderer";
 import { SpreadViewModal } from "./SpreadViewModal";
 
 interface DataPreviewModalProps {
-  module: CanvasModule;
-  projectName: string;
-  onClose: () => void;
-  modules?: CanvasModule[];
-  connections?: Connection[];
+    module: CanvasModule;
+    projectName: string;
+    onClose: () => void;
+    modules?: CanvasModule[];
+    connections?: Connection[];
 }
 
 type SortConfig = {
-  key: string;
+    key: string;
   direction: "ascending" | "descending";
 } | null;
 
@@ -43,148 +43,148 @@ type SortConfig = {
 const CorrelationHeatmap: React.FC<{
   matrix: Record<string, Record<string, number>>;
 }> = ({ matrix }) => {
-  const columns = Object.keys(matrix);
+    const columns = Object.keys(matrix);
+    
+    const getColor = (value: number) => {
+        const alpha = Math.abs(value);
+        if (value > 0) return `rgba(59, 130, 246, ${alpha})`; // Blue for positive
+        return `rgba(239, 68, 68, ${alpha})`; // Red for negative
+    };
 
-  const getColor = (value: number) => {
-    const alpha = Math.abs(value);
-    if (value > 0) return `rgba(59, 130, 246, ${alpha})`; // Blue for positive
-    return `rgba(239, 68, 68, ${alpha})`; // Red for negative
-  };
-
-  return (
-    <div className="p-2">
-      <div className="flex text-xs font-bold">
-        <div className="w-20 flex-shrink-0"></div>
+    return (
+        <div className="p-2">
+            <div className="flex text-xs font-bold">
+                <div className="w-20 flex-shrink-0"></div>
         {columns.map((col) => (
           <div key={col} className="flex-1 text-center truncate" title={col}>
             {col}
-          </div>
+            </div>
         ))}
       </div>
       {columns.map((rowCol) => (
-        <div key={rowCol} className="flex items-center text-xs">
+                <div key={rowCol} className="flex items-center text-xs">
           <div className="w-20 flex-shrink-0 font-bold truncate" title={rowCol}>
             {rowCol}
           </div>
           {columns.map((colCol) => (
-            <div key={`${rowCol}-${colCol}`} className="flex-1 p-0.5">
-              <div
-                className="w-full h-6 rounded-sm flex items-center justify-center text-white font-mono"
+                        <div key={`${rowCol}-${colCol}`} className="flex-1 p-0.5">
+                            <div
+                                className="w-full h-6 rounded-sm flex items-center justify-center text-white font-mono"
                 style={{
                   backgroundColor: getColor(matrix[rowCol]?.[colCol] || 0),
                 }}
                 title={`${rowCol} vs ${colCol}: ${(
                   matrix[rowCol]?.[colCol] || 0
                 ).toFixed(5)}`}
-              >
-                {(matrix[rowCol]?.[colCol] || 0).toFixed(5)}
-              </div>
-            </div>
-          ))}
+                            >
+                                {(matrix[rowCol]?.[colCol] || 0).toFixed(5)}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ))}
         </div>
-      ))}
-    </div>
-  );
+    );
 };
 
 // Statistics 모듈의 Pairplot Cell 컴포넌트 (Load Data 모듈용)
-const PairplotCell: React.FC<{
-  row: number;
-  col: number;
-  displayColumns: string[];
-  correlation: Record<string, Record<string, number>>;
-  rows: Record<string, any>[];
+const PairplotCell: React.FC<{ 
+    row: number; 
+    col: number; 
+    displayColumns: string[]; 
+    correlation: Record<string, Record<string, number>>;
+    rows: Record<string, any>[];
 }> = ({ row, col, displayColumns, correlation, rows }) => {
-  const colNameX = displayColumns[col];
-  const colNameY = displayColumns[row];
+    const colNameX = displayColumns[col];
+    const colNameY = displayColumns[row];
 
   if (row === col) {
     // Diagonal -> Histogram
     const columnData = rows
       .map((r) => parseFloat(r[colNameX]))
       .filter((v) => !isNaN(v));
-    if (columnData.length === 0) {
-      return (
-        <div className="w-full h-full border border-gray-300 rounded flex items-center justify-center text-xs text-gray-400">
-          No data
-        </div>
-      );
-    }
-    const min = Math.min(...columnData);
-    const max = Math.max(...columnData);
-    const numBins = 10;
-    const binSize = (max - min) / numBins || 1;
-    const bins = Array(numBins).fill(0);
-
-    for (const value of columnData) {
-      let binIndex = binSize > 0 ? Math.floor((value - min) / binSize) : 0;
-      if (binIndex === numBins) binIndex--;
-      if (binIndex >= 0 && binIndex < numBins) {
-        bins[binIndex]++;
-      }
-    }
-
-    const maxBinCount = Math.max(...bins, 1);
-
-    return (
-      <div className="w-full h-full border border-gray-300 rounded flex items-end justify-around gap-px p-1 bg-gray-100">
-        {bins.map((count, i) => (
-          <div
-            key={i}
-            className="bg-gray-400 w-full"
-            style={{ height: `${(count / maxBinCount) * 100}%` }}
-          />
-        ))}
-      </div>
-    );
+        if (columnData.length === 0) {
+            return (
+                <div className="w-full h-full border border-gray-300 rounded flex items-center justify-center text-xs text-gray-400">
+                    No data
+                </div>
+            );
+        }
+        const min = Math.min(...columnData);
+        const max = Math.max(...columnData);
+        const numBins = 10;
+        const binSize = (max - min) / numBins || 1;
+        const bins = Array(numBins).fill(0);
+        
+        for (const value of columnData) {
+            let binIndex = binSize > 0 ? Math.floor((value - min) / binSize) : 0;
+            if (binIndex === numBins) binIndex--;
+            if (binIndex >= 0 && binIndex < numBins) {
+                bins[binIndex]++;
+            }
+        }
+        
+        const maxBinCount = Math.max(...bins, 1);
+        
+        return (
+            <div className="w-full h-full border border-gray-300 rounded flex items-end justify-around gap-px p-1 bg-gray-100">
+                {bins.map((count, i) => (
+                    <div 
+                        key={i} 
+                        className="bg-gray-400 w-full" 
+                        style={{ height: `${(count / maxBinCount) * 100}%` }}
+                    />
+                ))}
+            </div>
+        );
   } else {
     // Off-diagonal -> Scatter plot
-    const corrValue = correlation[colNameY]?.[colNameX] || 0;
+        const corrValue = correlation[colNameY]?.[colNameX] || 0;
     const xData = rows
       .map((r) => parseFloat(r[colNameX]))
       .filter((v) => !isNaN(v));
     const yData = rows
       .map((r) => parseFloat(r[colNameY]))
       .filter((v) => !isNaN(v));
-
-    if (xData.length === 0 || yData.length === 0) {
-      return (
-        <div className="w-full h-full border border-gray-300 rounded flex items-center justify-center text-xs text-gray-400">
-          No data
-        </div>
-      );
-    }
-
-    const xMin = Math.min(...xData);
-    const xMax = Math.max(...xData);
-    const yMin = Math.min(...yData);
-    const yMax = Math.max(...yData);
-
-    const xRange = xMax - xMin || 1;
-    const yRange = yMax - yMin || 1;
-
+        
+        if (xData.length === 0 || yData.length === 0) {
+            return (
+                <div className="w-full h-full border border-gray-300 rounded flex items-center justify-center text-xs text-gray-400">
+                    No data
+                </div>
+            );
+        }
+        
+        const xMin = Math.min(...xData);
+        const xMax = Math.max(...xData);
+        const yMin = Math.min(...yData);
+        const yMax = Math.max(...yData);
+        
+        const xRange = xMax - xMin || 1;
+        const yRange = yMax - yMin || 1;
+        
     const points = xData
       .map((x, i) => {
-        const y = yData[i];
-        return {
-          x: ((x - xMin) / xRange) * 100,
+            const y = yData[i];
+            return {
+                x: ((x - xMin) / xRange) * 100,
           y: ((y - yMin) / yRange) * 100,
-        };
+            };
       })
       .slice(0, 100); // 최대 100개 포인트만 표시
-
-    return (
-      <div className="w-full h-full border border-gray-300 rounded p-1 relative">
-        <div className="absolute top-0 left-0 text-xs font-semibold text-gray-700 px-1 bg-white bg-opacity-75 rounded">
-          r = {corrValue.toFixed(2)}
-        </div>
+        
+        return (
+            <div className="w-full h-full border border-gray-300 rounded p-1 relative">
+                <div className="absolute top-0 left-0 text-xs font-semibold text-gray-700 px-1 bg-white bg-opacity-75 rounded">
+                    r = {corrValue.toFixed(2)}
+                </div>
         <svg
           width="100%"
           height="100%"
           viewBox="0 0 100 100"
           className="overflow-visible"
         >
-          {points.map((p, i) => (
+                    {points.map((p, i) => (
             <circle
               key={i}
               cx={p.x}
@@ -193,80 +193,80 @@ const PairplotCell: React.FC<{
               fill="#3b82f6"
               opacity="0.6"
             />
-          ))}
-        </svg>
-      </div>
-    );
-  }
+                    ))}
+                </svg>
+            </div>
+        );
+    }
 };
 
 // Statistics 모듈의 Pairplot 컴포넌트 (Load Data 모듈용)
-const Pairplot: React.FC<{
-  correlation: Record<string, Record<string, number>>;
-  numericColumns: string[];
-  rows: Record<string, any>[];
+const Pairplot: React.FC<{ 
+    correlation: Record<string, Record<string, number>>;
+    numericColumns: string[];
+    rows: Record<string, any>[];
 }> = ({ correlation, numericColumns, rows }) => {
-  if (numericColumns.length === 0) {
+    if (numericColumns.length === 0) {
     return (
       <p className="text-sm text-gray-500">
         No numeric columns to display in pairplot.
       </p>
     );
-  }
-  const displayColumns = numericColumns.slice(0, 15);
+    }
+    const displayColumns = numericColumns.slice(0, 15); 
 
-  const gridStyle: React.CSSProperties = {
+    const gridStyle: React.CSSProperties = {
     display: "grid",
-    gridTemplateColumns: `repeat(${displayColumns.length}, minmax(0, 1fr))`,
-    gridTemplateRows: `repeat(${displayColumns.length}, minmax(0, 1fr))`,
+        gridTemplateColumns: `repeat(${displayColumns.length}, minmax(0, 1fr))`,
+        gridTemplateRows: `repeat(${displayColumns.length}, minmax(0, 1fr))`,
     gap: "8px",
-  };
-
-  return (
-    <div>
-      {displayColumns.length < numericColumns.length && (
+    };
+    
+    return (
+        <div>
+            {displayColumns.length < numericColumns.length && (
         <p className="text-sm text-gray-500 mb-2">
           Displaying first {displayColumns.length} of {numericColumns.length}{" "}
           numeric columns for brevity.
         </p>
-      )}
-      <div className="flex">
-        <div className="flex flex-col justify-around w-20 text-xs font-bold text-right pr-2">
+            )}
+            <div className="flex">
+                <div className="flex flex-col justify-around w-20 text-xs font-bold text-right pr-2">
           {displayColumns.map((col) => (
             <div key={col} className="truncate" title={col}>
               {col}
-            </div>
+                </div>
           ))}
         </div>
         <div className="flex-1" style={{ aspectRatio: "1 / 1" }}>
-          <div style={gridStyle} className="w-full h-full">
-            {displayColumns.map((_, rowIndex) =>
-              displayColumns.map((_, colIndex) => (
-                <PairplotCell
-                  key={`${rowIndex}-${colIndex}`}
-                  row={rowIndex}
-                  col={colIndex}
-                  displayColumns={displayColumns}
-                  correlation={correlation}
-                  rows={rows}
-                />
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="flex">
-        <div className="w-20"></div>
-        <div className="flex-1 flex justify-around text-xs font-bold text-center pt-2">
+                    <div style={gridStyle} className="w-full h-full">
+                        {displayColumns.map((_, rowIndex) => 
+                            displayColumns.map((_, colIndex) => (
+                                <PairplotCell 
+                                    key={`${rowIndex}-${colIndex}`} 
+                                    row={rowIndex} 
+                                    col={colIndex} 
+                                    displayColumns={displayColumns} 
+                                    correlation={correlation}
+                                    rows={rows}
+                                />
+                            ))
+                        )}
+                    </div>
+                </div>
+            </div>
+            <div className="flex">
+                <div className="w-20"></div>
+                <div className="flex-1 flex justify-around text-xs font-bold text-center pt-2">
           {displayColumns.map((col) => (
             <div key={col} className="truncate" title={col}>
               {col}
             </div>
           ))}
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 const HistogramPlot: React.FC<{
@@ -279,50 +279,50 @@ const HistogramPlot: React.FC<{
     [data]
   );
 
-  if (numericData.length === 0) {
+    if (numericData.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-gray-400 text-sm">
         No numeric data in this column to plot.
       </div>
     );
-  }
-
-  const { bins } = useMemo(() => {
-    const min = Math.min(...numericData);
-    const max = Math.max(...numericData);
-    const numBins = 10;
-    const binSize = (max - min) / numBins;
-    const bins = Array(numBins).fill(0);
-
-    for (const value of numericData) {
-      let binIndex = binSize > 0 ? Math.floor((value - min) / binSize) : 0;
-      if (binIndex === numBins) binIndex--;
-      if (binIndex >= 0 && binIndex < numBins) {
-        bins[binIndex]++;
-      }
     }
-    return { bins };
-  }, [numericData]);
 
-  const maxBinCount = Math.max(...bins, 0);
+    const { bins } = useMemo(() => {
+        const min = Math.min(...numericData);
+        const max = Math.max(...numericData);
+        const numBins = 10;
+        const binSize = (max - min) / numBins;
+        const bins = Array(numBins).fill(0);
 
-  return (
-    <div className="w-full h-full p-4 flex flex-col border border-gray-200 rounded-lg">
-      <div className="flex-grow flex items-center gap-2 overflow-hidden">
-        {/* Y-axis Label */}
-        <div className="flex items-center justify-center h-full">
-          <p className="text-sm text-gray-600 font-semibold transform -rotate-90 whitespace-nowrap">
-            Frequency
-          </p>
-        </div>
+        for (const value of numericData) {
+            let binIndex = binSize > 0 ? Math.floor((value - min) / binSize) : 0;
+            if (binIndex === numBins) binIndex--;
+            if (binIndex >= 0 && binIndex < numBins) {
+                bins[binIndex]++;
+            }
+        }
+        return { bins };
+    }, [numericData]);
+    
+    const maxBinCount = Math.max(...bins, 0);
 
-        {/* Plot area */}
-        <div className="flex-grow h-full flex flex-col">
-          <div className="flex-grow flex items-end justify-around gap-1 pt-4">
-            {bins.map((count, index) => {
+    return (
+        <div className="w-full h-full p-4 flex flex-col border border-gray-200 rounded-lg">
+             <div className="flex-grow flex items-center gap-2 overflow-hidden">
+                {/* Y-axis Label */}
+                <div className="flex items-center justify-center h-full">
+                    <p className="text-sm text-gray-600 font-semibold transform -rotate-90 whitespace-nowrap">
+                        Frequency
+                    </p>
+                </div>
+                
+                {/* Plot area */}
+                <div className="flex-grow h-full flex flex-col">
+                    <div className="flex-grow flex items-end justify-around gap-1 pt-4">
+                        {bins.map((count, index) => {
               const heightPercentage =
                 maxBinCount > 0 ? (count / maxBinCount) * 100 : 0;
-              return (
+                            return (
                 <div
                   key={index}
                   className="flex-1 h-full flex flex-col justify-end items-center group relative"
@@ -331,22 +331,22 @@ const HistogramPlot: React.FC<{
                   <span className="absolute -top-5 text-xs bg-gray-800 text-white px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                     {count}
                   </span>
-                  <div
-                    className="w-full bg-blue-400 hover:bg-blue-500 transition-colors"
-                    style={{ height: `${heightPercentage}%` }}
+                                    <div 
+                                        className="w-full bg-blue-400 hover:bg-blue-500 transition-colors"
+                                        style={{ height: `${heightPercentage}%` }}
                   ></div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    {/* X-axis Label */}
+                    <div className="w-full text-center text-sm text-gray-600 font-semibold mt-2 border-t pt-1">
+                        {column}
+                    </div>
                 </div>
-              );
-            })}
-          </div>
-          {/* X-axis Label */}
-          <div className="w-full text-center text-sm text-gray-600 font-semibold mt-2 border-t pt-1">
-            {column}
-          </div>
+             </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 const ScatterPlot: React.FC<{
@@ -362,17 +362,17 @@ const ScatterPlot: React.FC<{
     [rows, xCol, yCol]
   );
 
-  if (dataPoints.length === 0) {
+    if (dataPoints.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-gray-400">
         No valid data points for scatter plot.
       </div>
     );
-  }
+    }
 
-  const margin = { top: 20, right: 20, bottom: 40, left: 50 };
-  const width = 600;
-  const height = 400;
+    const margin = { top: 20, right: 20, bottom: 40, left: 50 };
+    const width = 600;
+    const height = 400;
 
   const xMin = Math.min(...dataPoints.map((d) => d.x));
   const xMax = Math.max(...dataPoints.map((d) => d.x));
@@ -386,26 +386,26 @@ const ScatterPlot: React.FC<{
     height -
     margin.bottom -
     ((y - yMin) / (yMax - yMin || 1)) * (height - margin.top - margin.bottom);
+    
+    const getTicks = (min: number, max: number, count: number) => {
+        if (min === max) return [min];
+        const ticks = [];
+        const step = (max - min) / (count - 1);
+        for (let i = 0; i < count; i++) {
+            ticks.push(min + i * step);
+        }
+        return ticks;
+    };
+    
+    const xTicks = getTicks(xMin, xMax, 5);
+    const yTicks = getTicks(yMin, yMax, 5);
 
-  const getTicks = (min: number, max: number, count: number) => {
-    if (min === max) return [min];
-    const ticks = [];
-    const step = (max - min) / (count - 1);
-    for (let i = 0; i < count; i++) {
-      ticks.push(min + i * step);
-    }
-    return ticks;
-  };
-
-  const xTicks = getTicks(xMin, xMax, 5);
-  const yTicks = getTicks(yMin, yMax, 5);
-
-  return (
+    return (
     <svg
       viewBox={`0 0 ${width} ${height}`}
       className="w-full h-auto max-w-full"
     >
-      {/* Axes */}
+            {/* Axes */}
       <line
         x1={margin.left}
         y1={height - margin.bottom}
@@ -423,18 +423,18 @@ const ScatterPlot: React.FC<{
         strokeWidth="1"
       />
 
-      {/* X Ticks and Labels */}
-      {xTicks.map((tick, i) => (
+            {/* X Ticks and Labels */}
+            {xTicks.map((tick, i) => (
         <g
           key={`x-${i}`}
           transform={`translate(${xScale(tick)}, ${height - margin.bottom})`}
         >
-          <line y2="5" stroke="currentColor" strokeWidth="1" />
+                    <line y2="5" stroke="currentColor" strokeWidth="1" />
           <text y="20" textAnchor="middle" fill="currentColor" fontSize="10">
             {tick.toFixed(1)}
           </text>
-        </g>
-      ))}
+                </g>
+            ))}
       <text
         x={width / 2}
         y={height - 5}
@@ -445,14 +445,14 @@ const ScatterPlot: React.FC<{
       >
         {xCol}
       </text>
-
-      {/* Y Ticks and Labels */}
-      {yTicks.map((tick, i) => (
+            
+            {/* Y Ticks and Labels */}
+            {yTicks.map((tick, i) => (
         <g
           key={`y-${i}`}
           transform={`translate(${margin.left}, ${yScale(tick)})`}
         >
-          <line x2="-5" stroke="currentColor" strokeWidth="1" />
+                    <line x2="-5" stroke="currentColor" strokeWidth="1" />
           <text
             x="-10"
             y="3"
@@ -462,8 +462,8 @@ const ScatterPlot: React.FC<{
           >
             {tick.toFixed(1)}
           </text>
-        </g>
-      ))}
+                </g>
+            ))}
       <text
         transform={`translate(${15}, ${height / 2}) rotate(-90)`}
         textAnchor="middle"
@@ -474,9 +474,9 @@ const ScatterPlot: React.FC<{
         {yCol}
       </text>
 
-      {/* Points */}
-      <g>
-        {dataPoints.map((d, i) => (
+            {/* Points */}
+            <g>
+                {dataPoints.map((d, i) => (
           <circle
             key={i}
             cx={xScale(d.x)}
@@ -484,30 +484,30 @@ const ScatterPlot: React.FC<{
             r="2.5"
             fill="rgba(59, 130, 246, 0.7)"
           />
-        ))}
-      </g>
-    </svg>
-  );
+                ))}
+            </g>
+        </svg>
+    );
 };
 
 // 상관계수 계산 함수
 const calculateCorrelation = (x: number[], y: number[]): number => {
-  if (x.length !== y.length || x.length === 0) return 0;
-
-  const n = x.length;
-  const sumX = x.reduce((a, b) => a + b, 0);
-  const sumY = y.reduce((a, b) => a + b, 0);
-  const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
-  const sumX2 = x.reduce((a, b) => a + b * b, 0);
-  const sumY2 = y.reduce((a, b) => a + b * b, 0);
-
-  const numerator = n * sumXY - sumX * sumY;
+    if (x.length !== y.length || x.length === 0) return 0;
+    
+    const n = x.length;
+    const sumX = x.reduce((a, b) => a + b, 0);
+    const sumY = y.reduce((a, b) => a + b, 0);
+    const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
+    const sumX2 = x.reduce((a, b) => a + b * b, 0);
+    const sumY2 = y.reduce((a, b) => a + b * b, 0);
+    
+    const numerator = n * sumXY - sumX * sumY;
   const denominator = Math.sqrt(
     (n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY)
   );
-
-  if (denominator === 0) return 0;
-  return numerator / denominator;
+    
+    if (denominator === 0) return 0;
+    return numerator / denominator;
 };
 
 // 상관계수 행렬 계산
@@ -515,34 +515,34 @@ const calculateCorrelationMatrix = (
   rows: Record<string, any>[],
   numericColumns: string[]
 ): number[][] => {
-  const matrix: number[][] = [];
-
-  for (let i = 0; i < numericColumns.length; i++) {
-    matrix[i] = [];
-    for (let j = 0; j < numericColumns.length; j++) {
-      if (i === j) {
-        matrix[i][j] = 1;
-      } else {
-        const col1 = numericColumns[i];
-        const col2 = numericColumns[j];
+    const matrix: number[][] = [];
+    
+    for (let i = 0; i < numericColumns.length; i++) {
+        matrix[i] = [];
+        for (let j = 0; j < numericColumns.length; j++) {
+            if (i === j) {
+                matrix[i][j] = 1;
+            } else {
+                const col1 = numericColumns[i];
+                const col2 = numericColumns[j];
         const values1 = rows
           .map((r) => Number(r[col1]))
           .filter((v) => !isNaN(v));
         const values2 = rows
           .map((r) => Number(r[col2]))
           .filter((v) => !isNaN(v));
-
-        // 길이가 같은 값들만 사용
-        const minLength = Math.min(values1.length, values2.length);
-        const valid1 = values1.slice(0, minLength);
-        const valid2 = values2.slice(0, minLength);
-
-        matrix[i][j] = calculateCorrelation(valid1, valid2);
-      }
+                
+                // 길이가 같은 값들만 사용
+                const minLength = Math.min(values1.length, values2.length);
+                const valid1 = values1.slice(0, minLength);
+                const valid2 = values2.slice(0, minLength);
+                
+                matrix[i][j] = calculateCorrelation(valid1, valid2);
+            }
+        }
     }
-  }
-
-  return matrix;
+    
+    return matrix;
 };
 
 // 작은 히스토그램 플롯 (Pairplot 대각선용)
@@ -556,54 +556,54 @@ const SmallHistogram: React.FC<{
     [data]
   );
 
-  if (numericData.length === 0) {
+    if (numericData.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-gray-400 text-xs">
         No data
       </div>
     );
-  }
-
-  const { bins } = useMemo(() => {
-    const min = Math.min(...numericData);
-    const max = Math.max(...numericData);
-    const numBins = 10;
-    const binSize = (max - min) / numBins;
-    const bins = Array(numBins).fill(0);
-
-    for (const value of numericData) {
-      let binIndex = binSize > 0 ? Math.floor((value - min) / binSize) : 0;
-      if (binIndex === numBins) binIndex--;
-      if (binIndex >= 0 && binIndex < numBins) {
-        bins[binIndex]++;
-      }
     }
-    return { bins };
-  }, [numericData]);
 
-  const maxBinCount = Math.max(...bins, 0);
+    const { bins } = useMemo(() => {
+        const min = Math.min(...numericData);
+        const max = Math.max(...numericData);
+        const numBins = 10;
+        const binSize = (max - min) / numBins;
+        const bins = Array(numBins).fill(0);
 
-  return (
-    <div className="w-full h-full p-2">
-      <div className="flex-grow flex items-end justify-around gap-0.5 h-full">
-        {bins.map((count, index) => {
+        for (const value of numericData) {
+            let binIndex = binSize > 0 ? Math.floor((value - min) / binSize) : 0;
+            if (binIndex === numBins) binIndex--;
+            if (binIndex >= 0 && binIndex < numBins) {
+                bins[binIndex]++;
+            }
+        }
+        return { bins };
+    }, [numericData]);
+    
+    const maxBinCount = Math.max(...bins, 0);
+
+    return (
+        <div className="w-full h-full p-2">
+            <div className="flex-grow flex items-end justify-around gap-0.5 h-full">
+                {bins.map((count, index) => {
           const heightPercentage =
             maxBinCount > 0 ? (count / maxBinCount) * 100 : 0;
-          return (
+                    return (
             <div
               key={index}
               className="flex-1 h-full flex flex-col justify-end items-center"
             >
-              <div
-                className="w-full bg-blue-400"
-                style={{ height: `${heightPercentage}%` }}
-              />
+                            <div 
+                                className="w-full bg-blue-400"
+                                style={{ height: `${heightPercentage}%` }}
+                            />
+                        </div>
+                    );
+                })}
             </div>
-          );
-        })}
-      </div>
-    </div>
-  );
+        </div>
+    );
 };
 
 // 작은 산점도 플롯 (Pairplot용)
@@ -620,17 +620,17 @@ const SmallScatterPlot: React.FC<{
     [rows, xCol, yCol]
   );
 
-  if (dataPoints.length === 0) {
+    if (dataPoints.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-gray-400 text-xs">
         No data
       </div>
     );
-  }
+    }
 
-  const margin = { top: 5, right: 5, bottom: 20, left: 20 };
-  const width = 120;
-  const height = 120;
+    const margin = { top: 5, right: 5, bottom: 20, left: 20 };
+    const width = 120;
+    const height = 120;
 
   const xMin = Math.min(...dataPoints.map((d) => d.x));
   const xMax = Math.max(...dataPoints.map((d) => d.x));
@@ -645,9 +645,9 @@ const SmallScatterPlot: React.FC<{
     margin.bottom -
     ((y - yMin) / (yMax - yMin || 1)) * (height - margin.top - margin.bottom);
 
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full">
-      {/* Axes */}
+    return (
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full">
+            {/* Axes */}
       <line
         x1={margin.left}
         y1={height - margin.bottom}
@@ -665,9 +665,9 @@ const SmallScatterPlot: React.FC<{
         strokeWidth="0.5"
       />
 
-      {/* Points */}
-      <g>
-        {dataPoints.map((d, i) => (
+            {/* Points */}
+            <g>
+                {dataPoints.map((d, i) => (
           <circle
             key={i}
             cx={xScale(d.x)}
@@ -675,73 +675,73 @@ const SmallScatterPlot: React.FC<{
             r="1.5"
             fill="rgba(59, 130, 246, 0.6)"
           />
-        ))}
-      </g>
-    </svg>
-  );
+                ))}
+            </g>
+        </svg>
+    );
 };
 
 // Pairplot 컴포넌트
-const CorrelationPlots: React.FC<{
-  correlationMatrix: number[][];
-  columnNames: string[];
-  rows: Record<string, any>[];
+const CorrelationPlots: React.FC<{ 
+    correlationMatrix: number[][]; 
+    columnNames: string[];
+    rows: Record<string, any>[];
 }> = ({ correlationMatrix, columnNames, rows }) => {
-  const numCols = columnNames.length;
-
-  return (
-    <div className="w-full overflow-auto">
-      <div
-        className="inline-grid gap-1 border border-gray-300 p-2 bg-white"
-        style={{
-          gridTemplateColumns: `repeat(${numCols}, minmax(120px, 1fr))`,
+    const numCols = columnNames.length;
+    
+    return (
+        <div className="w-full overflow-auto">
+            <div 
+                className="inline-grid gap-1 border border-gray-300 p-2 bg-white"
+                style={{ 
+                    gridTemplateColumns: `repeat(${numCols}, minmax(120px, 1fr))`,
           gridTemplateRows: `repeat(${numCols}, minmax(120px, 1fr))`,
-        }}
-      >
-        {columnNames.map((colY, rowIdx) =>
-          columnNames.map((colX, colIdx) => {
-            const isDiagonal = rowIdx === colIdx;
-            const isUpperTriangle = rowIdx < colIdx;
-            const isLowerTriangle = rowIdx > colIdx;
-
-            return (
-              <div
-                key={`${rowIdx}-${colIdx}`}
-                className="border border-gray-200 rounded bg-white relative"
+                }}
+            >
+                {columnNames.map((colY, rowIdx) =>
+                    columnNames.map((colX, colIdx) => {
+                        const isDiagonal = rowIdx === colIdx;
+                        const isUpperTriangle = rowIdx < colIdx;
+                        const isLowerTriangle = rowIdx > colIdx;
+                        
+                        return (
+                            <div 
+                                key={`${rowIdx}-${colIdx}`}
+                                className="border border-gray-200 rounded bg-white relative"
                 style={{ minWidth: "120px", minHeight: "120px" }}
-              >
-                {isDiagonal ? (
-                  // 대각선: 히스토그램
-                  <>
-                    <div className="absolute top-1 left-1 text-xs font-semibold text-gray-700 z-10">
+                            >
+                                {isDiagonal ? (
+                                    // 대각선: 히스토그램
+                                    <>
+                                        <div className="absolute top-1 left-1 text-xs font-semibold text-gray-700 z-10">
                       {colX.length > 10 ? colX.substring(0, 10) + "..." : colX}
-                    </div>
-                    <SmallHistogram rows={rows} column={colX} />
-                  </>
-                ) : isUpperTriangle ? (
-                  // 위쪽 삼각형: 산점도 (상관계수 표시)
-                  <>
-                    <div className="absolute top-1 left-1 text-xs font-semibold text-gray-700 z-10">
-                      r = {correlationMatrix[rowIdx][colIdx].toFixed(2)}
-                    </div>
-                    <SmallScatterPlot rows={rows} xCol={colX} yCol={colY} />
-                  </>
-                ) : (
-                  // 아래쪽 삼각형: 산점도 (상관계수 표시)
-                  <>
-                    <div className="absolute top-1 left-1 text-xs font-semibold text-gray-700 z-10">
-                      r = {correlationMatrix[rowIdx][colIdx].toFixed(2)}
-                    </div>
-                    <SmallScatterPlot rows={rows} xCol={colX} yCol={colY} />
-                  </>
+                                        </div>
+                                        <SmallHistogram rows={rows} column={colX} />
+                                    </>
+                                ) : isUpperTriangle ? (
+                                    // 위쪽 삼각형: 산점도 (상관계수 표시)
+                                    <>
+                                        <div className="absolute top-1 left-1 text-xs font-semibold text-gray-700 z-10">
+                                            r = {correlationMatrix[rowIdx][colIdx].toFixed(2)}
+                                        </div>
+                                        <SmallScatterPlot rows={rows} xCol={colX} yCol={colY} />
+                                    </>
+                                ) : (
+                                    // 아래쪽 삼각형: 산점도 (상관계수 표시)
+                                    <>
+                                        <div className="absolute top-1 left-1 text-xs font-semibold text-gray-700 z-10">
+                                            r = {correlationMatrix[rowIdx][colIdx].toFixed(2)}
+                                        </div>
+                                        <SmallScatterPlot rows={rows} xCol={colX} yCol={colY} />
+                                    </>
+                                )}
+                            </div>
+                        );
+                    })
                 )}
-              </div>
-            );
-          })
-        )}
-      </div>
-    </div>
-  );
+            </div>
+        </div>
+    );
 };
 
 // Prep Missing 처리 내용 표시 컴포넌트
@@ -1495,48 +1495,48 @@ const ColumnStatistics: React.FC<{
   columnName: string | null;
   isNumeric: boolean;
 }> = ({ data, columnName, isNumeric }) => {
-  const stats = useMemo(() => {
+    const stats = useMemo(() => {
     const isNull = (v: any) => v === null || v === undefined || v === "";
     const nonNullValues = data.filter((v) => !isNull(v));
-    const nulls = data.length - nonNullValues.length;
-    const count = data.length;
+        const nulls = data.length - nonNullValues.length;
+        const count = data.length;
 
     let mode: number | string = "N/A";
-    if (nonNullValues.length > 0) {
-      const counts: Record<string, number> = {};
+        if (nonNullValues.length > 0) {
+            const counts: Record<string, number> = {};
       for (const val of nonNullValues) {
-        const key = String(val);
-        counts[key] = (counts[key] || 0) + 1;
-      }
+                const key = String(val);
+                counts[key] = (counts[key] || 0) + 1;
+            }
       mode = Object.keys(counts).reduce((a, b) =>
         counts[a] > counts[b] ? a : b
       );
-    }
+        }
 
-    if (!isNumeric) {
-      return {
-        Count: count,
-        Null: nulls,
-        Mode: mode,
-      };
-    }
-
+        if (!isNumeric) {
+            return {
+                Count: count,
+                Null: nulls,
+                Mode: mode,
+            };
+        }
+        
     const numericValues = nonNullValues
       .map((v) => Number(v))
       .filter((v) => !isNaN(v));
 
-    if (numericValues.length === 0) {
-      return {
-        Count: count,
-        Null: nulls,
-        Mode: mode,
-      };
-    }
-
+        if (numericValues.length === 0) {
+             return {
+                Count: count,
+                Null: nulls,
+                Mode: mode,
+            };
+        }
+        
     numericValues.sort((a, b) => a - b);
-    const sum = numericValues.reduce((a, b) => a + b, 0);
-    const mean = sum / numericValues.length;
-    const n = numericValues.length;
+        const sum = numericValues.reduce((a, b) => a + b, 0);
+        const mean = sum / numericValues.length;
+        const n = numericValues.length;
     const stdDev = Math.sqrt(
       numericValues.map((x) => Math.pow(x - mean, 2)).reduce((a, b) => a + b) /
         n
@@ -1553,39 +1553,39 @@ const ColumnStatistics: React.FC<{
           3
         : 0;
 
-    const getQuantile = (q: number) => {
-      const pos = (numericValues.length - 1) * q;
-      const base = Math.floor(pos);
-      const rest = pos - base;
-      if (numericValues[base + 1] !== undefined) {
+        const getQuantile = (q: number) => {
+            const pos = (numericValues.length - 1) * q;
+            const base = Math.floor(pos);
+            const rest = pos - base;
+            if (numericValues[base + 1] !== undefined) {
         return (
           numericValues[base] +
           rest * (numericValues[base + 1] - numericValues[base])
         );
-      } else {
-        return numericValues[base];
-      }
-    };
+            } else {
+                return numericValues[base];
+            }
+        };
 
-    const numericMode = Number(mode);
+        const numericMode = Number(mode);
 
-    return {
-      Count: data.length,
-      Mean: mean.toFixed(2),
+        return {
+            Count: data.length,
+            Mean: mean.toFixed(2),
       "Std Dev": stdDev.toFixed(2),
-      Median: getQuantile(0.5).toFixed(2),
-      Min: numericValues[0].toFixed(2),
-      Max: numericValues[numericValues.length - 1].toFixed(2),
+            Median: getQuantile(0.5).toFixed(2),
+            Min: numericValues[0].toFixed(2),
+            Max: numericValues[numericValues.length - 1].toFixed(2),
       "25%": getQuantile(0.25).toFixed(2),
       "75%": getQuantile(0.75).toFixed(2),
-      Mode: isNaN(numericMode) ? mode : numericMode,
-      Null: nulls,
-      Skew: skewness.toFixed(2),
-      Kurt: kurtosis.toFixed(2),
-    };
-  }, [data, isNumeric]);
-
-  const statOrder = isNumeric
+            Mode: isNaN(numericMode) ? mode : numericMode,
+            Null: nulls,
+            Skew: skewness.toFixed(2),
+            Kurt: kurtosis.toFixed(2),
+        };
+    }, [data, isNumeric]);
+    
+    const statOrder = isNumeric 
     ? [
         "Count",
         "Mean",
@@ -1602,27 +1602,27 @@ const ColumnStatistics: React.FC<{
       ]
     : ["Count", "Null", "Mode"];
 
-  return (
-    <div className="w-full p-4 border border-gray-200 rounded-lg">
+    return (
+        <div className="w-full p-4 border border-gray-200 rounded-lg">
       <h4 className="font-semibold text-gray-700 mb-3">
         Statistics for {columnName}
       </h4>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1 text-sm">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1 text-sm">
         {statOrder.map((key) => {
-          const value = (stats as Record<string, any>)[key];
-          if (value === undefined || value === null) return null;
-          return (
-            <React.Fragment key={key}>
-              <span className="text-gray-500">{key}:</span>
+                    const value = (stats as Record<string, any>)[key];
+                    if (value === undefined || value === null) return null;
+                    return (
+                        <React.Fragment key={key}>
+                           <span className="text-gray-500">{key}:</span> 
               <span className="font-mono text-gray-800 font-medium">
                 {String(value)}
               </span>
-            </React.Fragment>
-          );
-        })}
-      </div>
-    </div>
-  );
+                        </React.Fragment>
+                    );
+                })}
+            </div>
+        </div>
+    );
 };
 
 export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
@@ -1724,9 +1724,9 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
 
   const joinConcatCurrent = getJoinConcatCurrentData();
 
-  // 안전한 데이터 가져오기
-  const getPreviewData = (): DataPreview | null => {
-    try {
+    // 안전한 데이터 가져오기
+    const getPreviewData = (): DataPreview | null => {
+        try {
       console.log(
         "DataPreviewModal getPreviewData called for module:",
         module.id,
@@ -1734,42 +1734,42 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
         "outputData type:",
         module.outputData?.type
       );
-      if (!module || !module.outputData) {
+            if (!module || !module.outputData) {
         console.warn("DataPreviewModal: No module or outputData");
-        return null;
-      }
+                return null;
+            }
       if (module.outputData.type === "DataPreview") return module.outputData;
       if (module.outputData.type === "KMeansOutput") {
-        return module.outputData.clusterAssignments || null;
-      }
-      // ClusteringDataOutput은 별도의 ClusteringDataPreviewModal에서 처리
+                return module.outputData.clusterAssignments || null;
+        }
+        // ClusteringDataOutput은 별도의 ClusteringDataPreviewModal에서 처리
       if (module.outputData.type === "ClusteringDataOutput") {
-        return null;
-      }
+                return null;
+        }
       if (module.outputData.type === "PCAOutput") {
-        return module.outputData.transformedData || null;
-      }
-      // TrainedClusteringModelOutput은 별도의 TrainedClusteringModelPreviewModal에서 처리
+                return module.outputData.transformedData || null;
+        }
+        // TrainedClusteringModelOutput은 별도의 TrainedClusteringModelPreviewModal에서 처리
       if (module.outputData.type === "TrainedClusteringModelOutput") {
-        return null;
-      }
+                return null;
+        }
       // VIFCheckerOutput은 별도로 처리
       if (module.outputData.type === "VIFCheckerOutput") {
         return null;
       }
       // 이제 모든 전처리 모듈은 DataPreview를 직접 출력합니다
-      return null;
-    } catch (error) {
+        return null;
+        } catch (error) {
       console.error("Error in getPreviewData:", error);
-      return null;
-    }
-  };
-
-  const data = getPreviewData();
-  const columns = Array.isArray(data?.columns) ? data.columns : [];
-  const rows = Array.isArray(data?.rows) ? data.rows : [];
-
-  const [sortConfig, setSortConfig] = useState<SortConfig>(null);
+            return null;
+        }
+    };
+    
+    const data = getPreviewData();
+    const columns = Array.isArray(data?.columns) ? data.columns : [];
+    const rows = Array.isArray(data?.rows) ? data.rows : [];
+    
+    const [sortConfig, setSortConfig] = useState<SortConfig>(null);
 
   // Join/Concat 모듈의 경우 현재 탭에 따라 초기 컬럼 선택
   const getInitialSelectedColumn = () => {
@@ -1792,9 +1792,9 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
       }
     }
   }, [isJoinConcatModule, joinConcatTab, joinConcatCurrent.columns]);
-  const [yAxisCol, setYAxisCol] = useState<string | null>(null);
-  const [showSpreadView, setShowSpreadView] = useState(false);
-
+    const [yAxisCol, setYAxisCol] = useState<string | null>(null);
+    const [showSpreadView, setShowSpreadView] = useState(false);
+    
   // Prep Missing, Prep Encode, Prep Normalize용 탭 상태
   const [prepTab, setPrepTab] = useState<"processing" | "output1" | "output2">(
     "processing"
@@ -1856,28 +1856,28 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
   const currentRows =
     prepTab === "output1" ? rows : prepTab === "output2" ? rows2 : [];
 
-  // Load Data 모듈용 탭 상태
+    // Load Data 모듈용 탭 상태
   const [loadDataTab, setLoadDataTab] = useState<"detail" | "graph">("detail");
-  const [graphXCol, setGraphXCol] = useState<string | null>(null);
-  const [graphYCol, setGraphYCol] = useState<string | null>(null);
-
-  // Load Data 모듈인지 확인
-  const isLoadDataModule = module.type === ModuleType.LoadData;
-  // Select Data 모듈도 Load Data와 동일한 형식으로 표시
-  const isSelectDataModule = module.type === ModuleType.SelectData;
+    const [graphXCol, setGraphXCol] = useState<string | null>(null);
+    const [graphYCol, setGraphYCol] = useState<string | null>(null);
+    
+    // Load Data 모듈인지 확인
+    const isLoadDataModule = module.type === ModuleType.LoadData;
+    // Select Data 모듈도 Load Data와 동일한 형식으로 표시
+    const isSelectDataModule = module.type === ModuleType.SelectData;
   // Transition Data, Resample Data, Transform Data도 동일한 형식으로 표시
   const isDataModule =
     isLoadDataModule ||
-    isSelectDataModule ||
-    module.type === ModuleType.TransitionData ||
-    module.type === ModuleType.ResampleData ||
+                         isSelectDataModule || 
+                         module.type === ModuleType.TransitionData ||
+                         module.type === ModuleType.ResampleData ||
     module.type === ModuleType.TransformData;
 
   // VIF Checker 모듈인지 확인
   const isVIFCheckerModule = module.outputData?.type === "VIFCheckerOutput";
 
-  const sortedRows = useMemo(() => {
-    try {
+    const sortedRows = useMemo(() => {
+        try {
       let rowsToSort: any[] = [];
       if (isJoinConcatModule) {
         rowsToSort = joinConcatCurrent.rows;
@@ -1888,26 +1888,26 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
       }
       if (!Array.isArray(rowsToSort)) return [];
       let sortableItems = [...rowsToSort];
-      if (sortConfig !== null && sortConfig.key) {
-        sortableItems.sort((a, b) => {
-          const valA = a[sortConfig.key];
-          const valB = b[sortConfig.key];
-          if (valA === null || valA === undefined) return 1;
-          if (valB === null || valB === undefined) return -1;
-          if (valA < valB) {
+            if (sortConfig !== null && sortConfig.key) {
+            sortableItems.sort((a, b) => {
+                const valA = a[sortConfig.key];
+                const valB = b[sortConfig.key];
+                if (valA === null || valA === undefined) return 1;
+                if (valB === null || valB === undefined) return -1;
+                if (valA < valB) {
             return sortConfig.direction === "ascending" ? -1 : 1;
-          }
-          if (valA > valB) {
+                }
+                if (valA > valB) {
             return sortConfig.direction === "ascending" ? 1 : -1;
-          }
-          return 0;
-        });
-      }
-      return sortableItems;
-    } catch (error) {
+                }
+                return 0;
+            });
+        }
+        return sortableItems;
+        } catch (error) {
       console.error("Error sorting rows:", error);
       return Array.isArray(rowsToSort) ? rowsToSort : [];
-    }
+        }
   }, [
     rows,
     currentRows,
@@ -1918,7 +1918,7 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
     joinConcatCurrent.rows,
   ]);
 
-  const requestSort = (key: string) => {
+    const requestSort = (key: string) => {
     let direction: "ascending" | "descending" = "ascending";
     if (
       sortConfig &&
@@ -1926,12 +1926,12 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
       sortConfig.direction === "ascending"
     ) {
       direction = "descending";
-    }
-    setSortConfig({ key, direction });
-  };
+        }
+        setSortConfig({ key, direction });
+    };
 
-  const selectedColumnData = useMemo(() => {
-    try {
+    const selectedColumnData = useMemo(() => {
+        try {
       let rowsToUse: any[] = [];
       if (isJoinConcatModule) {
         rowsToUse = joinConcatCurrent.rows;
@@ -1942,10 +1942,10 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
       }
       if (!selectedColumn || !Array.isArray(rowsToUse)) return null;
       return rowsToUse.map((row) => row[selectedColumn]);
-    } catch (error) {
+        } catch (error) {
       console.error("Error getting selected column data:", error);
-      return null;
-    }
+            return null;
+        }
   }, [
     selectedColumn,
     rows,
@@ -1955,9 +1955,9 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
     isJoinConcatModule,
     joinConcatCurrent.rows,
   ]);
-
-  const selectedColInfo = useMemo(() => {
-    try {
+    
+    const selectedColInfo = useMemo(() => {
+        try {
       let colsToUse: ColumnInfo[] = [];
       if (isJoinConcatModule) {
         colsToUse = joinConcatCurrent.columns;
@@ -1968,10 +1968,10 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
       }
       if (!Array.isArray(colsToUse) || !selectedColumn) return null;
       return colsToUse.find((c) => c && c.name === selectedColumn) || null;
-    } catch (error) {
+        } catch (error) {
       console.error("Error finding selected column info:", error);
-      return null;
-    }
+            return null;
+        }
   }, [
     columns,
     currentColumns,
@@ -1981,14 +1981,14 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
     isJoinConcatModule,
     joinConcatCurrent.columns,
   ]);
-
+    
   const isSelectedColNumeric = useMemo(
     () => selectedColInfo?.type === "number",
     [selectedColInfo]
   );
-
-  const numericCols = useMemo(() => {
-    try {
+    
+    const numericCols = useMemo(() => {
+        try {
       let colsToUse: ColumnInfo[] = [];
       if (isJoinConcatModule) {
         colsToUse = joinConcatCurrent.columns;
@@ -2002,10 +2002,10 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
         .filter((c) => c && c.type === "number")
         .map((c) => c.name)
         .filter(Boolean);
-    } catch (error) {
+        } catch (error) {
       console.error("Error getting numeric columns:", error);
-      return [];
-    }
+            return [];
+        }
   }, [
     columns,
     currentColumns,
@@ -2015,40 +2015,40 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
     joinConcatCurrent.columns,
   ]);
 
-  useEffect(() => {
-    if (isSelectedColNumeric && selectedColumn) {
+    useEffect(() => {
+        if (isSelectedColNumeric && selectedColumn) {
       const defaultY = numericCols.find((c) => c !== selectedColumn);
-      setYAxisCol(defaultY || null);
-    } else {
-      setYAxisCol(null);
-    }
-  }, [isSelectedColNumeric, selectedColumn, numericCols]);
-
-  // Load Data/Select Data 모듈용: Graph 탭에서 사용할 열 초기화 (Detail 탭에서 선택된 열을 기본으로 사용)
-  useEffect(() => {
-    if (isDataModule && numericCols.length >= 2) {
-      // Detail 탭에서 선택된 열이 숫자형이면 기본값으로 사용
-      if (selectedColumn && isSelectedColNumeric) {
-        if (!graphXCol || graphXCol !== selectedColumn) {
-          setGraphXCol(selectedColumn);
+            setYAxisCol(defaultY || null);
+        } else {
+            setYAxisCol(null);
         }
-        if (!graphYCol || graphYCol === selectedColumn) {
+    }, [isSelectedColNumeric, selectedColumn, numericCols]);
+    
+    // Load Data/Select Data 모듈용: Graph 탭에서 사용할 열 초기화 (Detail 탭에서 선택된 열을 기본으로 사용)
+    useEffect(() => {
+        if (isDataModule && numericCols.length >= 2) {
+            // Detail 탭에서 선택된 열이 숫자형이면 기본값으로 사용
+            if (selectedColumn && isSelectedColNumeric) {
+                if (!graphXCol || graphXCol !== selectedColumn) {
+                    setGraphXCol(selectedColumn);
+                }
+                if (!graphYCol || graphYCol === selectedColumn) {
           const defaultY =
             numericCols.find((c) => c !== selectedColumn) ||
             numericCols[1] ||
             null;
-          setGraphYCol(defaultY);
-        }
-      } else if (!graphXCol) {
-        // 선택된 열이 없거나 숫자형이 아니면 첫 번째 숫자형 열 사용
-        setGraphXCol(numericCols[0] || null);
-      }
-      if (!graphYCol && graphXCol) {
+                    setGraphYCol(defaultY);
+                }
+            } else if (!graphXCol) {
+                // 선택된 열이 없거나 숫자형이 아니면 첫 번째 숫자형 열 사용
+                setGraphXCol(numericCols[0] || null);
+            }
+            if (!graphYCol && graphXCol) {
         const defaultY =
           numericCols.find((c) => c !== graphXCol) || numericCols[1] || null;
-        setGraphYCol(defaultY);
-      }
-    }
+                setGraphYCol(defaultY);
+            }
+        }
   }, [
     isDataModule,
     numericCols,
@@ -2057,25 +2057,25 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
     graphXCol,
     graphYCol,
   ]);
-
-  // 상관계수 행렬 계산 (Load Data/Select Data 모듈용)
-  const correlationMatrix = useMemo(() => {
-    if (!isDataModule || numericCols.length < 2) return null;
-    return calculateCorrelationMatrix(rows, numericCols);
+    
+    // 상관계수 행렬 계산 (Load Data/Select Data 모듈용)
+    const correlationMatrix = useMemo(() => {
+        if (!isDataModule || numericCols.length < 2) return null;
+        return calculateCorrelationMatrix(rows, numericCols);
   }, [isDataModule, rows, numericCols]);
-
-  // correlationMatrix를 Statistics 형식의 correlation으로 변환
-  const correlation = useMemo(() => {
-    if (!correlationMatrix || !numericCols.length) return null;
-    const result: Record<string, Record<string, number>> = {};
-    numericCols.forEach((col, i) => {
-      result[col] = {};
-      numericCols.forEach((col2, j) => {
-        result[col][col2] = correlationMatrix[i][j];
-      });
-    });
-    return result;
-  }, [correlationMatrix, numericCols]);
+    
+    // correlationMatrix를 Statistics 형식의 correlation으로 변환
+    const correlation = useMemo(() => {
+        if (!correlationMatrix || !numericCols.length) return null;
+        const result: Record<string, Record<string, number>> = {};
+        numericCols.forEach((col, i) => {
+            result[col] = {};
+            numericCols.forEach((col2, j) => {
+                result[col][col2] = correlationMatrix[i][j];
+            });
+        });
+        return result;
+    }, [correlationMatrix, numericCols]);
 
   // Prep Module의 경우 data가 없어도 Processing Info 탭을 보여줄 수 있음
   // Join/Concat 모듈의 경우 입력 데이터가 있으면 표시 가능
@@ -2087,7 +2087,7 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
       module.type,
       module.outputData
     );
-    return (
+        return (
       <div
         className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
         onClick={onClose}
@@ -2096,37 +2096,37 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
           className="bg-white p-6 rounded-lg shadow-xl"
           onClick={(e) => e.stopPropagation()}
         >
-          <h3 className="text-lg font-bold">No Data Available</h3>
-          <p>The selected module has no previewable data.</p>
+                    <h3 className="text-lg font-bold">No Data Available</h3>
+                    <p>The selected module has no previewable data.</p>
           <p className="text-sm text-gray-500 mt-2">
             Module Type: {module.type}
           </p>
           <p className="text-sm text-gray-500">
             Output Data Type: {module.outputData?.type || "null"}
           </p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white text-gray-900 rounded-lg shadow-xl w-full max-w-7xl max-h-[90vh] flex flex-col"
+                </div>
+            </div>
+        );
+    }
+    
+    return (
+        <div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            onClick={onClose}
+        >
+            <div 
+                className="bg-white text-gray-900 rounded-lg shadow-xl w-full max-w-7xl max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
-      >
-        <header className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
+            >
+                <header className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
           <h2 className="text-xl font-bold text-gray-800">
             Data Preview: {module.name}
           </h2>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowSpreadView(true)}
-              className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center gap-1"
-            >
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setShowSpreadView(true)}
+                            className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center gap-1"
+                        >
               <svg
                 className="w-4 h-4"
                 fill="none"
@@ -2139,11 +2139,11 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                   strokeWidth={2}
                   d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
                 />
-              </svg>
-              Spread View
-            </button>
-            <button
-              onClick={() => {
+                            </svg>
+                            Spread View
+                        </button>
+                        <button
+                            onClick={() => {
                 const dataToExport =
                   isPrepModule && prepTab !== "processing" ? currentData : data;
                 const colsToExport =
@@ -2153,19 +2153,19 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                 const rowsToExport =
                   isPrepModule && prepTab !== "processing" ? currentRows : rows;
                 if (!dataToExport || !colsToExport || !rowsToExport) return;
-                const csvContent = [
+                                const csvContent = [
                   colsToExport.map((c) => c.name).join(","),
                   ...rowsToExport.map((row) =>
                     colsToExport
                       .map((col) => {
-                        const val = row[col.name];
+                                            const val = row[col.name];
                         if (val === null || val === undefined) return "";
-                        const str = String(val);
+                                            const str = String(val);
                         return str.includes(",") ||
                           str.includes('"') ||
                           str.includes("\n")
-                          ? `"${str.replace(/"/g, '""')}"`
-                          : str;
+                                                ? `"${str.replace(/"/g, '""')}"` 
+                                                : str;
                       })
                       .join(",")
                   ),
@@ -2175,7 +2175,7 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                   type: "text/csv;charset=utf-8;",
                 });
                 const link = document.createElement("a");
-                link.href = URL.createObjectURL(blob);
+                                link.href = URL.createObjectURL(blob);
                 link.download = `${module.name}_${
                   prepTab === "output1"
                     ? "output1"
@@ -2183,21 +2183,21 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                     ? "output2"
                     : "data"
                 }.csv`;
-                link.click();
-              }}
-              className="text-gray-500 hover:text-gray-800 p-1 rounded hover:bg-gray-100"
-              title="Download CSV"
-            >
-              <ArrowDownTrayIcon className="w-6 h-6" />
-            </button>
+                                link.click();
+                            }}
+                            className="text-gray-500 hover:text-gray-800 p-1 rounded hover:bg-gray-100"
+                            title="Download CSV"
+                        >
+                            <ArrowDownTrayIcon className="w-6 h-6" />
+                        </button>
             <button
               onClick={onClose}
               className="text-gray-500 hover:text-gray-800"
             >
-              <XCircleIcon className="w-6 h-6" />
-            </button>
-          </div>
-        </header>
+                            <XCircleIcon className="w-6 h-6" />
+                        </button>
+                    </div>
+                </header>
         <main
           className="flex-grow p-4 overflow-auto flex flex-col gap-4"
           style={{ userSelect: "text" }}
@@ -2278,34 +2278,34 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
               </nav>
             </div>
           )}
-          {/* Load Data/Select Data 모듈용 탭 */}
-          {isDataModule && (
-            <div className="flex-shrink-0 border-b border-gray-200">
-              <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-                <button
+                    {/* Load Data/Select Data 모듈용 탭 */}
+                    {isDataModule && (
+                        <div className="flex-shrink-0 border-b border-gray-200">
+                            <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                                <button
                   onClick={() => setLoadDataTab("detail")}
-                  className={`${
+                                    className={`${
                     loadDataTab === "detail"
                       ? "border-indigo-500 text-indigo-600"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-                >
-                  Detail
-                </button>
-                <button
+                                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                                >
+                                    Detail
+                                </button>
+                                <button
                   onClick={() => setLoadDataTab("graph")}
-                  className={`${
+                                    className={`${
                     loadDataTab === "graph"
                       ? "border-indigo-500 text-indigo-600"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-                >
-                  Graph
-                </button>
-              </nav>
-            </div>
-          )}
-
+                                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                                >
+                                    Graph
+                                </button>
+                            </nav>
+                        </div>
+                    )}
+                    
           {/* Prep Module 처리 내용 탭 */}
           {isPrepModule && prepTab === "processing" ? (
             (() => {
@@ -2324,7 +2324,7 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                   ? modules.find(
                       (m) => m && m.id === inputConnection.from.moduleId
                     )
-                  : null;
+                : null;
 
               // 입력 데이터 가져오기 (다양한 출력 타입 처리)
               let inputData: DataPreview | null = null;
@@ -2380,22 +2380,22 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
               return null;
             })()
           ) : isDataModule && loadDataTab === "graph" ? (
-            /* Graph 탭 */
-            <div className="flex-grow flex flex-col gap-4">
-              <div className="flex-shrink-0 flex items-center gap-4">
-                <div className="flex items-center gap-2">
+                        /* Graph 탭 */
+                        <div className="flex-grow flex flex-col gap-4">
+                            <div className="flex-shrink-0 flex items-center gap-4">
+                                <div className="flex items-center gap-2">
                   <label
                     htmlFor="graph-x-select"
                     className="font-semibold text-gray-700"
                   >
                     X-Axis:
                   </label>
-                  <select
-                    id="graph-x-select"
+                                    <select
+                                        id="graph-x-select"
                     value={graphXCol || ""}
                     onChange={(e) => setGraphXCol(e.target.value)}
-                    className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
+                                        className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    >
                     <option value="" disabled>
                       Select a column
                     </option>
@@ -2403,22 +2403,22 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                       <option key={col} value={col}>
                         {col}
                       </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex items-center gap-2">
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="flex items-center gap-2">
                   <label
                     htmlFor="graph-y-select"
                     className="font-semibold text-gray-700"
                   >
                     Y-Axis:
                   </label>
-                  <select
-                    id="graph-y-select"
+                                    <select
+                                        id="graph-y-select"
                     value={graphYCol || ""}
                     onChange={(e) => setGraphYCol(e.target.value)}
-                    className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
+                                        className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    >
                     <option value="" disabled>
                       Select a column
                     </option>
@@ -2428,20 +2428,20 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                         <option key={col} value={col}>
                           {col}
                         </option>
-                      ))}
-                  </select>
-                </div>
-              </div>
-              {graphXCol && graphYCol ? (
-                <div className="flex-grow flex items-center justify-center border border-gray-200 rounded-lg p-4">
-                  <ScatterPlot rows={rows} xCol={graphXCol} yCol={graphYCol} />
-                </div>
-              ) : (
-                <div className="flex-grow flex items-center justify-center text-gray-500">
-                  Please select both X and Y axis columns.
-                </div>
-              )}
-            </div>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                            {graphXCol && graphYCol ? (
+                                <div className="flex-grow flex items-center justify-center border border-gray-200 rounded-lg p-4">
+                                    <ScatterPlot rows={rows} xCol={graphXCol} yCol={graphYCol} />
+                                </div>
+                            ) : (
+                                <div className="flex-grow flex items-center justify-center text-gray-500">
+                                    Please select both X and Y axis columns.
+                                </div>
+                            )}
+                        </div>
           ) : isVIFCheckerModule ? (
             /* VIF Checker 모듈 */
             <div className="flex-grow flex flex-col gap-4">
@@ -2535,7 +2535,7 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
             </div>
           ) : (
             /* Detail 탭 또는 일반 모듈 또는 Output_1/Output_2 탭 또는 Join/Concat 탭 */
-            <div className="flex-grow flex flex-col gap-4">
+                        <div className="flex-grow flex flex-col gap-4">
               {/* Join/Concat 모듈의 경우 데이터 정보 표시 */}
               {isJoinConcatModule && joinConcatCurrent.data && (
                 <div className="flex-shrink-0 bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
@@ -2598,13 +2598,13 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                   }
 
                   return (
-                    <div className="flex-shrink-0 bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-                      <div className="flex items-center gap-6 text-sm">
-                        <div className="flex items-center gap-2">
+                            <div className="flex-shrink-0 bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                                <div className="flex items-center gap-6 text-sm">
+                                    <div className="flex items-center gap-2">
                           <span className="font-semibold text-gray-700">
                             입력 데이터:
                           </span>
-                          <span className="text-gray-600">
+                                        <span className="text-gray-600">
                             {inputData
                               ? `${(
                                   inputData.totalRowCount ??
@@ -2616,13 +2616,13 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                                     : 0
                                 }열`
                               : "N/A"}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
                           <span className="font-semibold text-gray-700">
                             결과 데이터:
                           </span>
-                          <span className="text-gray-600">
+                                        <span className="text-gray-600">
                             {currentData
                               ? `${(
                                   currentData.totalRowCount ??
@@ -2632,8 +2632,8 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                                   currentColumns.length
                                 }열`
                               : "N/A"}
-                          </span>
-                        </div>
+                                        </span>
+                                    </div>
                       </div>
                     </div>
                   );
@@ -2649,11 +2649,11 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                     ).toLocaleString()}{" "}
                     rows and {columns.length} columns. Click a column to see
                     details.
-                  </div>
-                </div>
+                                </div>
+                            </div>
               ) : !isJoinConcatModule ? (
-                <div className="flex justify-between items-center flex-shrink-0">
-                  <div className="text-sm text-gray-600">
+                            <div className="flex justify-between items-center flex-shrink-0">
+                                <div className="text-sm text-gray-600">
                     Showing {Math.min(currentRows.length, 1000)} of{" "}
                     {(
                       currentData?.totalRowCount ??
@@ -2662,31 +2662,31 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                     ).toLocaleString()}{" "}
                     rows and {currentColumns.length} columns. Click a column to
                     see details.
-                  </div>
-                </div>
+                                </div>
+                            </div>
               ) : null}
               <div
                 className="flex-grow flex gap-4 overflow-hidden"
                 style={{ userSelect: "text" }}
               >
-                {/* Score Model인 경우 테이블만 표시 */}
-                {module.type === ModuleType.ScoreModel ? (
-                  <div className="w-full overflow-auto border border-gray-200 rounded-lg">
-                    <table className="min-w-full text-sm text-left">
-                      <thead className="bg-gray-50 sticky top-0">
-                        <tr>
+                            {/* Score Model인 경우 테이블만 표시 */}
+                            {module.type === ModuleType.ScoreModel ? (
+                                <div className="w-full overflow-auto border border-gray-200 rounded-lg">
+                                    <table className="min-w-full text-sm text-left">
+                                        <thead className="bg-gray-50 sticky top-0">
+                                            <tr>
                           {(isJoinConcatModule
                             ? joinConcatCurrent.columns
                             : isPrepModule && prepTab !== "processing"
                             ? currentColumns
                             : columns
                           ).map((col) => (
-                            <th
-                              key={col.name}
-                              className="py-2 px-3 font-semibold text-gray-600 cursor-pointer hover:bg-gray-100"
-                              onClick={() => requestSort(col.name)}
-                            >
-                              <div className="flex items-center gap-1">
+                                                    <th 
+                                                        key={col.name} 
+                                                        className="py-2 px-3 font-semibold text-gray-600 cursor-pointer hover:bg-gray-100"
+                                                        onClick={() => requestSort(col.name)}
+                                                    >
+                                                        <div className="flex items-center gap-1">
                                 <span className="truncate" title={col.name}>
                                   {col.name}
                                 </span>
@@ -2696,13 +2696,13 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                                   ) : (
                                     <ChevronDownIcon className="w-3 h-3" />
                                   ))}
-                              </div>
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {sortedRows.map((row, rowIndex) => (
+                                                        </div>
+                                                    </th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {sortedRows.map((row, rowIndex) => (
                           <tr
                             key={rowIndex}
                             className="border-b border-gray-200 last:border-b-0"
@@ -2717,28 +2717,28 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                               const alignClass = isNumberColumn
                                 ? "text-right"
                                 : "text-left";
-                              return (
-                                <td
-                                  key={col.name}
+                                                        return (
+                                                            <td 
+                                                                key={col.name} 
                                   className={`py-1.5 px-3 truncate hover:bg-gray-50 ${
                                     isNumberColumn ? "font-mono" : ""
                                   } ${alignClass}`}
-                                  title={String(row[col.name])}
-                                >
+                                                                title={String(row[col.name])}
+                                                            >
                                   {row[col.name] === null ||
                                   row[col.name] === ""
                                     ? ""
                                     : String(row[col.name])}
-                                </td>
-                              );
-                            })}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <>
+                                                            </td>
+                                                        );
+                                                    })}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <>
                     <div
                       className={`border border-gray-200 rounded-lg ${
                         selectedColumnData ? "w-1/2" : "w-full"
@@ -2748,21 +2748,21 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                         className="overflow-y-auto overflow-x-auto"
                         style={{ maxHeight: "400px" }}
                       >
-                        <table className="min-w-full text-sm text-left">
-                          <thead className="bg-gray-50 sticky top-0 z-10">
-                            <tr>
+                                    <table className="min-w-full text-sm text-left">
+                                        <thead className="bg-gray-50 sticky top-0 z-10">
+                                            <tr>
                               {(isJoinConcatModule
                                 ? joinConcatCurrent.columns
                                 : isPrepModule && prepTab !== "processing"
                                 ? currentColumns
                                 : columns
                               ).map((col) => (
-                                <th
-                                  key={col.name}
-                                  className="py-2 px-3 font-semibold text-gray-600 cursor-pointer hover:bg-gray-100"
-                                  onClick={() => requestSort(col.name)}
-                                >
-                                  <div className="flex items-center gap-1">
+                                                    <th 
+                                                        key={col.name} 
+                                                        className="py-2 px-3 font-semibold text-gray-600 cursor-pointer hover:bg-gray-100"
+                                                        onClick={() => requestSort(col.name)}
+                                                    >
+                                                        <div className="flex items-center gap-1">
                                     <span className="truncate" title={col.name}>
                                       {col.name}
                                     </span>
@@ -2772,13 +2772,13 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                                       ) : (
                                         <ChevronDownIcon className="w-3 h-3" />
                                       ))}
-                                  </div>
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {sortedRows.map((row, rowIndex) => (
+                                                        </div>
+                                                    </th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {sortedRows.map((row, rowIndex) => (
                               <tr
                                 key={rowIndex}
                                 className="border-b border-gray-200 last:border-b-0"
@@ -2793,9 +2793,9 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                                   const alignClass = isNumberColumn
                                     ? "text-right"
                                     : "text-left";
-                                  return (
-                                    <td
-                                      key={col.name}
+                                                        return (
+                                                            <td 
+                                                                key={col.name} 
                                       className={`py-1.5 px-3 truncate ${
                                         selectedColumn === col.name
                                           ? "bg-blue-100"
@@ -2806,24 +2806,24 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                                       onClick={() =>
                                         setSelectedColumn(col.name)
                                       }
-                                      title={String(row[col.name])}
-                                    >
+                                                                title={String(row[col.name])}
+                                                            >
                                       {row[col.name] === null ||
                                       row[col.name] === ""
                                         ? ""
                                         : String(row[col.name])}
-                                    </td>
-                                  );
-                                })}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                    {selectedColumnData && (
-                      <div className="w-1/2 flex flex-col gap-4">
-                        {isSelectedColNumeric ? (
+                                                            </td>
+                                                        );
+                                                    })}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            {selectedColumnData && (
+                                <div className="w-1/2 flex flex-col gap-4">
+                                    {isSelectedColNumeric ? (
                           <HistogramPlot
                             rows={
                               isJoinConcatModule
@@ -2834,75 +2834,75 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
                             }
                             column={selectedColumn!}
                           />
-                        ) : (
-                          <div className="w-full h-full p-4 flex flex-col border border-gray-200 rounded-lg items-center justify-center">
+                                    ) : (
+                                        <div className="w-full h-full p-4 flex flex-col border border-gray-200 rounded-lg items-center justify-center">
                             <p className="text-gray-500">
                               Plot is not available for non-numeric columns.
                             </p>
-                          </div>
-                        )}
+                                        </div>
+                                    )}
                         <ColumnStatistics
                           data={selectedColumnData}
                           columnName={selectedColumn}
                           isNumeric={isSelectedColNumeric}
                         />
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-
-              {/* Load Data/Select Data 모듈용: 상관계수 표시 (Statistics 모듈 형식) */}
+                                </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                        
+                        {/* Load Data/Select Data 모듈용: 상관계수 표시 (Statistics 모듈 형식) */}
               {isDataModule &&
                 !isPrepModule &&
                 numericCols.length >= 2 &&
                 correlation && (
-                  <div className="flex-shrink-0 flex flex-col gap-4">
-                    <div className="border-t border-gray-200 pt-4">
-                      {/* Correlation Analysis Section */}
-                      <div>
+                            <div className="flex-shrink-0 flex flex-col gap-4">
+                                <div className="border-t border-gray-200 pt-4">
+                                    {/* Correlation Analysis Section */}
+                                    <div>
                         <h3 className="text-lg font-semibold mb-2 text-gray-700">
                           Correlation Analysis
                         </h3>
-                        <div className="overflow-x-auto border border-gray-200 rounded-lg">
-                          <CorrelationHeatmap matrix={correlation} />
-                        </div>
-                      </div>
+                                        <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                                            <CorrelationHeatmap matrix={correlation} />
+                                        </div>
+                                    </div>
 
-                      {/* Pairplot Visualization Section */}
-                      <div className="mt-4">
+                                    {/* Pairplot Visualization Section */}
+                                    <div className="mt-4">
                         <h3 className="text-lg font-semibold mb-2 text-gray-700">
                           Pairplot
                         </h3>
-                        <div className="p-4 border border-gray-200 rounded-lg">
+                                        <div className="p-4 border border-gray-200 rounded-lg">
                           <Pairplot
                             correlation={correlation}
                             numericColumns={numericCols}
                             rows={rows}
                           />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                    )}
+                </main>
             </div>
-          )}
-        </main>
-      </div>
       {showSpreadView &&
         (isPrepModule && prepTab !== "processing" ? currentRows : rows).length >
           0 && (
-          <SpreadViewModal
-            onClose={() => setShowSpreadView(false)}
+                <SpreadViewModal
+                    onClose={() => setShowSpreadView(false)}
             data={isPrepModule && prepTab !== "processing" ? currentRows : rows}
             columns={
               isPrepModule && prepTab !== "processing"
                 ? currentColumns
                 : columns
             }
-            title={`Spread View: ${module.name}`}
-          />
-        )}
-    </div>
-  );
+                    title={`Spread View: ${module.name}`}
+                />
+            )}
+        </div>
+    );
 };

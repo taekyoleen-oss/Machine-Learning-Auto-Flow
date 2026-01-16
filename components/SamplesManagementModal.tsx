@@ -20,6 +20,7 @@ export const SamplesManagementModal: React.FC<Props> = ({
     name: '',
     input_data: '',
     description: '',
+    category: '머신러닝',
   });
 
   useEffect(() => {
@@ -72,6 +73,7 @@ export const SamplesManagementModal: React.FC<Props> = ({
       name: sample.name,
       input_data: sample.input_data || '',
       description: sample.description || '',
+      category: sample.category || '머신러닝',
     });
   };
 
@@ -175,6 +177,7 @@ export const SamplesManagementModal: React.FC<Props> = ({
                 <thead>
                   <tr className="border-b border-gray-700">
                     <th className="text-left p-3 text-gray-300 font-semibold">이름</th>
+                    <th className="text-left p-3 text-gray-300 font-semibold">카테고리</th>
                     <th className="text-left p-3 text-gray-300 font-semibold">입력 데이터</th>
                     <th className="text-left p-3 text-gray-300 font-semibold">설명</th>
                     <th className="text-left p-3 text-gray-300 font-semibold">생성일</th>
@@ -188,6 +191,11 @@ export const SamplesManagementModal: React.FC<Props> = ({
                       className="border-b border-gray-800 hover:bg-gray-800/50 transition-colors"
                     >
                       <td className="p-3 text-white font-medium">{sample.name}</td>
+                      <td className="p-3 text-gray-400">
+                        <span className="px-2 py-1 bg-purple-600/20 text-purple-300 rounded text-xs">
+                          {sample.category || '머신러닝'}
+                        </span>
+                      </td>
                       <td className="p-3 text-gray-400">{sample.input_data || '-'}</td>
                       <td className="p-3 text-gray-400 max-w-md truncate">
                         {sample.description || '-'}
