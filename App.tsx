@@ -2190,9 +2190,18 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         }
 
         // Convert sample model format to app format
+        // 원본 모듈 ID를 새 모듈 ID로 매핑하는 맵 생성 (연결 처리에 필요)
+        const originalIdToNewIdMap = new Map<string, string>();
         const newModules: CanvasModule[] = sampleModel.modules.map(
           (m: any, index: number) => {
             const moduleId = `module-${Date.now()}-${index}`;
+            const originalId = m.id; // 원본 모듈 ID 저장
+            
+            // 원본 ID가 있으면 매핑에 추가
+            if (originalId) {
+              originalIdToNewIdMap.set(originalId, moduleId);
+            }
+            
             const defaultModule = DEFAULT_MODULES.find(
               (dm) => dm.type === m.type
             );
@@ -2248,31 +2257,46 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 const originalFromId = conn.from.moduleId;
                 const originalToId = conn.to.moduleId;
 
-                // sampleModel.modules에서 원본 인덱스 찾기
-                const originalFromIndex = sampleModel.modules.findIndex(
-                  (m: any) => m.id === originalFromId
-                );
-                const originalToIndex = sampleModel.modules.findIndex(
-                  (m: any) => m.id === originalToId
-                );
+                // 매핑 맵에서 새 모듈 ID 찾기
+                const newFromId = originalIdToNewIdMap.get(originalFromId);
+                const newToId = originalIdToNewIdMap.get(originalToId);
 
-                if (originalFromIndex >= 0 && originalToIndex >= 0) {
-                  fromModule = newModules[originalFromIndex];
-                  toModule = newModules[originalToIndex];
+                if (newFromId && newToId) {
+                  // 새 모듈 ID로 모듈 찾기
+                  fromModule = newModules.find((m) => m.id === newFromId);
+                  toModule = newModules.find((m) => m.id === newToId);
                   fromPort = conn.from.portName;
                   toPort = conn.to.portName;
                 } else {
-                  console.warn(
-                    `Connection at index ${index}: Could not find module IDs`,
-                    { 
-                      originalFromId, 
-                      originalToId,
-                      fromIndex: originalFromIndex,
-                      toIndex: originalToIndex,
-                      availableModuleIds: sampleModel.modules?.map((m: any) => m.id) || []
-                    }
+                  // 매핑 맵에 없으면 인덱스로 찾기 (폴백)
+                  const originalFromIndex = sampleModel.modules.findIndex(
+                    (m: any) => m.id === originalFromId
                   );
-                  return null;
+                  const originalToIndex = sampleModel.modules.findIndex(
+                    (m: any) => m.id === originalToId
+                  );
+
+                  if (originalFromIndex >= 0 && originalToIndex >= 0) {
+                    fromModule = newModules[originalFromIndex];
+                    toModule = newModules[originalToIndex];
+                    fromPort = conn.from.portName;
+                    toPort = conn.to.portName;
+                  } else {
+                    console.warn(
+                      `Connection at index ${index}: Could not find module IDs`,
+                      { 
+                        originalFromId, 
+                        originalToId,
+                        newFromId,
+                        newToId,
+                        fromIndex: originalFromIndex,
+                        toIndex: originalToIndex,
+                        availableModuleIds: sampleModel.modules?.map((m: any) => m.id) || [],
+                        mapSize: originalIdToNewIdMap.size
+                      }
+                    );
+                    return null;
+                  }
                 }
               } else {
                 console.warn(
