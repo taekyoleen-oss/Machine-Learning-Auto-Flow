@@ -41,6 +41,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { DEFAULT_MODULES } from "../constants";
 import { ExcelInputModal } from "./ExcelInputModal";
 import { DataAnalysisRAGModal } from "./DataAnalysisRAGModal";
+import { useTheme } from "../contexts/ThemeContext";
 
 // Dynamic import for xlsx to handle module resolution issues
 let XLSX: any = null;
@@ -118,14 +119,14 @@ const ExplanationRenderer: React.FC<{ text: string }> = ({ text }) => {
   };
 
   return (
-    <div className="text-gray-300 space-y-2 text-sm">
+    <div className="text-gray-700 dark:text-gray-300 space-y-2 text-sm">
       {text.split("\n").map((line, index) => {
         const trimmedLine = line.trim();
         if (trimmedLine.startsWith("### ")) {
           return (
             <h4
               key={index}
-              className="text-md font-semibold mt-3 mb-1 text-gray-200"
+              className="text-md font-semibold mt-3 mb-1 text-gray-800 dark:text-gray-200"
             >
               {renderLine(trimmedLine.substring(4))}
             </h4>
@@ -135,7 +136,7 @@ const ExplanationRenderer: React.FC<{ text: string }> = ({ text }) => {
           return (
             <h3
               key={index}
-              className="text-lg font-semibold mt-4 mb-2 text-gray-100"
+              className="text-lg font-semibold mt-4 mb-2 text-gray-900 dark:text-gray-100"
             >
               {renderLine(trimmedLine.substring(3))}
             </h3>
@@ -269,7 +270,7 @@ ${optionsContext}
       {show && (
         <div className="mt-2 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
           {isLoading && (
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-gray-700 dark:text-gray-400">
               AI 설명을 생성하고 있습니다...
             </p>
           )}
@@ -374,7 +375,7 @@ const PropertyGroup: React.FC<{
   module: CanvasModule;
 }> = ({ title, children, module }) => (
   <div className="mb-4">
-    <h4 className="text-xs text-gray-500 uppercase font-bold mb-2">{title}</h4>
+    <h4 className="text-xs text-gray-700 dark:text-gray-500 uppercase font-bold mb-2">{title}</h4>
     <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg">
       {children}
       <AIModuleExplanation module={module} />
@@ -391,7 +392,7 @@ const PropertyInput: React.FC<{
   placeholder?: string;
 }> = ({ label, value, onChange, type = "text", step, placeholder }) => (
   <div className="mb-3 last:mb-0">
-    <label className="block text-sm text-gray-400 mb-1">{label}</label>
+    <label className="block text-sm text-gray-700 dark:text-gray-400 mb-1">{label}</label>
     <input
       type={type}
       value={value === null || value === undefined ? "" : value}
@@ -418,7 +419,7 @@ const PropertySelect: React.FC<{
   options: (string | { label: string; value: string })[];
 }> = ({ label, value, onChange, options }) => (
   <div className="mb-3 last:mb-0">
-    <label className="block text-sm text-gray-400 mb-1">{label}</label>
+    <label className="block text-sm text-gray-700 dark:text-gray-400 mb-1">{label}</label>
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
@@ -448,9 +449,9 @@ const PropertyCheckbox: React.FC<{
         type="checkbox"
         checked={value}
         onChange={(e) => onChange(e.target.checked)}
-        className="w-4 h-4 rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-500"
+        className="w-4 h-4 rounded bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
       />
-      <span className="text-sm text-gray-400">{label}</span>
+      <span className="text-sm text-gray-700 dark:text-gray-400">{label}</span>
     </label>
   </div>
 );
@@ -460,7 +461,7 @@ const PropertyDisplay: React.FC<{ label: string; value: React.ReactNode }> = ({
   value,
 }) => (
   <div className="mb-3 last:mb-0">
-    <label className="block text-sm text-gray-400 mb-1">{label}</label>
+    <label className="block text-sm text-gray-700 dark:text-gray-400 mb-1">{label}</label>
     <div className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 text-sm text-gray-700 dark:text-gray-300">
       {value}
     </div>
@@ -573,18 +574,18 @@ const renderParameters = (
           const csvRows = rows.map((row) =>
             columns
               .map((col) => {
-                const value = row[col.name];
-                // CSV 형식에 맞게 이스케이프 처리
+              const value = row[col.name];
+              // CSV 형식에 맞게 이스케이프 처리
                 if (value === null || value === undefined) return "";
-                const str = String(value);
+              const str = String(value);
                 if (
                   str.includes(",") ||
                   str.includes('"') ||
                   str.includes("\n")
                 ) {
-                  return `"${str.replace(/"/g, '""')}"`;
-                }
-                return str;
+                return `"${str.replace(/"/g, '""')}"`;
+              }
+              return str;
               })
               .join(",")
           );
@@ -718,18 +719,18 @@ const renderParameters = (
 
       return (
         <div>
-          <label className="block text-sm text-gray-400 mb-1">Source</label>
+          <label className="block text-sm text-gray-700 dark:text-gray-400 mb-1">Source</label>
           <div className="flex gap-2">
             <input
               type="text"
               value={module.parameters.source}
               onChange={(e) => onParamChange("source", e.target.value)}
-              className="flex-grow bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-grow bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="No file selected"
             />
             <button
               onClick={handleBrowseClick}
-              className="px-3 py-1.5 text-sm bg-gray-600 hover:bg-gray-500 rounded-md font-semibold text-white transition-colors"
+              className="px-3 py-1.5 text-sm bg-gray-600 dark:bg-gray-600 hover:bg-gray-700 dark:hover:bg-gray-500 rounded-md font-semibold text-white transition-colors"
             >
               Browse...
             </button>
@@ -737,7 +738,7 @@ const renderParameters = (
           {/* 파일 타입 표시 */}
           {module.parameters.fileType === "excel" &&
             module.parameters.sheetName && (
-              <div className="mt-2 text-xs text-gray-500">
+              <div className="mt-2 text-xs text-gray-600 dark:text-gray-500">
                 Excel Sheet: {module.parameters.sheetName}
               </div>
             )}
@@ -748,7 +749,7 @@ const renderParameters = (
                 onOpenExcelModal();
               }
             }}
-            className="mt-2 px-3 py-1.5 text-sm bg-gray-600 hover:bg-gray-500 rounded-md font-semibold text-white transition-colors"
+            className="mt-2 px-3 py-1.5 text-sm bg-gray-600 dark:bg-gray-600 hover:bg-gray-700 dark:hover:bg-gray-500 rounded-md font-semibold text-white transition-colors"
           >
             엑셀 데이터 직접 입력
           </button>
@@ -764,8 +765,8 @@ const renderParameters = (
           <div className="mt-4">
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-xs text-gray-500 uppercase font-bold">
-                Examples
-              </h4>
+              Examples
+            </h4>
               <button
                 onClick={handleSaveAsExample}
                 disabled={
@@ -787,13 +788,13 @@ const renderParameters = (
                 <span className="sm:hidden">저장</span>
               </button>
             </div>
-            <div className="bg-gray-700 p-2 rounded-md space-y-1">
+            <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded-md space-y-1">
               {isLoadingExamples ? (
-                <div className="px-2 py-1.5 text-sm text-gray-400 text-center">
+                <div className="px-2 py-1.5 text-sm text-gray-600 dark:text-gray-400 text-center">
                   Loading examples...
                 </div>
               ) : (exampleDataList || []).length === 0 ? (
-                <div className="px-2 py-1.5 text-sm text-gray-400 text-center">
+                <div className="px-2 py-1.5 text-sm text-gray-600 dark:text-gray-400 text-center">
                   No examples found
                 </div>
               ) : (
@@ -801,7 +802,7 @@ const renderParameters = (
                   <div
                     key={sample.name}
                     onDoubleClick={() => onSampleLoad(sample)}
-                    className="px-2 py-1.5 text-sm text-gray-300 rounded-md hover:bg-gray-600 cursor-pointer"
+                    className="px-2 py-1.5 text-sm text-gray-900 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer"
                     title="Double-click to load"
                   >
                     {sample.name}
@@ -883,23 +884,23 @@ const renderParameters = (
           <div className="flex justify-end gap-2 mb-2">
             <button
               onClick={() => handleSelectAll(true)}
-              className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md font-semibold"
+              className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md font-semibold text-gray-900 dark:text-white"
             >
               Select All
             </button>
             <button
               onClick={() => handleSelectAll(false)}
-              className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md font-semibold"
+              className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md font-semibold text-gray-900 dark:text-white"
             >
               Deselect All
             </button>
           </div>
           <div className="space-y-2 pr-2">
-            <div className="grid grid-cols-3 gap-2 items-center sticky top-0 bg-gray-800 py-1">
-              <span className="text-xs font-bold text-gray-400 col-span-2">
+            <div className="grid grid-cols-3 gap-2 items-center sticky top-0 bg-gray-100 dark:bg-gray-800 py-1">
+              <span className="text-xs font-bold text-gray-700 dark:text-gray-400 col-span-2">
                 Column Name
               </span>
-              <span className="text-xs font-bold text-gray-400">Data Type</span>
+              <span className="text-xs font-bold text-gray-700 dark:text-gray-400">Data Type</span>
             </div>
             {inputColumns.map((col) => {
               // selection이 없으면 기본값으로 selected: true, type: pandas dtype 사용
@@ -908,14 +909,14 @@ const renderParameters = (
               const columnType = selection
                 ? selection.type
                 : getPandasDtype(col.type);
-
+              
               return (
                 <div
                   key={col.name}
                   className="grid grid-cols-3 gap-2 items-center"
                 >
                   <label
-                    className="flex items-center gap-2 text-sm truncate col-span-2"
+                    className="flex items-center gap-2 text-sm truncate col-span-2 text-gray-900 dark:text-white"
                     title={col.name}
                   >
                     <input
@@ -929,7 +930,7 @@ const renderParameters = (
                           e.target.checked
                         );
                       }}
-                      className="h-4 w-4 rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-500"
+                      className="h-4 w-4 rounded bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
                     />
                     <span className="truncate">{col.name}</span>
                   </label>
@@ -938,7 +939,7 @@ const renderParameters = (
                     onChange={(e) =>
                       handleSelectionChange(col.name, "type", e.target.value)
                     }
-                    className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
                     {availableDataTypes.map((type) => (
                       <option key={type} value={type}>
@@ -1045,12 +1046,12 @@ const renderParameters = (
                 {conditions.map((condition: any, index: number) => (
                   <div
                     key={index}
-                    className="bg-gray-800 p-3 rounded-md border border-gray-700"
+                    className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md border border-gray-300 dark:border-gray-700"
                   >
                     <div className="flex items-start gap-2 mb-2">
                       <div className="flex-1 grid grid-cols-3 gap-2">
                         <div>
-                          <label className="block text-xs text-gray-400 mb-1">
+                          <label className="block text-xs text-gray-700 dark:text-gray-400 mb-1">
                             Column
                           </label>
                           <select
@@ -1062,7 +1063,7 @@ const renderParameters = (
                                 e.target.value
                               )
                             }
-                            className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                           >
                             <option value="">Select column...</option>
                             {inputColumns.map((col) => (
@@ -1073,7 +1074,7 @@ const renderParameters = (
                           </select>
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-400 mb-1">
+                          <label className="block text-xs text-gray-700 dark:text-gray-400 mb-1">
                             Operator
                           </label>
                           <select
@@ -1085,7 +1086,7 @@ const renderParameters = (
                                 e.target.value
                               )
                             }
-                            className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                           >
                             {operators.map((op) => (
                               <option key={op.value} value={op.value}>
@@ -1095,7 +1096,7 @@ const renderParameters = (
                           </select>
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-400 mb-1">
+                          <label className="block text-xs text-gray-700 dark:text-gray-400 mb-1">
                             Value
                           </label>
                           {condition.operator === "is_null" ||
@@ -1104,7 +1105,7 @@ const renderParameters = (
                               type="text"
                               value="N/A"
                               disabled
-                              className="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1.5 text-sm text-gray-500 cursor-not-allowed"
+                              className="w-full bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 text-sm text-gray-500 cursor-not-allowed"
                             />
                           ) : (
                             <input
@@ -1118,7 +1119,7 @@ const renderParameters = (
                                 )
                               }
                               placeholder="Enter value..."
-                              className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                             />
                           )}
                         </div>
@@ -1197,15 +1198,15 @@ const renderParameters = (
             ]}
           />
 
-          <div className="border-t border-gray-700 pt-4 space-y-4">
+          <div className="border-t border-gray-300 dark:border-gray-700 pt-4 space-y-4">
             <div>
-              <label className="block text-sm text-gray-400 mb-1">
+              <label className="block text-sm text-gray-700 dark:text-gray-400 mb-1">
                 {plot_type === "single" ? "Column" : "X-Axis Column"}
               </label>
               <select
                 value={column1}
                 onChange={(e) => onParamChange("column1", e.target.value)}
-                className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 <option value="">Select column...</option>
                 {inputColumns.map((col) => (
@@ -1218,13 +1219,13 @@ const renderParameters = (
 
             {plot_type === "double" && (
               <div>
-                <label className="block text-sm text-gray-400 mb-1">
+                <label className="block text-sm text-gray-700 dark:text-gray-400 mb-1">
                   Y-Axis Column
                 </label>
                 <select
                   value={column2}
                   onChange={(e) => onParamChange("column2", e.target.value)}
-                  className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value="">Select column...</option>
                   {inputColumns
@@ -1278,12 +1279,12 @@ const renderParameters = (
       return (
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-gray-400 mb-2">
+            <label className="block text-sm text-gray-700 dark:text-gray-400 mb-2">
               Columns (최대 5개 선택)
             </label>
-            <div className="bg-gray-700 border border-gray-600 rounded px-2 py-2 max-h-60 overflow-y-auto">
+            <div className="bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-2 max-h-60 overflow-y-auto">
               {numericColumns.length === 0 ? (
-                <p className="text-xs text-yellow-500">
+                <p className="text-xs text-yellow-600 dark:text-yellow-500">
                   No numeric columns available. Outlier detection requires
                   numeric data.
                 </p>
@@ -1295,20 +1296,20 @@ const renderParameters = (
                     return (
                       <label
                         key={col.name}
-                        className="flex items-center gap-2 cursor-pointer hover:bg-gray-600 p-1 rounded"
+                        className="flex items-center gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 p-1 rounded text-gray-900 dark:text-white"
                       >
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => handleColumnToggle(col.name)}
-                          className="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500"
+                          className="w-4 h-4 text-blue-600 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                           disabled={
                             !isSelected &&
                             Array.isArray(columns) &&
                             columns.length >= 5
                           }
                         />
-                        <span className="text-sm text-gray-300">
+                        <span className="text-sm text-gray-900 dark:text-gray-300">
                           {col.name}
                         </span>
                       </label>
@@ -1318,13 +1319,13 @@ const renderParameters = (
               )}
             </div>
             {Array.isArray(columns) && columns.length > 0 && (
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-gray-700 dark:text-gray-400 mt-2">
                 선택된 열: {columns.length}개 / 5개
               </p>
             )}
           </div>
-          <div className="border-t border-gray-700 pt-4">
-            <p className="text-xs text-gray-500">
+          <div className="border-t border-gray-300 dark:border-gray-700 pt-4">
+            <p className="text-xs text-gray-700 dark:text-gray-500">
               This module will detect outliers using multiple methods:
               <br />• IQR (Interquartile Range)
               <br />• Z-score
@@ -1449,10 +1450,10 @@ const renderParameters = (
       return (
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-gray-400 mb-2">
+            <label className="block text-sm text-gray-700 dark:text-gray-400 mb-2">
               Select Tests
             </label>
-            <div className="bg-gray-700 border border-gray-600 rounded px-2 py-2 max-h-60 overflow-y-auto">
+            <div className="bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-2 max-h-60 overflow-y-auto">
               <div className="space-y-2">
                 {testTypes.map((test) => {
                   const isSelected =
@@ -1471,7 +1472,7 @@ const renderParameters = (
                       key={test.value}
                       className={`flex items-center gap-2 p-2 rounded ${
                         canSelect
-                          ? "cursor-pointer hover:bg-gray-600"
+                          ? "cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
                           : "opacity-50 cursor-not-allowed"
                       }`}
                     >
@@ -1482,14 +1483,14 @@ const renderParameters = (
                           canSelect && handleTestToggle(test.value)
                         }
                         disabled={!canSelect}
-                        className="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500"
+                        className="w-4 h-4 text-blue-600 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                       />
                       <div className="flex-1">
-                        <span className="text-sm text-gray-300">
+                        <span className="text-sm text-gray-900 dark:text-gray-300">
                           {test.label}
                         </span>
                         {!canSelect && (
-                          <div className="text-xs text-yellow-500 mt-1">
+                          <div className="text-xs text-yellow-600 dark:text-yellow-500 mt-1">
                             {test.requiresNumeric > 0 &&
                               availableCols.numeric.length <
                                 test.requiresNumeric &&
@@ -1510,8 +1511,8 @@ const renderParameters = (
 
           {/* 선택된 테스트별 열 선택 */}
           {Array.isArray(tests) && tests.length > 0 && (
-            <div className="space-y-4 border-t border-gray-700 pt-4">
-              <label className="block text-sm text-gray-400 mb-2">
+            <div className="space-y-4 border-t border-gray-300 dark:border-gray-700 pt-4">
+              <label className="block text-sm text-gray-700 dark:text-gray-400 mb-2">
                 Configure Columns for Each Test
               </label>
               {tests.map((test: any, testIndex: number) => {
@@ -1526,18 +1527,18 @@ const renderParameters = (
                 return (
                   <div
                     key={testIndex}
-                    className="bg-gray-800 rounded-lg p-3 border border-gray-700"
+                    className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-300 dark:border-gray-700"
                   >
-                    <div className="text-sm font-semibold text-gray-300 mb-2">
+                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-300 mb-2">
                       {testDef?.label || test.testType}
                     </div>
                     <div className="space-y-2">
                       {testDef?.requiresNumeric > 0 && (
                         <div>
-                          <label className="block text-xs text-gray-400 mb-1">
+                          <label className="block text-xs text-gray-700 dark:text-gray-400 mb-1">
                             Numeric Columns ({testDef.requiresNumeric} required)
                           </label>
-                          <div className="bg-gray-700 border border-gray-600 rounded px-2 py-2 max-h-32 overflow-y-auto">
+                          <div className="bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-2 max-h-32 overflow-y-auto">
                             {availableCols.numeric.length === 0 ? (
                               <p className="text-xs text-yellow-500">
                                 No numeric columns available
@@ -1559,7 +1560,7 @@ const renderParameters = (
                                       key={col.name}
                                       className={`flex items-center gap-2 p-1 rounded ${
                                         canSelect
-                                          ? "cursor-pointer hover:bg-gray-600"
+                                          ? "cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
                                           : "opacity-50 cursor-not-allowed"
                                       }`}
                                     >
@@ -1582,9 +1583,9 @@ const renderParameters = (
                                           );
                                         }}
                                         disabled={!canSelect && !isSelected}
-                                        className="w-3 h-3 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500"
+                                        className="w-3 h-3 text-blue-600 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                                       />
-                                      <span className="text-xs text-gray-300">
+                                      <span className="text-xs text-gray-900 dark:text-gray-300">
                                         {col.name}
                                       </span>
                                     </label>
@@ -1597,13 +1598,13 @@ const renderParameters = (
                       )}
                       {testDef?.requiresCategorical > 0 && (
                         <div>
-                          <label className="block text-xs text-gray-400 mb-1">
+                          <label className="block text-xs text-gray-700 dark:text-gray-400 mb-1">
                             Categorical Columns ({testDef.requiresCategorical}{" "}
                             required)
                           </label>
-                          <div className="bg-gray-700 border border-gray-600 rounded px-2 py-2 max-h-32 overflow-y-auto">
+                          <div className="bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-2 max-h-32 overflow-y-auto">
                             {availableCols.categorical.length === 0 ? (
-                              <p className="text-xs text-yellow-500">
+                              <p className="text-xs text-yellow-600 dark:text-yellow-500">
                                 No categorical columns available
                               </p>
                             ) : (
@@ -1623,7 +1624,7 @@ const renderParameters = (
                                       key={col.name}
                                       className={`flex items-center gap-2 p-1 rounded ${
                                         canSelect
-                                          ? "cursor-pointer hover:bg-gray-600"
+                                          ? "cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
                                           : "opacity-50 cursor-not-allowed"
                                       }`}
                                     >
@@ -1646,9 +1647,9 @@ const renderParameters = (
                                           );
                                         }}
                                         disabled={!canSelect && !isSelected}
-                                        className="w-3 h-3 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500"
+                                        className="w-3 h-3 text-blue-600 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                                       />
-                                      <span className="text-xs text-gray-300">
+                                      <span className="text-xs text-gray-900 dark:text-gray-300">
                                         {col.name}
                                       </span>
                                     </label>
@@ -1762,19 +1763,19 @@ const renderParameters = (
 
           <div>
             <div className="flex justify-between items-center mb-2">
-              <label className="block text-sm text-gray-400">
+              <label className="block text-sm text-gray-700 dark:text-gray-400">
                 Select Tests
               </label>
               <div className="flex gap-2">
                 <button
                   onClick={() => handleSelectAllTests(true)}
-                  className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md font-semibold"
+                  className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md font-semibold text-gray-900 dark:text-white"
                 >
                   Select All
                 </button>
                 <button
                   onClick={() => handleSelectAllTests(false)}
-                  className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md font-semibold"
+                  className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md font-semibold text-gray-900 dark:text-white"
                 >
                   Deselect All
                 </button>
@@ -1872,7 +1873,7 @@ const renderParameters = (
         <div className="space-y-4">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm text-gray-400">
+              <label className="block text-sm text-gray-700 dark:text-gray-400">
                 Select Feature Columns
               </label>
               <div className="flex gap-2">
@@ -1884,13 +1885,13 @@ const renderParameters = (
                 </button>
                 <button
                   onClick={handleDeselectAll}
-                  className="px-2 py-1 text-xs bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+                  className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded transition-colors"
                 >
                   Deselect All
                 </button>
               </div>
             </div>
-            <div className="bg-gray-700 border border-gray-600 rounded px-2 py-2 max-h-60 overflow-y-auto">
+            <div className="bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-2 max-h-60 overflow-y-auto">
               <div className="space-y-2">
                 {numericColumns.map((col) => {
                   const isSelected =
@@ -1899,17 +1900,17 @@ const renderParameters = (
                   return (
                     <label
                       key={col.name}
-                      className="flex items-center gap-2 cursor-pointer hover:bg-gray-600 p-1 rounded"
+                      className="flex items-center gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 p-1 rounded text-gray-900 dark:text-white"
                     >
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => handleColumnToggle(col.name)}
-                        className="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500"
+                        className="w-4 h-4 text-blue-600 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                       />
-                      <span className="text-sm text-gray-300">
+                      <span className="text-sm text-gray-900 dark:text-gray-300">
                         {col.name}
-                        <span className="text-xs text-gray-500 ml-2">
+                        <span className="text-xs text-gray-600 dark:text-gray-500 ml-2">
                           ({col.type})
                         </span>
                       </span>
@@ -1918,13 +1919,13 @@ const renderParameters = (
                 })}
               </div>
             </div>
-            <p className="text-xs text-gray-400 mt-2">
+            <p className="text-xs text-gray-700 dark:text-gray-400 mt-2">
               Selected: {currentColumns.length} / {numericColumns.length}{" "}
               column(s)
             </p>
           </div>
-          <div className="border-t border-gray-700 pt-4">
-            <p className="text-xs text-gray-500">
+          <div className="border-t border-gray-300 dark:border-gray-700 pt-4">
+            <p className="text-xs text-gray-700 dark:text-gray-500">
               Select numeric feature columns to calculate Variance Inflation
               Factor (VIF). VIF values:
               <br />• VIF &gt; 10: High multicollinearity (red)
@@ -1981,7 +1982,7 @@ const renderParameters = (
         <div className="space-y-4">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm text-gray-400">
+              <label className="block text-sm text-gray-700 dark:text-gray-400">
                 Select Columns
               </label>
               <div className="flex gap-2">
@@ -1993,13 +1994,13 @@ const renderParameters = (
                 </button>
                 <button
                   onClick={handleDeselectAll}
-                  className="px-2 py-1 text-xs bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+                  className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded transition-colors"
                 >
                   Deselect All
                 </button>
               </div>
             </div>
-            <div className="bg-gray-700 border border-gray-600 rounded px-2 py-2 max-h-60 overflow-y-auto">
+            <div className="bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-2 max-h-60 overflow-y-auto">
               <div className="space-y-2">
                 {inputColumns.map((col) => {
                   const isSelected =
@@ -2007,17 +2008,17 @@ const renderParameters = (
                   return (
                     <label
                       key={col.name}
-                      className="flex items-center gap-2 cursor-pointer hover:bg-gray-600 p-1 rounded"
+                      className="flex items-center gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 p-1 rounded text-gray-900 dark:text-white"
                     >
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => handleColumnToggle(col.name)}
-                        className="w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500"
+                        className="w-4 h-4 text-blue-600 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                       />
-                      <span className="text-sm text-gray-300">
+                      <span className="text-sm text-gray-900 dark:text-gray-300">
                         {col.name}
-                        <span className="text-xs text-gray-500 ml-2">
+                        <span className="text-xs text-gray-600 dark:text-gray-500 ml-2">
                           (
                           {col.type.startsWith("int") ||
                           col.type.startsWith("float")
@@ -2031,13 +2032,13 @@ const renderParameters = (
                 })}
               </div>
             </div>
-            <p className="text-xs text-gray-400 mt-2">
+            <p className="text-xs text-gray-700 dark:text-gray-400 mt-2">
               Selected: {currentColumns.length} / {inputColumns.length}{" "}
               column(s)
             </p>
           </div>
-          <div className="border-t border-gray-700 pt-4">
-            <p className="text-xs text-gray-500">
+          <div className="border-t border-gray-300 dark:border-gray-700 pt-4">
+            <p className="text-xs text-gray-700 dark:text-gray-500">
               Select columns to analyze correlations. The module will
               automatically:
               <br />• Calculate Pearson/Spearman/Kendall correlations for
@@ -2092,10 +2093,10 @@ const renderParameters = (
               ));
 
           if (!isDisabled) {
-            newSelections[col.name] = {
+          newSelections[col.name] = {
               ...(currentSelections[col.name] || { type: pandasDtype }),
-              selected: selectAll,
-            };
+            selected: selectAll,
+          };
           }
         });
         onParamChange("columnSelections", newSelections);
@@ -2147,20 +2148,20 @@ const renderParameters = (
               />
             </div>
           )}
-          <div className="mt-4 pt-3 border-t border-gray-700">
-            <h5 className="text-xs text-gray-500 uppercase font-bold mb-2">
+          <div className="mt-4 pt-3 border-t border-gray-300 dark:border-gray-700">
+            <h5 className="text-xs text-gray-700 dark:text-gray-500 uppercase font-bold mb-2">
               COLUMNS TO PROCESS
             </h5>
             <div className="flex justify-end gap-2 mb-2">
               <button
                 onClick={() => handleSelectAll(true)}
-                className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md font-semibold"
+                className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md font-semibold text-gray-900 dark:text-white"
               >
                 Select All
               </button>
               <button
                 onClick={() => handleSelectAll(false)}
-                className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md font-semibold"
+                className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md font-semibold text-gray-900 dark:text-white"
               >
                 Deselect All
               </button>
@@ -2388,34 +2389,34 @@ const renderParameters = (
           />
 
           {inputColumns.length === 0 ? (
-            <p className="text-sm text-gray-500 mt-4">
+            <p className="text-sm text-gray-700 dark:text-gray-500 mt-4">
               Connect a data source module to configure columns.
             </p>
           ) : (
             <div className="mt-4">
-              <h5 className="text-xs text-gray-500 uppercase font-bold mb-2">
+              <h5 className="text-xs text-gray-700 dark:text-gray-500 uppercase font-bold mb-2">
                 COLUMNS TO NORMALIZE
               </h5>
               <div className="flex justify-end gap-2 mb-2">
                 <button
                   onClick={() => handleSelectAll(true)}
-                  className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md font-semibold"
+                  className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md font-semibold text-gray-900 dark:text-white"
                 >
                   Select All Numeric
                 </button>
                 <button
                   onClick={() => handleSelectAll(false)}
-                  className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md font-semibold"
+                  className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md font-semibold text-gray-900 dark:text-white"
                 >
                   Deselect All
                 </button>
               </div>
               <div className="space-y-2 pr-2">
-                <div className="grid grid-cols-5 gap-2 items-center sticky top-0 bg-gray-800 py-1">
-                  <span className="text-xs font-bold text-gray-400 col-span-3">
+                <div className="grid grid-cols-5 gap-2 items-center sticky top-0 bg-gray-100 dark:bg-gray-800 py-1">
+                  <span className="text-xs font-bold text-gray-700 dark:text-gray-400 col-span-3">
                     Column Name
                   </span>
-                  <span className="text-xs font-bold text-gray-400 col-span-2">
+                  <span className="text-xs font-bold text-gray-700 dark:text-gray-400 col-span-2">
                     Data Type
                   </span>
                 </div>
@@ -2450,7 +2451,7 @@ const renderParameters = (
                       className="grid grid-cols-5 gap-2 items-center"
                     >
                       <label
-                        className="flex items-center gap-2 text-sm truncate col-span-3"
+                        className="flex items-center gap-2 text-sm truncate col-span-3 text-gray-900 dark:text-white"
                         title={col.name}
                       >
                         <input
@@ -2459,19 +2460,19 @@ const renderParameters = (
                           onChange={(e) =>
                             handleSelectionChange(col.name, e.target.checked)
                           }
-                          className="h-4 w-4 rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed"
+                          className="h-4 w-4 rounded bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed"
                           disabled={!isNumeric}
                         />
                         <span
                           className={`truncate ${
-                            !isNumeric ? "text-gray-500" : ""
+                            !isNumeric ? "text-gray-500 dark:text-gray-500" : "text-gray-900 dark:text-white"
                           }`}
                         >
                           {col.name}
                         </span>
                       </label>
                       <div className="col-span-2">
-                        <span className="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded-md">
+                        <span className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-300 px-2 py-1 rounded-md">
                           {pandasDtype}
                         </span>
                       </div>
@@ -3036,19 +3037,19 @@ const renderParameters = (
           </div>
           <div>
             <div className="flex justify-between items-center mb-2">
-              <h5 className="text-xs text-gray-500 uppercase font-bold">
+              <h5 className="text-xs text-gray-700 dark:text-gray-500 uppercase font-bold">
                 Feature Columns
               </h5>
               <div className="flex gap-2">
                 <button
                   onClick={() => handleSelectAllFeatures(true)}
-                  className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md font-semibold"
+                  className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md font-semibold text-gray-900 dark:text-white"
                 >
                   Select All
                 </button>
                 <button
                   onClick={() => handleSelectAllFeatures(false)}
-                  className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md font-semibold"
+                  className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md font-semibold text-gray-900 dark:text-white"
                 >
                   Deselect All
                 </button>
@@ -3058,7 +3059,7 @@ const renderParameters = (
               {inputColumns.map((col) => (
                 <label
                   key={col.name}
-                  className="flex items-center gap-2 text-sm truncate"
+                  className="flex items-center gap-2 text-sm truncate text-gray-900 dark:text-white"
                   title={col.name}
                 >
                   <input
@@ -3798,19 +3799,19 @@ const renderParameters = (
           </div>
           <div>
             <div className="flex justify-between items-center mb-2">
-              <h5 className="text-xs text-gray-500 uppercase font-bold">
+              <h5 className="text-xs text-gray-700 dark:text-gray-500 uppercase font-bold">
                 Feature Columns
               </h5>
               <div className="flex gap-2">
                 <button
                   onClick={() => handleSelectAllFeatures(true)}
-                  className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md font-semibold"
+                  className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md font-semibold text-gray-900 dark:text-white"
                 >
                   Select All
                 </button>
                 <button
                   onClick={() => handleSelectAllFeatures(false)}
-                  className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 rounded-md font-semibold"
+                  className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md font-semibold text-gray-900 dark:text-white"
                 >
                   Deselect All
                 </button>
@@ -3820,7 +3821,7 @@ const renderParameters = (
               {inputColumns.map((col) => (
                 <label
                   key={col.name}
-                  className="flex items-center gap-2 text-sm truncate"
+                  className="flex items-center gap-2 text-sm truncate text-gray-900 dark:text-white"
                   title={col.name}
                 >
                   <input
@@ -4366,7 +4367,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
         return (
           isNumericDtype(pandasDtype) &&
           currentSelections[col.name]?.selected === true
-        );
+      );
       });
       if (!hasAnySelection) {
         // 모든 숫자형 열을 기본값으로 선택
@@ -4441,7 +4442,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             name: ex.name || ex.filename,
             content: ex.content,
           }));
-
+          
           // boston_housing.csv가 있는지 확인하고 제거
           const filteredExamples = validExamples.filter((ex: any) => {
             const name = ex.name || "";
@@ -5641,19 +5642,19 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               )}
               {activeTab === "code" && (
                 <div>
-                  <div className="relative bg-gray-900 rounded-lg">
+                  <div className="relative bg-gray-100 dark:bg-gray-900 rounded-lg">
                     <button
                       onClick={handleCopyCode}
-                      className="absolute top-2 right-2 p-1.5 bg-gray-700 hover:bg-gray-600 rounded-md text-gray-300 transition-colors"
+                      className="absolute top-2 right-2 p-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md text-gray-700 dark:text-gray-300 transition-colors"
                       title="Copy to clipboard"
                     >
                       {isCopied ? (
-                        <CheckIcon className="w-4 h-4 text-green-400" />
+                        <CheckIcon className="w-4 h-4 text-green-600 dark:text-green-400" />
                       ) : (
                         <ClipboardIcon className="w-4 h-4" />
                       )}
                     </button>
-                    <pre className="p-4 text-xs text-gray-300 overflow-x-auto">
+                    <pre className="p-4 text-xs text-gray-900 dark:text-gray-300 overflow-x-auto">
                       <code>{codeSnippet}</code>
                     </pre>
                   </div>
@@ -5662,7 +5663,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               {activeTab === "terminal" && (
                 <div
                   ref={logContainerRef}
-                  className="flex-grow overflow-y-auto bg-gray-900 text-xs font-mono p-2 space-y-1"
+                  className="flex-grow overflow-y-auto bg-gray-100 dark:bg-gray-900 text-xs font-mono p-2 space-y-1"
                   onContextMenu={(e) => {
                     // 텍스트가 선택되어 있으면 컨텍스트 메뉴에서 복사 가능하도록
                     const selection = window.getSelection();
@@ -5677,26 +5678,26 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   {logs.map((log) => (
                     <div
                       key={log.id}
-                      className="flex group hover:bg-gray-800/50 rounded px-1 py-0.5"
+                      className="flex group hover:bg-gray-200/50 dark:hover:bg-gray-800/50 rounded px-1 py-0.5"
                     >
-                      <span className="text-gray-500 mr-2 flex-shrink-0 select-none">
+                      <span className="text-gray-600 dark:text-gray-500 mr-2 flex-shrink-0 select-none">
                         {log.timestamp}
                       </span>
                       <span
                         className={`mr-2 font-bold flex-shrink-0 select-none ${
                           log.level === "INFO"
-                            ? "text-blue-400"
+                            ? "text-blue-600 dark:text-blue-400"
                             : log.level === "WARN"
-                            ? "text-yellow-400"
+                            ? "text-yellow-600 dark:text-yellow-400"
                             : log.level === "ERROR"
-                            ? "text-red-400"
-                            : "text-green-400"
+                            ? "text-red-600 dark:text-red-400"
+                            : "text-green-600 dark:text-green-400"
                         }`}
                       >
                         {log.level}:
                       </span>
                       <span
-                        className="flex-1 whitespace-pre-wrap break-words cursor-text select-text"
+                        className="flex-1 whitespace-pre-wrap break-words cursor-text select-text text-gray-900 dark:text-gray-200"
                         onDoubleClick={(e) => {
                           e.preventDefault();
                           const text = log.message;
@@ -5730,15 +5731,15 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                         title="전체 로그 복사"
                       >
                         {isCopied ? (
-                          <CheckIcon className="w-4 h-4 text-green-400" />
+                          <CheckIcon className="w-4 h-4 text-green-600 dark:text-green-400" />
                         ) : (
-                          <ClipboardIcon className="w-4 h-4 text-gray-400 hover:text-gray-300" />
+                          <ClipboardIcon className="w-4 h-4 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300" />
                         )}
                       </button>
                     </div>
                   ))}
                   {logs.length === 0 && (
-                    <div className="text-gray-500 text-center py-4">
+                    <div className="text-gray-600 dark:text-gray-500 text-center py-4">
                       로그가 없습니다
                     </div>
                   )}
