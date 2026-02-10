@@ -69,6 +69,10 @@ export enum ModuleType {
   PlatModel = "PlatModel",
   PSplineModel = "PSplineModel",
 
+  // Frequency-Severity Simulation Models
+  SimulateFreqSevTable = "SimulateFreqSevTable",
+  CombineLossModel = "CombineLossModel",
+
   // Deprecating these
   LogisticTradition = "LogisticTradition",
 

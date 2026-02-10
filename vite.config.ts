@@ -3,8 +3,16 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, '.', '');
+    // 환경 변수 로드 (.env, .env.local, .env.[mode], .env.[mode].local 모두 로드)
+    const env = loadEnv(mode, process.cwd(), '');
     const isProduction = mode === 'production';
+    
+    // API 키 확인 (디버깅용)
+    const apiKey = env.GEMINI_API_KEY || env.API_KEY;
+    if (!apiKey && mode === 'development') {
+      console.warn('⚠️  GEMINI_API_KEY가 설정되지 않았습니다. .env.local 파일에 GEMINI_API_KEY를 설정해주세요.');
+    }
+    
     return {
       publicDir: 'public',
       server: {
@@ -26,8 +34,8 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react()],
       define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY || env.API_KEY || ''),
+        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || env.API_KEY || '')
       },
       resolve: {
         alias: {

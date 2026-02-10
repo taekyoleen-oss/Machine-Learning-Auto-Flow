@@ -188,7 +188,9 @@ export const SamplesManagementModal: React.FC<Props> = ({
       >
         {/* 헤더 */}
         <div className="p-4 border-b border-gray-300 dark:border-gray-700 flex justify-between items-center flex-shrink-0">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">샘플 관리</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            샘플 관리
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -216,7 +218,9 @@ export const SamplesManagementModal: React.FC<Props> = ({
               />
             </label>
             {loading && (
-              <span className="text-gray-600 dark:text-gray-400 text-sm">처리 중...</span>
+              <span className="text-gray-600 dark:text-gray-400 text-sm">
+                처리 중...
+              </span>
             )}
           </div>
         </div>
@@ -230,11 +234,15 @@ export const SamplesManagementModal: React.FC<Props> = ({
         >
           {loading && samples.length === 0 ? (
             <div className="flex items-center justify-center py-12">
-              <div className="text-gray-600 dark:text-gray-400 text-lg">로딩 중...</div>
+              <div className="text-gray-600 dark:text-gray-400 text-lg">
+                로딩 중...
+              </div>
             </div>
           ) : samples.length === 0 ? (
             <div className="flex items-center justify-center py-12">
-              <div className="text-gray-600 dark:text-gray-400 text-lg">샘플이 없습니다</div>
+              <div className="text-gray-600 dark:text-gray-400 text-lg">
+                샘플이 없습니다
+              </div>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -321,7 +329,9 @@ export const SamplesManagementModal: React.FC<Props> = ({
             style={{ maxHeight: "400px" }}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">샘플 수정</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                샘플 수정
+              </h3>
               <button
                 type="button"
                 onClick={handleCancel}
@@ -333,7 +343,9 @@ export const SamplesManagementModal: React.FC<Props> = ({
             </div>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">이름</label>
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                  이름
+                </label>
                 <input
                   type="text"
                   value={formData.name}
@@ -376,7 +388,9 @@ export const SamplesManagementModal: React.FC<Props> = ({
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">설명</label>
+                <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                  설명
+                </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) =>

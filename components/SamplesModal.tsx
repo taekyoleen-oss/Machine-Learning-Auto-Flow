@@ -76,7 +76,9 @@ const SamplesModal: React.FC<SamplesModalProps> = ({
         {/* 헤더 */}
         <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700 z-10">
           <div className="p-4 flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Samples</h2>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Samples
+            </h2>
             <div className="flex items-center gap-2">
               {onManage && (
                 <button

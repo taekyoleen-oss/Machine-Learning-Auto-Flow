@@ -176,7 +176,11 @@ const AIModuleExplanation: React.FC<{ module: CanvasModule }> = ({
     setIsLoading(true);
     setShow(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+      const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error("GEMINI_API_KEY가 설정되지 않았습니다. .env.local 파일에 GEMINI_API_KEY를 설정하고 개발 서버를 재시작해주세요.");
+      }
+      const ai = new GoogleGenAI({ apiKey: apiKey });
 
       const defaultModuleData = DEFAULT_MODULES.find(
         (m) => m.type === module.type
@@ -292,7 +296,11 @@ const AIParameterRecommender: React.FC<{
   const handleRecommend = async () => {
     setIsLoading(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+      const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error("GEMINI_API_KEY가 설정되지 않았습니다. .env.local 파일에 GEMINI_API_KEY를 설정하고 개발 서버를 재시작해주세요.");
+      }
+      const ai = new GoogleGenAI({ apiKey: apiKey });
 
       const prompt = `
 You are an expert data scientist AI assistant. Your task is to recommend the optimal feature columns and a single label/target column for a machine learning model based on a project goal and a list of available data columns.

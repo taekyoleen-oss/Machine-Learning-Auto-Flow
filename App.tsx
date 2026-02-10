@@ -351,7 +351,11 @@ const App: React.FC = () => {
         `AI is suggesting a module to connect to '${fromModule.name}'...`
       );
       try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+        const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+          throw new Error("GEMINI_API_KEY가 설정되지 않았습니다. .env.local 파일에 GEMINI_API_KEY를 설정하고 개발 서버를 재시작해주세요.");
+        }
+        const ai = new GoogleGenAI({ apiKey: apiKey });
         const fromPort = fromModule.outputs.find(
           (p) => p.name === fromPortName
         );
@@ -1292,8 +1296,14 @@ Respond with ONLY the module type string, for example: 'ScoreModel'`;
       // API 키 확인
       const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
       if (!apiKey) {
+        addLog("ERROR", "API 키를 찾을 수 없습니다. 개발 서버를 재시작해주세요.");
         throw new Error(
-          "GEMINI_API_KEY가 설정되지 않았습니다. .env.local 파일에 GEMINI_API_KEY를 설정해주세요."
+          "GEMINI_API_KEY가 설정되지 않았습니다.\n\n" +
+          "해결 방법:\n" +
+          "1. 프로젝트 루트에 .env.local 파일이 있는지 확인하세요.\n" +
+          "2. .env.local 파일에 다음을 추가하세요:\n" +
+          "   GEMINI_API_KEY=your_api_key_here\n" +
+          "3. 개발 서버를 재시작하세요 (Ctrl+C 후 npm run dev)"
         );
       }
 
@@ -3345,6 +3355,148 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
     []
   );
 
+  // Helper function to process annual aggregation for SimulateFreqSevTable
+  const processAnnualAggregation = (inputData: DataPreview): DataPreview => {
+    // 연도별을 하나의 사고로 해서 테이블 구성
+    // 연도 컬럼을 찾아서 연도별로 그룹화
+    const yearColumn = inputData.columns.find(
+      (col) => col.name.toLowerCase().includes("year") || col.name.toLowerCase().includes("연도")
+    );
+    
+    if (!yearColumn) {
+      throw new Error("Year column not found. Please ensure your data has a year column.");
+    }
+
+    const groupedByYear: Record<string, any[]> = {};
+    (inputData.rows || []).forEach((row) => {
+      const year = String(row[yearColumn.name]);
+      if (!groupedByYear[year]) {
+        groupedByYear[year] = [];
+      }
+      groupedByYear[year].push(row);
+    });
+
+    // 연도별로 집계된 데이터 생성
+    const annualRows: Record<string, any>[] = [];
+    Object.keys(groupedByYear).forEach((year) => {
+      const yearData = groupedByYear[year];
+      // 각 연도를 하나의 사고로 처리
+      const aggregatedRow: Record<string, any> = {
+        year: year,
+        claim_count: yearData.length,
+        // 필요한 경우 추가 집계 컬럼 추가
+      };
+      
+      // 숫자형 컬럼들의 합계 계산
+      inputData.columns.forEach((col) => {
+        if (col.type === "int64" || col.type === "float64") {
+          const sum = yearData.reduce((acc, row) => {
+            const val = row[col.name];
+            return acc + (typeof val === "number" ? val : 0);
+          }, 0);
+          aggregatedRow[`total_${col.name}`] = sum;
+        }
+      });
+      
+      annualRows.push(aggregatedRow);
+    });
+
+    const annualColumns: ColumnInfo[] = [
+      { name: "year", type: "object" },
+      { name: "claim_count", type: "int64" },
+      ...inputData.columns
+        .filter((col) => col.type === "int64" || col.type === "float64")
+        .map((col) => ({ name: `total_${col.name}`, type: col.type })),
+    ];
+
+    return {
+      type: "DataPreview",
+      columns: annualColumns,
+      totalRowCount: annualRows.length,
+      rows: annualRows,
+    };
+  };
+
+  // Helper function to process claim aggregation for SimulateFreqSevTable
+  const processClaimAggregation = (inputData: DataPreview): DataPreview => {
+    // 사고별 집계 (XoL 사용) - 원본 데이터를 그대로 반환하거나 필요한 집계 수행
+    // 사고별 데이터는 원본 구조를 유지
+    return {
+      type: "DataPreview",
+      columns: inputData.columns,
+      totalRowCount: inputData.totalRowCount,
+      rows: inputData.rows || [],
+    };
+  };
+
+  // Helper function to combine two loss models
+  const combineLossModels = (
+    freqSevData: DataPreview,
+    lossData: DataPreview
+  ): { columns: ColumnInfo[]; rows: Record<string, any>[] } => {
+    // 두 데이터를 합산하여 VaR 등 계산
+    // 간단한 합산 예시 (실제로는 더 복잡한 계산 필요)
+    const combinedRows: Record<string, any>[] = [];
+    
+    // 공통 컬럼 찾기
+    const commonColumns = freqSevData.columns.filter((col) =>
+      lossData.columns.some((c) => c.name === col.name)
+    );
+
+    // 합산 가능한 숫자형 컬럼 찾기
+    const numericColumns = commonColumns.filter(
+      (col) => col.type === "int64" || col.type === "float64"
+    );
+
+    // 두 데이터의 행 수가 같다고 가정 (실제로는 더 복잡한 매칭 필요)
+    const maxRows = Math.max(
+      freqSevData.rows?.length || 0,
+      lossData.rows?.length || 0
+    );
+
+    for (let i = 0; i < maxRows; i++) {
+      const freqSevRow = freqSevData.rows?.[i] || {};
+      const lossRow = lossData.rows?.[i] || {};
+
+      const combinedRow: Record<string, any> = {};
+
+      // 공통 컬럼 합산
+      numericColumns.forEach((col) => {
+        const freqSevVal = freqSevRow[col.name] || 0;
+        const lossVal = lossRow[col.name] || 0;
+        combinedRow[col.name] =
+          (typeof freqSevVal === "number" ? freqSevVal : 0) +
+          (typeof lossVal === "number" ? lossVal : 0);
+      });
+
+      // 고유 컬럼 추가
+      freqSevData.columns.forEach((col) => {
+        if (!commonColumns.some((c) => c.name === col.name)) {
+          combinedRow[`freq_sev_${col.name}`] = freqSevRow[col.name];
+        }
+      });
+      lossData.columns.forEach((col) => {
+        if (!commonColumns.some((c) => c.name === col.name)) {
+          combinedRow[`loss_${col.name}`] = lossRow[col.name];
+        }
+      });
+
+      combinedRows.push(combinedRow);
+    }
+
+    const combinedColumns: ColumnInfo[] = [
+      ...commonColumns,
+      ...freqSevData.columns
+        .filter((col) => !commonColumns.some((c) => c.name === col.name))
+        .map((col) => ({ name: `freq_sev_${col.name}`, type: col.type })),
+      ...lossData.columns
+        .filter((col) => !commonColumns.some((c) => c.name === col.name))
+        .map((col) => ({ name: `loss_${col.name}`, type: col.type })),
+    ];
+
+    return { columns: combinedColumns, rows: combinedRows };
+  };
+
   const runSimulation = async (
     startModuleId: string,
     runAll: boolean = false
@@ -3508,6 +3660,16 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         const outputData2 = (sourceModule as any).outputData2;
         if (outputData2.type === "DataPreview" && portType === "data") {
           return outputData2;
+        }
+      }
+
+      // SimulateFreqSevTable의 output_1, output_2 포트 처리
+      if (sourceModule.type === ModuleType.SimulateFreqSevTable && portType === "data") {
+        if (fromPortName === "output_1" && (sourceModule as any).outputData1) {
+          return (sourceModule as any).outputData1;
+        }
+        if (fromPortName === "output_2" && (sourceModule as any).outputData2) {
+          return (sourceModule as any).outputData2;
         }
       }
 
@@ -8706,6 +8868,152 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             const errorMessage = error.message || String(error);
             addLog("ERROR", `Evaluate Stat 실행 실패: ${errorMessage}`);
             throw new Error(`Evaluate Stat 실행 실패: ${errorMessage}`);
+          }
+        } else if (module.type === ModuleType.SimulateFreqSevTable) {
+          const inputData = getSingleInputData(module.id) as DataPreview;
+          if (!inputData) throw new Error("Input data not available.");
+
+          const { outputFormat } = module.parameters;
+          if (!outputFormat) {
+            throw new Error("Output Format must be configured.");
+          }
+
+          try {
+            addLog(
+              "INFO",
+              `Simulate Freq-Sev Table 실행 중 (Output Format: ${outputFormat})...`
+            );
+
+            // Output Format에 따라 다른 출력 생성
+            let annualData: DataPreview | null = null;
+            let claimData: DataPreview | null = null;
+
+            if (outputFormat === "annual") {
+              // 연도별 집계 (DFA 사용) - output_1
+              // 연도별을 하나의 사고로 해서 테이블 구성
+              annualData = processAnnualAggregation(inputData);
+              newOutputData = annualData;
+            } else if (outputFormat === "claim") {
+              // 사고별 집계 (XoL 사용) - output_2
+              claimData = processClaimAggregation(inputData);
+              newOutputData = claimData;
+            } else {
+              throw new Error(`Invalid output format: ${outputFormat}`);
+            }
+
+            // 모듈 상태 업데이트 시 outputData1과 outputData2도 함께 저장
+            setModules((prev) =>
+              prev.map((m) => {
+                if (m.id === module.id) {
+                  const updated: any = {
+                    ...m,
+                    outputData: newOutputData,
+                  };
+                  if (annualData) {
+                    updated.outputData1 = annualData;
+                  }
+                  if (claimData) {
+                    updated.outputData2 = claimData;
+                  }
+                  return updated;
+                }
+                return m;
+              })
+            );
+
+            // currentModules도 업데이트
+            currentModules = currentModules.map((m) => {
+              if (m.id === module.id) {
+                const updated: any = {
+                  ...m,
+                  outputData: newOutputData,
+                };
+                if (annualData) {
+                  updated.outputData1 = annualData;
+                }
+                if (claimData) {
+                  updated.outputData2 = claimData;
+                }
+                return updated;
+              }
+              return m;
+            });
+
+            addLog("SUCCESS", "Simulate Freq-Sev Table 실행 완료");
+          } catch (error: any) {
+            const errorMessage = error.message || String(error);
+            addLog("ERROR", `Simulate Freq-Sev Table 실행 실패: ${errorMessage}`);
+            throw new Error(`Simulate Freq-Sev Table 실행 실패: ${errorMessage}`);
+          }
+        } else if (module.type === ModuleType.CombineLossModel) {
+          // 두 개의 입력 포트 확인
+          const freqSevInputConnection = connections.find(
+            (c) => c.to.moduleId === module.id && c.to.portName === "freq_serv_in"
+          );
+          const lossInputConnection = connections.find(
+            (c) => c.to.moduleId === module.id && c.to.portName === "loss_in"
+          );
+
+          if (!freqSevInputConnection) {
+            throw new Error(
+              "Frequency-Severity simulation input not available. Please connect Simulate Freq-Sev Table module's 'output_1' port to the 'freq_serv_in' port."
+            );
+          }
+          if (!lossInputConnection) {
+            throw new Error(
+              "Loss model input not available. Please connect a loss model module to the 'loss_in' port."
+            );
+          }
+
+          const freqSevSourceModule = currentModules.find(
+            (m) => m.id === freqSevInputConnection.from.moduleId
+          );
+          const lossSourceModule = currentModules.find(
+            (m) => m.id === lossInputConnection.from.moduleId
+          );
+
+          if (!freqSevSourceModule || !lossSourceModule) {
+            throw new Error("Source modules not found.");
+          }
+
+          // output_1 포트에서 데이터 가져오기
+          let freqSevData: DataPreview | null = null;
+          if (freqSevInputConnection.from.portName === "output_1") {
+            freqSevData = (freqSevSourceModule as any).outputData1;
+          } else {
+            // 기본 outputData 사용
+            if (freqSevSourceModule.outputData?.type === "DataPreview") {
+              freqSevData = freqSevSourceModule.outputData;
+            }
+          }
+
+          let lossData: DataPreview | null = null;
+          if (lossSourceModule.outputData?.type === "DataPreview") {
+            lossData = lossSourceModule.outputData;
+          }
+
+          if (!freqSevData || !lossData) {
+            throw new Error("Input data not available from source modules.");
+          }
+
+          try {
+            addLog("INFO", "Combine Loss Model 실행 중...");
+
+            // 두 데이터를 합산하여 VaR 등 계산
+            const combinedData = combineLossModels(freqSevData, lossData);
+
+            newOutputData = {
+              type: "DataPreview",
+              columns: combinedData.columns,
+              totalRowCount: combinedData.rows.length,
+              rows: combinedData.rows,
+            };
+
+            addLog("SUCCESS", "Combine Loss Model 실행 완료");
+          } catch (error: any) {
+            const errorMessage = error.message || String(error);
+            addLog("ERROR", `Combine Loss Model 실행 실패: ${errorMessage}`);
+            throw new Error(`Combine Loss Model 실행 실패: ${errorMessage}`);
           }
         } else if (
           module.type === ModuleType.LeeCarterModel ||

@@ -374,6 +374,19 @@ export const TOOLBOX_MODULES = [
     icon: PresentationChartLineIcon,
     description: "P-Spline mortality forecasting model.",
   },
+  // Frequency-Severity Simulation Models
+  {
+    type: ModuleType.SimulateFreqSevTable,
+    name: "Simulate Freq-Sev Table",
+    icon: TableCellsIcon,
+    description: "Simulates frequency-severity table with annual or claim-level aggregation.",
+  },
+  {
+    type: ModuleType.CombineLossModel,
+    name: "Combine Loss Model",
+    icon: CalculatorIcon,
+    description: "Combines two loss models and calculates VaR and other risk metrics.",
+  },
 ];
 
 // fix: Replaced all instances of status: 'Pending' with status: ModuleStatus.Pending to conform to the ModuleStatus enum type.
@@ -966,6 +979,26 @@ export const DEFAULT_MODULES: Omit<CanvasModule, "id" | "position" | "name">[] =
       },
       inputs: [{ name: "data_in", type: "data" }],
       outputs: [{ name: "model_out", type: "model" }],
+    },
+    {
+      type: ModuleType.SimulateFreqSevTable,
+      status: ModuleStatus.Pending,
+      parameters: { outputFormat: "annual" }, // "annual" or "claim"
+      inputs: [{ name: "data_in", type: "data" }],
+      outputs: [
+        { name: "output_1", type: "data" }, // 연도별 집계 (DFA 사용)
+        { name: "output_2", type: "data" }, // 사고별 집계 (XoL 사용)
+      ],
+    },
+    {
+      type: ModuleType.CombineLossModel,
+      status: ModuleStatus.Pending,
+      parameters: {},
+      inputs: [
+        { name: "freq_serv_in", type: "data" }, // Frequency-Severity simulation input
+        { name: "loss_in", type: "data" }, // Second loss model input
+      ],
+      outputs: [{ name: "combined_loss_out", type: "data" }],
     },
   ];
 
