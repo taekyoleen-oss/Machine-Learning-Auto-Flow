@@ -270,6 +270,16 @@ const App: React.FC = () => {
   const [saveButtonText, setSaveButtonText] = useState("Save");
   const [dfaPipelineInitialized, setDfaPipelineInitialized] = useState(false);
 
+  // Canvas tabs: multiple canvases with add/rename
+  const [tabs, setTabs] = useState<{ id: string; name: string; backgroundColor?: string }[]>([{ id: "tab-1", name: "Tab 1" }]);
+  const [activeTabId, setActiveTabId] = useState<string>("tab-1");
+  const tabContentsRef = useRef<Record<string, { modules: CanvasModule[]; connections: Connection[]; scale: number; pan: { x: number; y: number }; selectedModuleIds: string[] }>>({});
+  const [editingTabId, setEditingTabId] = useState<string | null>(null);
+  const [editingTabName, setEditingTabName] = useState("");
+  const prevActiveTabIdRef = useRef<string>("tab-1");
+  const [tabContextMenu, setTabContextMenu] = useState<{ tabId: string; x: number; y: number } | null>(null);
+  const tabContextMenuRef = useRef<HTMLDivElement>(null);
+
   // Draggable control panel state
   const [controlPanelPos, setControlPanelPos] = useState<{
     x: number;
@@ -322,6 +332,87 @@ const App: React.FC = () => {
     },
     [connections, modules, setModules]
   );
+
+  // Save current canvas state to the active tab (for tab switching)
+  const saveCurrentTabContent = useCallback(() => {
+    tabContentsRef.current[activeTabId] = {
+      modules: JSON.parse(JSON.stringify(modules)),
+      connections: JSON.parse(JSON.stringify(connections)),
+      scale,
+      pan: { ...pan },
+      selectedModuleIds: [...selectedModuleIds],
+    };
+  }, [activeTabId, modules, connections, scale, pan, selectedModuleIds]);
+
+  // When active tab changes, restore that tab's canvas state
+  useEffect(() => {
+    if (prevActiveTabIdRef.current === activeTabId) return;
+    const data = tabContentsRef.current[activeTabId];
+    if (data) {
+      resetModules(data.modules);
+      _setConnections(data.connections);
+      setScale(data.scale);
+      setPan(data.pan);
+      setSelectedModuleIds(data.selectedModuleIds);
+    } else {
+      resetModules([]);
+      _setConnections([]);
+      setScale(0.8);
+      setPan({ x: 0, y: 0 });
+      setSelectedModuleIds([]);
+    }
+    prevActiveTabIdRef.current = activeTabId;
+  }, [activeTabId, resetModules]);
+
+  const handleTabClick = useCallback((tabId: string) => {
+    if (tabId === activeTabId) return;
+    saveCurrentTabContent();
+    setActiveTabId(tabId);
+  }, [activeTabId, saveCurrentTabContent]);
+
+  const handleAddTab = useCallback(() => {
+    saveCurrentTabContent();
+    const newId = `tab-${Date.now()}`;
+    setTabs((prev) => [...prev, { id: newId, name: `Tab ${prev.length + 1}` }]);
+    setActiveTabId(newId);
+  }, [saveCurrentTabContent]);
+
+  const handleTabRename = useCallback((tabId: string, newName: string) => {
+    setTabs((prev) => prev.map((t) => (t.id === tabId ? { ...t, name: newName.trim() || t.name } : t)));
+    setEditingTabId(null);
+  }, []);
+
+  const handleDeleteTab = useCallback((tabId: string) => {
+    if (tabs.length <= 1) return;
+    saveCurrentTabContent();
+    const nextTabs = tabs.filter((t) => t.id !== tabId);
+    delete tabContentsRef.current[tabId];
+    if (activeTabId === tabId) {
+      const idx = tabs.findIndex((t) => t.id === tabId);
+      const newActiveId = (idx > 0 ? tabs[idx - 1] : nextTabs[0])?.id;
+      if (newActiveId) {
+        setActiveTabId(newActiveId);
+        prevActiveTabIdRef.current = newActiveId;
+      }
+    }
+    setTabs(nextTabs);
+    setTabContextMenu(null);
+  }, [activeTabId, tabs, saveCurrentTabContent]);
+
+  const handleTabBackgroundColor = useCallback((tabId: string, color: string | undefined) => {
+    setTabs((prev) => prev.map((t) => (t.id === tabId ? { ...t, backgroundColor: color } : t)));
+    setTabContextMenu(null);
+  }, []);
+
+  useEffect(() => {
+    if (!tabContextMenu) return;
+    const close = (e: MouseEvent) => {
+      if (tabContextMenuRef.current?.contains(e.target as Node)) return;
+      setTabContextMenu(null);
+    };
+    document.addEventListener("click", close, true);
+    return () => document.removeEventListener("click", close, true);
+  }, [tabContextMenu]);
 
   // fix: Moved 'addLog' before 'handleSuggestModule' to fix "used before its declaration" error.
   const addLog = useCallback((level: TerminalLog["level"], message: string) => {
@@ -9899,13 +9990,14 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
   };
 
   const handleRunAll = () => {
+    // Run All runs only the currently active tab's modules/connections (state is always active tab).
     const rootNodes = modules.filter(
       (m) => !connections.some((c) => c.to.moduleId === m.id)
     );
     if (rootNodes.length > 0) {
       addLog(
         "INFO",
-        `Project Run All started with ${rootNodes.length} root node(s)...`
+        `Project Run All started (active tab only) with ${rootNodes.length} root node(s)...`
       );
       setModules((prev) =>
         prev.map((m) => ({
@@ -10832,13 +10924,141 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         </div>
       </header>
 
-      <div className="flex-grow min-h-0 relative">
-        <main
-          ref={canvasContainerRef}
-          className={`w-full h-full ${
-            theme === "dark" ? "canvas-bg" : "canvas-bg-light"
-          } relative overflow-hidden`}
-        >
+      <div className="flex-grow min-h-0 relative flex flex-col">
+        {/* Canvas tabs: click to switch, double-click to rename, + to add */}
+        <div className="flex items-center gap-0 border-b border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 flex-shrink-0 overflow-x-auto scrollbar-hide min-h-0 relative">
+          {tabs.map((tab) => (
+            <div
+              key={tab.id}
+              onClick={() => handleTabClick(tab.id)}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                setEditingTabId(tab.id);
+                setEditingTabName(tab.name);
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setTabContextMenu({ tabId: tab.id, x: e.clientX, y: e.clientY });
+              }}
+              className={`flex items-center min-w-0 max-w-[140px] px-2 py-1 cursor-pointer border-r border-gray-300 dark:border-gray-600 select-none ${
+                tab.backgroundColor
+                  ? (activeTabId === tab.id ? "text-blue-600 dark:text-blue-400 font-semibold" : "text-gray-700 dark:text-gray-300 hover:opacity-90")
+                  : (activeTabId === tab.id ? "bg-white dark:bg-gray-900 text-blue-600 dark:text-blue-400 font-semibold" : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700")
+              }`}
+              style={tab.backgroundColor ? { backgroundColor: tab.backgroundColor } : undefined}
+            >
+              {editingTabId === tab.id ? (
+                <input
+                  type="text"
+                  value={editingTabName}
+                  onChange={(e) => setEditingTabName(e.target.value)}
+                  onBlur={() => handleTabRename(tab.id, editingTabName)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleTabRename(tab.id, editingTabName);
+                    }
+                    if (e.key === "Escape") {
+                      setEditingTabName(tab.name);
+                      setEditingTabId(null);
+                    }
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full bg-transparent border border-blue-500 rounded px-1 py-0.5 text-xs text-gray-900 dark:text-white focus:outline-none"
+                  autoFocus
+                />
+              ) : (
+                <span className="truncate text-xs">{tab.name}</span>
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAddTab();
+            }}
+            className="flex-shrink-0 p-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors"
+            title="탭 추가"
+            aria-label="탭 추가"
+          >
+            <PlusIcon className="h-4 w-4" />
+          </button>
+          {tabContextMenu && (
+            <div
+              ref={tabContextMenuRef}
+              className="fixed z-[9999] min-w-[140px] py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg"
+              style={{ left: tabContextMenu.x, top: tabContextMenu.y }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  const tab = tabs.find((t) => t.id === tabContextMenu.tabId);
+                  if (tab) {
+                    setEditingTabId(tab.id);
+                    setEditingTabName(tab.name);
+                    setTabContextMenu(null);
+                  }
+                }}
+                className="w-full text-left px-3 py-1.5 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                이름 바꾸기
+              </button>
+              <div className="border-t border-gray-200 dark:border-gray-600 my-1" />
+              <div className="px-2 py-1 text-xs text-gray-500 dark:text-gray-400">배경색</div>
+              <div className="flex flex-wrap gap-1 px-2 pb-1">
+                {[
+                  { label: "기본", value: undefined },
+                  { label: "흰색", value: "#ffffff" },
+                  { label: "회색", value: "#9ca3af" },
+                  { label: "검정", value: "#111827" },
+                  { label: "파란", value: "#3b82f6" },
+                  { label: "빨간", value: "#ef4444" },
+                ].map(({ label, value }) => (
+                  <button
+                    key={value ?? "default"}
+                    type="button"
+                    onClick={() => handleTabBackgroundColor(tabContextMenu.tabId, value)}
+                    className={`px-2 py-1 text-xs rounded border ${
+                      value ? "" : "border-gray-300 dark:border-gray-600"
+                    } hover:bg-gray-100 dark:hover:bg-gray-700`}
+                    style={value ? { backgroundColor: value } : undefined}
+                    title={value ?? "테마 기본"}
+                  >
+                    {label ?? ""}
+                  </button>
+                ))}
+              </div>
+              <div className="border-t border-gray-200 dark:border-gray-600 my-1" />
+              <button
+                type="button"
+                onClick={() => handleDeleteTab(tabContextMenu.tabId)}
+                disabled={tabs.length <= 1}
+                className="w-full text-left px-3 py-1.5 text-xs text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                탭 삭제
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="flex flex-1 min-h-0 min-w-0">
+          {/* Left module panel (Toolbox) - below tabs */}
+          <div
+            className={`flex-shrink-0 h-full overflow-hidden transition-[width] duration-300 ease-in-out ${
+              isLeftPanelVisible ? "w-56" : "w-0"
+            }`}
+          >
+            <div className="w-56 h-full overflow-y-auto border-r border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900">
+              <Toolbox
+                onModuleDoubleClick={handleModuleToolboxDoubleClick}
+                onFontSizeChange={handleFontSizeChange}
+              />
+            </div>
+          </div>
+          <main
+            ref={canvasContainerRef}
+            className={`flex-1 min-h-0 min-w-0 relative overflow-hidden ${theme === "dark" ? "canvas-bg" : "canvas-bg-light"}`}
+          >
           <Canvas
             modules={modules}
             connections={connections}
@@ -10937,6 +11157,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             </div>
           </div>
         </main>
+        </div>
 
         {/* -- Unified Side Panels -- */}
         {/* Code Panel - Rightmost */}
@@ -10946,19 +11167,6 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           isVisible={isCodePanelVisible}
           onToggle={() => setIsCodePanelVisible((v) => !v)}
         />
-
-        {/* Toolbox Panel */}
-        <div
-          className={`absolute top-0 left-0 h-full z-10 transition-transform duration-300 ease-in-out ${
-            isLeftPanelVisible ? "translate-x-0" : "-translate-x-full"
-          }`}
-          style={{ left: 0 }}
-        >
-          <Toolbox
-            onModuleDoubleClick={handleModuleToolboxDoubleClick}
-            onFontSizeChange={handleFontSizeChange}
-          />
-        </div>
 
         <div
           className={`absolute top-0 right-0 h-full z-10 transition-transform duration-300 ease-in-out ${
