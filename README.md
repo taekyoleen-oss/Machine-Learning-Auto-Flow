@@ -43,9 +43,9 @@ npm run dev
 
 이 명령어는 다음을 실행합니다:
 - **백엔드 서버** (포트 3002): 샘플 관리 API, SplitData API, PPT 생성 API
-- **프론트엔드** (포트 3001): Vite 개발 서버
+- **프론트엔드** (포트 3003): Vite 개발 서버 (DFA가 3001 사용 시 충돌 방지)
 
-실행 후 브라우저에서 `http://localhost:3001`로 접속하세요.
+실행 후 브라우저에서 `http://localhost:3003`로 접속하세요.
 
 ### 방법 2: 개별 실행
 
@@ -53,7 +53,7 @@ npm run dev
 ```bash
 npm run dev:client-only
 ```
-- 포트 3001에서 실행
+- 포트 3003에서 실행
 - 백엔드 서버 없이도 기본 기능 사용 가능 (샘플 관리 기능 제외)
 
 #### 백엔드 서버만 실행
@@ -68,17 +68,27 @@ npm run server
 애플리케이션은 두 개의 서버로 구성됩니다:
 
 ### 1. 프론트엔드 서버 (Vite)
-- **포트**: 3001
+- **포트**: 3003
 - **역할**: React 애플리케이션 제공
-- **URL**: `http://localhost:3001`
+- **URL**: `http://localhost:3003`
 
 ### 2. 백엔드 서버 (Express)
 - **포트**: 3002
 - **역할**: 
-  - 샘플 관리 API (`/api/samples`)
-  - 데이터 분할 API (`/api/split-data`)
-  - PPT 생성 API (`/api/generate-ppts`)
+  - **SplitData API** (`/api/split-data`) — 데이터 분할, 서버 기동 시 항상 사용 가능
+  - **PPT 생성 API** (`/api/generate-ppts`) — PowerPoint 생성
+  - **Samples API** (`/api/samples`) — 샘플 목록/CRUD, better-sqlite3 로드 시 사용 가능(미로드 시 503)
 - **URL**: `http://localhost:3002`
+- 서버 시작 시 콘솔에 각 API별 `(ready)` / Samples DB 미사용 시 `(DB unavailable, 503)` 상태가 출력됩니다.
+
+### Samples API (`/api/samples`) 필요 여부
+
+| 환경 | Samples API 필요 여부 |
+|------|------------------------|
+| **Supabase 설정됨** (`.env`에 `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) | **불필요** — 목록·단건 로드·등록·수정·삭제 모두 Supabase 사용 |
+| **Supabase 미설정** | **필요** — 샘플 관리 모달 목록/수정/삭제 및 숫자 ID로 샘플 로드 시 서버 API 사용 (better-sqlite3 필요) |
+
+Supabase를 사용 중이면 `better-sqlite3` 없이 서버가 떠 있어도 Samples 기능은 정상 동작합니다. 404/CSP 관련 콘솔 메시지 중 `localhost:3002/.well-known/appspecific/com.chrome.devtools.json` 은 Chrome DevTools 내부 요청으로, 무시해도 됩니다.
 
 ## 주요 기능
 
@@ -134,19 +144,18 @@ npm run preview
 
 ### 샘플 관리 기능이 작동하지 않는 경우
 
-1. **서버가 실행 중인지 확인**:
-   ```bash
-   npm run server
-   ```
+1. **Supabase 사용 시** (권장):
+   - `.env`에 `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` 설정
+   - 서버의 Samples API는 사용하지 않으므로 better-sqlite3/서버 없이도 Samples 목록·실행·등록 가능
 
-2. **데이터베이스 확인**:
-   - `database/samples.db` 파일이 존재하는지 확인
-   - 없으면 `npm run migrate:samples` 실행
+2. **Supabase 미사용 시 (로컬 DB)**:
+   - 서버 실행: `npm run server`
+   - better-sqlite3 필요 시: `pnpm rebuild better-sqlite3`
+   - `database/samples.db` 확인, 없으면 `npm run migrate:samples` 실행
 
 3. **브라우저 콘솔 확인**:
-   - F12로 개발자 도구 열기
-   - Network 탭에서 API 요청 확인
-   - Console 탭에서 에러 메시지 확인
+   - F12 → Network 탭에서 API 요청 확인
+   - `localhost:3002/.well-known/...` 404/CSP 메시지는 Chrome DevTools 내부 요청으로 무시 가능
 
 ### 샘플이 표시되지 않는 경우
 

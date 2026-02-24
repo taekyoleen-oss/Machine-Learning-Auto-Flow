@@ -14,6 +14,18 @@ const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
+// better-sqlite3 미사용 시(바인딩 없음) 모든 샘플 API는 503. Supabase 사용 시 클라이언트는 이 API를 쓰지 않음.
+router.use((req, res, next) => {
+  if (!db) {
+    return res.status(503).json({
+      error: "Samples DB unavailable",
+      message:
+        "better-sqlite3 not loaded. Use Supabase for samples or run: pnpm rebuild better-sqlite3",
+    });
+  }
+  next();
+});
+
 // 업로드 디렉토리 생성
 const uploadDir = path.join(__dirname, "..", "..", "temp", "uploads");
 if (!fs.existsSync(uploadDir)) {

@@ -1,6 +1,68 @@
 # Change History
 
-## 2026-01-16 (현재 작업)
+## 2026-02-24 (현재 작업)
+
+### fix(supabase): Supabase null 처리 + SamplesModal을 life/DFA와 동일하게
+
+**Description:**
+- `lib/supabase.ts`: URL/Anon Key 미설정 시 `createClient` 호출하지 않고 `supabase = null`로 두어 null-safe 동작
+- `utils/supabase-samples.ts`: 모든 함수에 `!supabase` 체크 추가 (fetchAutoflowSamplesList, fetchAutoflowSampleById, createSampleModel, createSampleInputData, createAutoflowSample, updateAutoflowSample, deleteAutoflowSample)
+- `components/SamplesModal.tsx`: life/DFA와 동일 구조로 전면 교체 — 목록 탭 + 데이터 입력 탭, CATEGORIES(전체/종신/건강/상해/운전자/기타), PlusCircleIcon으로 "데이터 입력"/"목록 보기" 전환, 등록 폼(app_section "ML", 모델 .json/.mla), onRefresh/isLoading 사용, Supabase 미설정 시 안내 문구
+- `App.tsx`: SamplesModal에 `onRefresh={loadFolderSamplesLocal}` 추가
+
+**Files Affected:**
+- `lib/supabase.ts`
+- `utils/supabase-samples.ts`
+- `components/SamplesModal.tsx`
+- `App.tsx`
+
+**Reason:**
+- 세 앱(Life, DFA, ML)이 같은 형태로 동작하도록 SamplesModal 및 Supabase null 처리 통일
+
+**Commit Hash:** (커밋 후 기록)
+
+**Recovery Command:**
+```bash
+git stash push -u -m "백업"
+git reset --hard <커밋해시>
+# Or direct: git reset --hard <커밋해시>
+```
+
+---
+
+### feat(samples): Samples 데이터 Supabase 이관 (대분류 ML)
+
+**Description:**
+- Life Matrix Flow와 동일한 방식으로 Samples를 Supabase로 이관
+- 대분류(app_section): **ML**
+- Supabase 우선 로드, 없으면 samples.json 폴백
+- 샘플 관리 모달: Supabase 설정 시 목록/수정/삭제 Supabase 사용, 미설정 시 기존 DB API 또는 안내
+
+**Files Affected:**
+- `lib/supabase.ts` - Supabase 클라이언트 (신규)
+- `utils/supabase-samples.ts` - Supabase Samples API, app_section=ML (신규)
+- `supabase/migrations/001_autoflow_samples_schema.sql` - 스키마 (신규)
+- `supabase/README.md` - 시드 안내 (신규)
+- `scripts/seed-ml-samples-to-supabase.mjs` - public/samples.json → Supabase 시드 (신규)
+- `App.tsx` - loadFolderSamplesLocal: Supabase 우선, handleLoadSample: sampleId(string) 시 Supabase 단건 조회
+- `components/SamplesManagementModal.tsx` - Supabase 연동 (목록/수정/삭제), id string 지원
+- `package.json` - @supabase/supabase-js 추가
+
+**Reason:**
+- 사용자 요청: Samples를 Supabase로 이관, Life Matrix Flow와 동일한 방법 적용, 대분류 ML
+
+**Commit Hash:** (커밋 후 기록)
+
+**Recovery Command:**
+```bash
+git stash push -u -m "백업"
+git reset --hard <커밋해시>
+# Or direct: git reset --hard <커밋해시>
+```
+
+---
+
+## 2026-01-16 (이전 작업)
 
 ### feat(samples): DB 기반 샘플 관리 시스템 구현
 

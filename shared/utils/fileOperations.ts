@@ -9,46 +9,30 @@ export interface SaveOptions {
   onError?: (error: Error) => void;
 }
 
+/** Save pipeline — 항상 로컬 다운로드로 저장 */
 export async function savePipeline(
   data: any,
   options: SaveOptions
 ): Promise<void> {
   try {
-    if (!('showSaveFilePicker' in window)) {
-      throw new Error(
-        'File System Access API is not supported in this browser.'
-      );
-    }
-
-    // 사용자 제스처 컨텍스트에서 직접 호출되도록 보장
-    const fileHandle = await (window as any).showSaveFilePicker({
-      suggestedName: `${data.projectName || 'pipeline'}${options.extension}`,
-      types: [
-        {
-          description: options.description,
-          accept: {
-            'application/json': [options.extension],
-          },
-        },
-      ],
-      excludeAcceptAllOption: false,
+    const fileName = `${data.projectName && data.projectName.trim() ? data.projectName.trim() : 'pipeline'}${options.extension}`;
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: 'application/json',
     });
-
-    const writable = await fileHandle.createWritable();
-    await writable.write(JSON.stringify(data, null, 2));
-    await writable.close();
-
-    const fileName = fileHandle.name;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
     if (options.onSuccess) {
       options.onSuccess(fileName);
     }
   } catch (error: any) {
-    if (error.name === 'AbortError') {
-      // User cancelled the save dialog
-      return;
-    }
     if (options.onError) {
-      options.onError(error);
+      options.onError(error instanceof Error ? error : new Error(String(error)));
     } else {
       throw error;
     }

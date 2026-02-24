@@ -12,6 +12,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import samplesRouter from './routes/samples.js';
+import db from './db/samples-db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,7 +23,29 @@ const PORT = process.env.SERVER_PORT || 3002;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-// 샘플 관리 API 라우트
+// 루트 요청 처리 — 브라우저로 접속 시 앱(3001) 안내, API 클라이언트는 Accept: application/json 시 JSON
+app.get('/', (req, res) => {
+  const wantsJson = /application\/json/i.test(req.get('accept') || '');
+  if (wantsJson) {
+    res.status(200).json({ ok: true, service: 'ML Auto Flow API', port: PORT });
+    return;
+  }
+  res.set('Content-Type', 'text/html; charset=utf-8').status(200).send(`
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>ML Auto Flow API</title></head>
+<body style="font-family: sans-serif; padding: 2rem; max-width: 480px;">
+  <h1>ML Auto Flow API</h1>
+  <p>이 주소(포트 ${PORT})는 <strong>API 서버</strong>입니다. 앱 화면은 아래에서 열어주세요.</p>
+  <p><a href="http://localhost:3003" style="font-size: 1.1rem;">→ ML Auto Flow 앱 열기 (http://localhost:3003)</a></p>
+</body></html>`);
+});
+
+// Chrome DevTools가 요청하는 경로 처리 (404 방지)
+app.get('/.well-known/appspecific/com.chrome.devtools.json', (req, res) => {
+  res.status(204).end();
+});
+
+// 샘플 관리 API 라우트 (Supabase 사용 시 미사용 가능, better-sqlite3 없으면 503)
 app.use('/api/samples', samplesRouter);
 
 app.post('/api/split-data', async (req, res) => {
@@ -489,7 +512,11 @@ app.post('/api/generate-ppts', async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`서버가 포트 ${PORT}에서 실행 중입니다.`);
-    console.log(`- SplitData API: http://localhost:${PORT}/api/split-data`);
-    console.log(`- PPT 생성 API: http://localhost:${PORT}/api/generate-ppts`);
-    console.log(`- Samples API: http://localhost:${PORT}/api/samples`);
+    console.log(`- SplitData API: http://localhost:${PORT}/api/split-data (ready)`);
+    console.log(`- PPT 생성 API: http://localhost:${PORT}/api/generate-ppts (ready)`);
+    console.log(
+      db
+        ? `- Samples API: http://localhost:${PORT}/api/samples (ready)`
+        : `- Samples API: http://localhost:${PORT}/api/samples (DB unavailable, 503. Use Supabase or: pnpm rebuild better-sqlite3)`
+    );
 });

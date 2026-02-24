@@ -6,6 +6,14 @@ import {
   ArrowUpTrayIcon,
 } from "@heroicons/react/24/outline";
 import { samplesApi, Sample } from "../utils/samples-api";
+import {
+  isSupabaseConfigured,
+  fetchAutoflowSamplesList,
+  updateAutoflowSample,
+  deleteAutoflowSample,
+} from "../utils/supabase-samples";
+
+type ManagementSample = Sample & { id: number | string };
 
 interface Props {
   isOpen: boolean;
@@ -18,8 +26,8 @@ export const SamplesManagementModal: React.FC<Props> = ({
   onClose,
   onRefresh,
 }) => {
-  const [samples, setSamples] = useState<Sample[]>([]);
-  const [editing, setEditing] = useState<Sample | null>(null);
+  const [samples, setSamples] = useState<ManagementSample[]>([]);
+  const [editing, setEditing] = useState<ManagementSample | null>(null);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -37,18 +45,29 @@ export const SamplesManagementModal: React.FC<Props> = ({
   const loadSamples = async () => {
     setLoading(true);
     try {
+      if (isSupabaseConfigured()) {
+        const list = await fetchAutoflowSamplesList();
+        setSamples(
+          list.map((s) => ({
+            id: s.id,
+            filename: s.model_name,
+            name: s.model_name,
+            input_data: s.input_data_name ?? undefined,
+            description: s.description ?? undefined,
+            category: s.category ?? "머신러닝",
+            created_at: s.created_at,
+            updated_at: s.updated_at,
+          }))
+        );
+        return;
+      }
       const data = await samplesApi.getAll();
-      setSamples(data);
+      setSamples(data as ManagementSample[]);
     } catch (error: any) {
       console.error("Failed to load samples:", error);
-      // 404 에러인 경우 서버가 실행되지 않았을 가능성
-      if (error.message && error.message.includes("404")) {
+      if (!isSupabaseConfigured() && error.message?.includes("404")) {
         alert(
-          "샘플 관리 서버에 연결할 수 없습니다.\n\n" +
-            "서버를 시작하려면 다음 명령어를 실행하세요:\n" +
-            "npm run server\n\n" +
-            "또는 터미널에서:\n" +
-            "node server/split-data-server.js"
+          "샘플 관리 서버에 연결할 수 없습니다. Supabase를 설정하거나 서버를 실행하세요."
         );
       } else {
         alert("샘플 목록을 불러오는데 실패했습니다: " + error.message);
@@ -59,11 +78,15 @@ export const SamplesManagementModal: React.FC<Props> = ({
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: number | string) => {
     if (!confirm("정말 이 샘플을 삭제하시겠습니까?")) return;
-
     try {
-      await samplesApi.delete(id);
+      if (typeof id === "string" && isSupabaseConfigured()) {
+        const ok = await deleteAutoflowSample(id);
+        if (!ok) throw new Error("삭제 실패");
+      } else {
+        await samplesApi.delete(id as number);
+      }
       await loadSamples();
       onRefresh();
       alert("삭제되었습니다.");
@@ -72,7 +95,7 @@ export const SamplesManagementModal: React.FC<Props> = ({
     }
   };
 
-  const handleEdit = (sample: Sample) => {
+  const handleEdit = (sample: ManagementSample) => {
     setEditing(sample);
     setFormData({
       name: sample.name,
@@ -87,33 +110,23 @@ export const SamplesManagementModal: React.FC<Props> = ({
       console.error("handleSave: No editing sample or ID");
       return;
     }
-
-    // 필수 필드 검증
-    if (!formData.name || formData.name.trim() === "") {
+    if (!formData.name?.trim()) {
       alert("이름을 입력해주세요.");
       return;
     }
-
-    // 이름이 비어있으면 저장하지 않음
-    if (!formData.name.trim()) {
-      return;
-    }
-
     try {
       setLoading(true);
-      console.log("handleSave: Updating sample", {
-        id: editing.id,
-        formData: formData,
-      });
-      const result = await samplesApi.update(editing.id, formData);
-      console.log("handleSave: Update successful", result);
+      if (typeof editing.id === "string" && isSupabaseConfigured()) {
+        const ok = await updateAutoflowSample(editing.id, {
+          category: formData.category || null,
+          description: formData.description || null,
+        });
+        if (!ok) throw new Error("수정 실패");
+      } else {
+        await samplesApi.update(editing.id as number, formData);
+      }
       setEditing(null);
-      setFormData({
-        name: "",
-        input_data: "",
-        description: "",
-        category: "머신러닝",
-      });
+      setFormData({ name: "", input_data: "", description: "", category: "머신러닝" });
       await loadSamples();
       onRefresh();
       alert("저장되었습니다.");
@@ -240,8 +253,10 @@ export const SamplesManagementModal: React.FC<Props> = ({
             </div>
           ) : samples.length === 0 ? (
             <div className="flex items-center justify-center py-12">
-              <div className="text-gray-600 dark:text-gray-400 text-lg">
-                샘플이 없습니다
+              <div className="text-gray-600 dark:text-gray-400 text-lg text-center">
+                {isSupabaseConfigured()
+                  ? "샘플이 없습니다. pnpm run seed:samples 로 등록하세요."
+                  : "Supabase를 설정하면 샘플을 관리할 수 있습니다. (.env에 VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)"}
               </div>
             </div>
           ) : (

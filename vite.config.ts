@@ -15,8 +15,9 @@ export default defineConfig(({ mode }) => {
     
     return {
       publicDir: 'public',
+      envPrefix: ['VITE_', 'NEXT_PUBLIC_'],
       server: {
-        port: 3001,
+        port: 3003,
         // 프로덕션 빌드에서는 host 설정 제거 (로컬 네트워크 권한 요청 방지)
         ...(isProduction ? {} : { host: '0.0.0.0' }),
         proxy: {

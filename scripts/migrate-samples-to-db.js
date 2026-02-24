@@ -7,6 +7,13 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
+if (!db) {
+  console.error(
+    "Samples DB unavailable (better-sqlite3 not loaded). Run: pnpm rebuild better-sqlite3"
+  );
+  process.exit(1);
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
