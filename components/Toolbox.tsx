@@ -235,6 +235,8 @@ export const Toolbox: React.FC<ToolboxProps> = ({
     "Advanced Model-Mortality Model": true,
   });
 
+  const [searchQuery, setSearchQuery] = useState("");
+
   const [lastTapInfo, setLastTapInfo] = useState<{
     type: ModuleType;
     time: number;
@@ -285,8 +287,15 @@ export const Toolbox: React.FC<ToolboxProps> = ({
 
   return (
     <aside className="w-56 bg-white dark:bg-gray-900 border-r border-gray-300 dark:border-gray-700 flex flex-col h-full">
-      <div className="p-3 flex-shrink-0">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Modules</h3>
+      <div className="p-3 pb-2 flex-shrink-0">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Modules</h3>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="검색..."
+          className="w-full px-2 py-1 text-xs rounded-md border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
       </div>
       <div className="flex-1 p-2 overflow-y-auto panel-scrollbar min-h-0">
         <div className="flex flex-col gap-2">
@@ -354,7 +363,31 @@ export const Toolbox: React.FC<ToolboxProps> = ({
               </div>
             </div>
           </div>
-          {categorizedModules.map((category) => (
+          {searchQuery.trim() ? (
+            (() => {
+              const q = searchQuery.trim().toLowerCase();
+              const results = TOOLBOX_MODULES.filter((m) =>
+                m.name.toLowerCase().includes(q)
+              );
+              return results.length > 0 ? (
+                <div className="flex flex-col gap-1">
+                  {results.map(({ type, name, icon, description }) => (
+                    <ToolboxItem
+                      key={type}
+                      type={type}
+                      name={name}
+                      icon={icon}
+                      description={description}
+                      onDoubleClick={onModuleDoubleClick}
+                      onTouchEnd={handleTouchEnd}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-4">검색 결과 없음</p>
+              );
+            })()
+          ) : categorizedModules.map((category) => (
             <div key={category.name}>
               <button
                 onClick={() => toggleCategory(category.name)}

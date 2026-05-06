@@ -534,6 +534,7 @@ export interface CanvasModule {
     | VIFCheckerOutput
     | MortalityModelOutput
     | MortalityResultOutput;
+  executionTime?: number; // milliseconds, set after successful run
   // Shape-specific properties
   shapeData?: {
     // For TextBox

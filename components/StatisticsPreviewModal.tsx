@@ -5,6 +5,97 @@ import { GoogleGenAI } from "@google/genai";
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { SpreadViewModal } from './SpreadViewModal';
 
+// C-3: 컬럼별 분포 미니 시각화 컴포넌트
+const DistributionSummary: React.FC<{ stats: StatisticsOutput['stats'] }> = ({ stats }) => {
+    const cols = Object.keys(stats).filter((col) => {
+        const s = stats[col] as any;
+        return typeof s.min === 'number' && typeof s.max === 'number' && typeof s.mean === 'number';
+    });
+    if (cols.length === 0) return null;
+
+    return (
+        <div className="mt-4">
+            <h3 className="text-base font-semibold mb-2 text-gray-700">컬럼별 분포 요약</h3>
+            <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
+                {cols.map((col) => {
+                    const s = stats[col] as any;
+                    const min: number = s.min;
+                    const max: number = s.max;
+                    const mean: number = s.mean;
+                    const median: number = s['50%'] ?? mean;
+                    const q1: number = s['25%'] ?? min;
+                    const q3: number = s['75%'] ?? max;
+                    const skew: number = s.skewness ?? 0;
+                    const nulls: number = s.nulls ?? 0;
+
+                    const range = max - min || 1;
+                    const meanPct = ((mean - min) / range) * 100;
+                    const q1Pct = ((q1 - min) / range) * 100;
+                    const q3Pct = ((q3 - min) / range) * 100;
+                    const medianPct = ((median - min) / range) * 100;
+
+                    const skewColor = Math.abs(skew) > 1 ? 'text-orange-500' : Math.abs(skew) > 0.5 ? 'text-yellow-600' : 'text-green-600';
+                    const skewLabel = Math.abs(skew) > 1 ? '높은 편포' : Math.abs(skew) > 0.5 ? '약간 편포' : '정규 분포 근사';
+
+                    const fmt = (v: number) => Math.abs(v) >= 1000
+                        ? v.toExponential(1)
+                        : Math.abs(v) >= 0.01 ? v.toFixed(2)
+                        : v.toExponential(1);
+
+                    return (
+                        <div key={col} className="border border-gray-200 rounded-lg p-3 bg-white hover:shadow-sm transition-shadow">
+                            <div className="flex justify-between items-start mb-1">
+                                <span className="text-xs font-semibold text-gray-700 truncate max-w-[130px]" title={col}>{col}</span>
+                                {nulls > 0 && (
+                                    <span className="text-xs text-red-500 ml-1 flex-shrink-0">결측 {nulls}</span>
+                                )}
+                            </div>
+
+                            {/* Range bar: IQR + mean marker */}
+                            <div className="relative h-5 my-1">
+                                {/* 전체 범위 배경 */}
+                                <div className="absolute inset-y-1.5 inset-x-0 bg-gray-200 rounded-full" />
+                                {/* IQR 박스 (Q1~Q3) */}
+                                <div
+                                    className="absolute inset-y-0.5 bg-blue-300 rounded"
+                                    style={{ left: `${q1Pct}%`, width: `${Math.max(q3Pct - q1Pct, 2)}%` }}
+                                />
+                                {/* 중앙값 선 */}
+                                <div
+                                    className="absolute inset-y-0 w-0.5 bg-blue-700"
+                                    style={{ left: `${medianPct}%` }}
+                                />
+                                {/* 평균 삼각형 마커 */}
+                                <div
+                                    className="absolute top-0 text-orange-500 text-xs leading-none -translate-x-1/2"
+                                    style={{ left: `${meanPct}%` }}
+                                    title={`평균: ${fmt(mean)}`}
+                                >▲</div>
+                            </div>
+
+                            {/* 범위 레이블 */}
+                            <div className="flex justify-between text-xs text-gray-400 mb-1">
+                                <span>{fmt(min)}</span>
+                                <span>{fmt(max)}</span>
+                            </div>
+
+                            {/* 통계 요약 칩 */}
+                            <div className="flex flex-wrap gap-1 mt-1">
+                                <span className="text-xs bg-orange-50 text-orange-700 px-1.5 py-0.5 rounded">μ {fmt(mean)}</span>
+                                <span className="text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">중앙 {fmt(median)}</span>
+                                <span className={`text-xs px-1.5 py-0.5 rounded ${skewColor} bg-gray-50`} title={skewLabel}>
+                                    편도 {skew.toFixed(2)}
+                                </span>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+            <p className="text-xs text-gray-400 mt-2">▲ 평균 | 파란 박스: IQR(Q1~Q3) | 파란 선: 중앙값</p>
+        </div>
+    );
+};
+
 interface StatisticsPreviewModalProps {
     module: CanvasModule;
     projectName: string;
@@ -403,6 +494,9 @@ ${correlationText}
                                     </table>
                                 </div>
                             </div>
+
+                            {/* C-3: 컬럼별 분포 요약 시각화 */}
+                            {stats && <DistributionSummary stats={stats} />}
 
                             {/* Correlation Analysis Section */}
                             {correlation && (

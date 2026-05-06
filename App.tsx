@@ -110,6 +110,7 @@ import { OutlierDetectorPreviewModal } from "./components/OutlierDetectorPreview
 import { HypothesisTestingPreviewModal } from "./components/HypothesisTestingPreviewModal";
 import { NormalityCheckerPreviewModal } from "./components/NormalityCheckerPreviewModal";
 import { CorrelationPreviewModal } from "./components/CorrelationPreviewModal";
+import { ModelComparisonModal } from "./components/ModelComparisonModal";
 import { AIPipelineFromGoalModal } from "./components/AIPipelineFromGoalModal";
 import { AIPipelineFromDataModal } from "./components/AIPipelineFromDataModal";
 import { AIPlanDisplayModal } from "./components/AIPlanDisplayModal";
@@ -119,6 +120,7 @@ import SamplesModal from "./components/SamplesModal";
 import { SamplesManagementModal } from "./components/SamplesManagementModal";
 import { GoogleGenAI, Type } from "@google/genai";
 import { savePipeline, loadPipeline } from "./utils/fileOperations";
+import { setPyodideStatusCallback } from "./utils/pyodideRunner";
 // Samples와 Examples는 빌드 시점에 생성된 JSON 파일에서 직접 로드하므로 import 제거
 
 type TerminalLog = {
@@ -133,6 +135,202 @@ type PropertiesTab = "properties" | "preview" | "code" | "terminal";
 // --- Helper Functions ---
 // Note: All mathematical/statistical calculations are now performed using Pyodide (Python)
 // JavaScript is only used for UI rendering and data structure transformations that don't modify Python results
+
+// A-5: Python 실행 오류 유형 분류 → 한국어 안내 메시지 반환
+function classifyPythonError(error: any): { category: string; userMessage: string } {
+  const msg = (error.message || String(error)).toLowerCase();
+  const errType = (error.error_type || "").toLowerCase();
+  const tb = (error.traceback || error.error_traceback || error.stack || "").toLowerCase();
+  const all = `${msg} ${errType} ${tb}`;
+
+  if (all.includes("modulenotfounderror") || all.includes("importerror") || all.includes("no module named"))
+    return { category: "📦 패키지 미설치", userMessage: "필요한 Python 패키지가 설치되지 않았습니다. Pyodide 환경에서 해당 패키지를 지원하지 않을 수 있습니다." };
+
+  if (all.includes("keyerror") || all.includes("not found in") || all.includes("dataframe is empty") || (all.includes("column") && all.includes("not found")))
+    return { category: "📋 데이터 컬럼 오류", userMessage: "입력 데이터의 컬럼명이나 형식이 맞지 않습니다. LoadData 모듈의 데이터와 컬럼 설정을 확인해주세요." };
+
+  if (all.includes("valueerror") || all.includes("no feature") || all.includes("label column") || all.includes("invalid value") || all.includes("must have same number") || all.includes("파라미터") || all.includes("설정값"))
+    return { category: "⚙️ 파라미터 오류", userMessage: "모듈 설정값이 올바르지 않습니다. 속성 패널에서 파라미터를 확인하고 수정해주세요." };
+
+  if (all.includes("typeerror") || all.includes("cannot convert") || all.includes("expected number") || all.includes("int() argument") || all.includes("unsupported operand") || all.includes("must be numeric"))
+    return { category: "🔢 데이터 타입 오류", userMessage: "데이터 타입이 맞지 않습니다. 숫자형 컬럼에 문자열이 포함되어 있거나 타입 변환이 필요합니다." };
+
+  if (all.includes("timeout") || all.includes("타임아웃") || all.includes("timed out"))
+    return { category: "⏱️ 타임아웃 오류", userMessage: "실행 시간이 초과되었습니다. 데이터 크기를 줄이거나 파라미터를 조정해주세요." };
+
+  if (all.includes("upstream") || all.includes("did not run successfully") || all.includes("no data available") || all.includes("먼저 실행") || all.includes("모듈을 먼저"))
+    return { category: "🔗 상위 모듈 미실행", userMessage: "연결된 이전 모듈이 성공적으로 실행되지 않았습니다. 상위 모듈부터 순서대로 실행해주세요." };
+
+  if (all.includes("memoryerror") || all.includes("out of memory") || all.includes("메모리"))
+    return { category: "💾 메모리 오류", userMessage: "데이터가 너무 크거나 메모리가 부족합니다. 데이터 크기를 줄이거나 샘플링을 적용해주세요." };
+
+  if (all.includes("zerodivisionerror") || all.includes("division by zero"))
+    return { category: "➗ 연산 오류", userMessage: "0으로 나누기 오류가 발생했습니다. 입력 데이터에 0 값이 있는지 확인해주세요." };
+
+  if (all.includes("indexerror") || all.includes("index out of") || all.includes("list index"))
+    return { category: "📌 인덱스 오류", userMessage: "데이터 인덱스가 범위를 벗어났습니다. 데이터 크기나 컬럼 선택을 확인해주세요." };
+
+  if (all.includes("runtimeerror") || all.includes("코드 생성에 실패") || all.includes("코드 생성 실패"))
+    return { category: "⚙️ 코드 생성 오류", userMessage: "모듈 코드 생성에 실패했습니다. 파라미터 설정을 확인하고 다시 실행해주세요." };
+
+  if (all.includes("순환 연결") || all.includes("circular") || all.includes("cycle"))
+    return { category: "🔄 순환 연결 오류", userMessage: "파이프라인에 순환 연결이 있습니다. 모듈 간 연결 방향을 확인해주세요." };
+
+  if (all.includes("convergencewarn") || all.includes("failed to converge") || all.includes("max_iter"))
+    return { category: "📈 수렴 경고", userMessage: "모델 학습이 수렴하지 않았습니다. max_iter를 늘리거나 데이터를 스케일링해보세요." };
+
+  if (all.includes("attributeerror") || all.includes("has no attribute") || all.includes("object has no"))
+    return { category: "🔗 모듈 연결 오류", userMessage: "모듈 간 데이터 타입이 맞지 않습니다. 연결된 모듈의 출력 형식을 확인해주세요." };
+
+  return { category: "❌ 실행 오류", userMessage: "모듈 실행 중 오류가 발생했습니다. 하단 터미널 로그에서 상세 내용을 확인하세요." };
+}
+
+/**
+ * B-1: 모듈 파라미터 사전 유효성 검사
+ * Python 실행 전에 잘못된 파라미터를 감지하여 빠른 피드백 제공
+ */
+/**
+ * 모듈 파라미터 사전 유효성 검사 (#3 확장 버전)
+ * Python 실행 전 잘못된 파라미터를 감지하여 즉각적인 피드백 제공
+ */
+function validateModuleParameters(module: CanvasModule): string | null {
+  const p = module.parameters || {};
+
+  switch (module.type) {
+    // ── 데이터 분할 ──────────────────────────────────────────────────────────
+    case 'SplitData': {
+      const ts = parseFloat(p.train_size);
+      if (!isNaN(ts) && (ts <= 0 || ts >= 1))
+        return `train_size는 0~1 사이 값이어야 합니다 (현재: ${ts}). 예: 0.8`;
+      break;
+    }
+
+    // ── 모델 학습/평가 ────────────────────────────────────────────────────────
+    case 'TrainModel': {
+      const fc = p.feature_columns;
+      if (!fc || (Array.isArray(fc) && fc.length === 0))
+        return '특성 컬럼(feature_columns)을 1개 이상 선택해야 합니다. 속성 패널에서 컬럼을 선택해주세요.';
+      if (!p.label_column || p.label_column === '')
+        return '레이블 컬럼(label_column)을 선택해야 합니다. 속성 패널에서 목표 컬럼을 선택해주세요.';
+      break;
+    }
+    case 'EvaluateModel': {
+      if (!p.label_column || p.label_column === '')
+        return '평가할 레이블 컬럼(label_column)을 선택해야 합니다.';
+      break;
+    }
+
+    // ── 데이터 선택/필터링 ────────────────────────────────────────────────────
+    case 'SelectData': {
+      const sel = p.columnSelections || p.selectedColumns || p.columns;
+      const hasSelection = sel && (
+        (Array.isArray(sel) && sel.length > 0) ||
+        (typeof sel === 'object' && Object.values(sel).some(Boolean))
+      );
+      if (!hasSelection)
+        return '출력할 컬럼을 1개 이상 선택해야 합니다.';
+      break;
+    }
+    case 'DataFiltering': {
+      if (!p.filter_column && !p.filterColumn)
+        return '필터링할 컬럼(filter_column)을 지정해야 합니다.';
+      break;
+    }
+
+    // ── k-최근접 이웃 ─────────────────────────────────────────────────────────
+    case 'KNN': {
+      const nn = parseInt(p.n_neighbors);
+      if (!isNaN(nn) && nn < 1)
+        return `n_neighbors는 1 이상이어야 합니다 (현재: ${nn})`;
+      break;
+    }
+
+    // ── 군집화 ───────────────────────────────────────────────────────────────
+    case 'KMeans': {
+      const nc = parseInt(p.n_clusters);
+      if (!isNaN(nc) && nc < 1)
+        return `n_clusters는 1 이상이어야 합니다 (현재: ${nc})`;
+      break;
+    }
+    case 'TrainClusteringModel': {
+      const nc = parseInt(p.n_clusters);
+      if (!isNaN(nc) && nc < 1)
+        return `n_clusters는 1 이상이어야 합니다 (현재: ${nc})`;
+      break;
+    }
+
+    // ── 차원 축소 ─────────────────────────────────────────────────────────────
+    case 'PCA': {
+      const nc = parseInt(p.n_components);
+      if (!isNaN(nc) && nc < 1)
+        return `n_components는 1 이상이어야 합니다 (현재: ${nc})`;
+      break;
+    }
+
+    // ── 트리 기반 모델 ───────────────────────────────────────────────────────
+    case 'DecisionTree':
+    case 'RandomForest': {
+      const md = parseInt(p.max_depth);
+      if (!isNaN(md) && md < 1)
+        return `max_depth는 1 이상이거나 비워두어야 합니다 (현재: ${md})`;
+      const nest = parseInt(p.n_estimators);
+      if (!isNaN(nest) && nest < 1)
+        return `n_estimators는 1 이상이어야 합니다 (현재: ${nest})`;
+      break;
+    }
+
+    // ── 결측치 처리 ──────────────────────────────────────────────────────────
+    case 'HandleMissingValues': {
+      if (p.strategy === 'constant' && (p.fill_value === undefined || p.fill_value === ''))
+        return '전략이 constant일 때 fill_value를 입력해야 합니다';
+      break;
+    }
+
+    // ── 신경망 ───────────────────────────────────────────────────────────────
+    case 'NeuralNetwork': {
+      const epochs = parseInt(p.epochs ?? p.max_iter);
+      if (!isNaN(epochs) && epochs < 1)
+        return `epochs는 1 이상이어야 합니다 (현재: ${epochs})`;
+      break;
+    }
+
+    // ── 컬럼 시각화 ──────────────────────────────────────────────────────────
+    case 'ColumnPlot': {
+      if (!p.column1 || p.column1 === '')
+        return '시각화할 컬럼(column1)을 선택해야 합니다.';
+      break;
+    }
+
+    // ── 상관관계 ─────────────────────────────────────────────────────────────
+    case 'Correlation': {
+      if (p.columns && Array.isArray(p.columns) && p.columns.length < 2)
+        return '상관관계 분석을 위해 컬럼을 2개 이상 선택해야 합니다.';
+      break;
+    }
+  }
+  return null;
+}
+
+/**
+ * #8: 모듈 실행 전 필수 입력 포트 연결 검사
+ * 연결되지 않은 필수 포트가 있으면 오류 메시지 반환
+ */
+function validateModuleConnections(
+  module: CanvasModule,
+  connections: Connection[]
+): string | null {
+  if (module.inputs.length === 0) return null; // 입력 포트 없는 모듈은 통과
+
+  const unconnected = module.inputs.filter(
+    (port) => !connections.some((c) => c.to.moduleId === module.id && c.to.portName === port.name)
+  );
+
+  if (unconnected.length > 0) {
+    const portNames = unconnected.map((p) => `'${p.name}'`).join(', ');
+    return `필수 입력 포트가 연결되지 않았습니다: ${portNames}. 이전 모듈에서 연결선을 연결해주세요.`;
+  }
+  return null;
+}
 
 // Sigmoid function for logistic regression predictions
 const sigmoid = (x: number): number => {
@@ -220,6 +418,11 @@ const App: React.FC = () => {
   const [viewingTrainedClusteringModel, setViewingTrainedClusteringModel] =
     useState<CanvasModule | null>(null);
 
+  const [showModelComparison, setShowModelComparison] = useState(false);
+
+  // #11: Run All 진행률 상태
+  const [runAllProgress, setRunAllProgress] = useState<{ current: number; total: number } | null>(null);
+
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [isDataModalOpen, setIsDataModalOpen] = useState(false);
@@ -250,6 +453,9 @@ const App: React.FC = () => {
   const myWorkMenuRef = useRef<HTMLDivElement>(null);
   const [myWorkModels, setMyWorkModels] = useState<any[]>([]);
   const isSavingRef = useRef(false); // 저장 중 플래그
+
+  // B-1: Pyodide 로딩 진행 상태
+  const [pyodideStatus, setPyodideStatus] = useState<{ message: string; progress: number } | null>(null);
 
   const [isLeftPanelVisible, setIsLeftPanelVisible] = useState(false);
   const [isRightPanelVisible, setIsRightPanelVisible] = useState(false);
@@ -353,6 +559,72 @@ const App: React.FC = () => {
     };
   }, [activeTabId, modules, connections, scale, pan, selectedModuleIds]);
 
+  // B-1: Pyodide 로딩 상태 콜백 등록
+  useEffect(() => {
+    setPyodideStatusCallback((message, progress) => {
+      if (message) {
+        setPyodideStatus({ message, progress });
+      } else {
+        setPyodideStatus(null);
+      }
+    });
+    return () => {
+      setPyodideStatusCallback(null);
+    };
+  }, []);
+
+  // #5: 파이프라인 자동 저장 - modules/connections 변경 시 sessionStorage에 저장
+  // fileContent는 대용량이므로 제외, outputData는 재실행으로 복원 가능하므로 제외
+  const AUTO_SAVE_KEY = 'mlAutoFlow_pipeline_autosave';
+  useEffect(() => {
+    if (modules.length === 0 && connections.length === 0) return;
+    try {
+      const saveable = {
+        modules: modules.map((m) => ({
+          ...m,
+          outputData: undefined, // 실행 결과는 용량이 크므로 제외
+          parameters: {
+            ...m.parameters,
+            fileContent: m.parameters?.fileContent ? '__FILE_LOADED__' : undefined, // 파일 내용 제외
+          },
+        })),
+        connections,
+        projectName,
+        savedAt: Date.now(),
+      };
+      sessionStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(saveable));
+    } catch (_) {
+      // sessionStorage 용량 초과 등 실패 시 무시
+    }
+  }, [modules, connections, projectName]);
+
+  // #5: 앱 시작 시 자동 저장된 파이프라인 복원 (최초 1회)
+  const autoSaveRestoredRef = React.useRef(false);
+  useEffect(() => {
+    if (autoSaveRestoredRef.current) return;
+    autoSaveRestoredRef.current = true;
+    try {
+      const saved = sessionStorage.getItem(AUTO_SAVE_KEY);
+      if (!saved) return;
+      const parsed = JSON.parse(saved);
+      const ageSec = (Date.now() - (parsed.savedAt || 0)) / 1000;
+      // 1시간 이내에 저장된 데이터만 복원
+      if (ageSec > 3600) {
+        sessionStorage.removeItem(AUTO_SAVE_KEY);
+        return;
+      }
+      if (parsed.modules?.length > 0) {
+        resetModules(parsed.modules);
+        _setConnections(parsed.connections || []);
+        if (parsed.projectName) setProjectName(parsed.projectName);
+        addLog('INFO', `자동 저장된 파이프라인을 복원했습니다 (${parsed.modules.length}개 모듈). LoadData 모듈은 파일을 다시 선택해주세요.`);
+      }
+    } catch (_) {
+      // 복원 실패 시 무시
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // When active tab changes, restore that tab's canvas state
   useEffect(() => {
     if (prevActiveTabIdRef.current === activeTabId) return;
@@ -436,6 +708,7 @@ const App: React.FC = () => {
     ]);
     if (level === "ERROR" || level === "WARN") {
       setIsRightPanelVisible(true);
+      setIsCodePanelVisible(false); // 에러/경고 시 속성 패널 열면 코드 패널 닫기
     }
   }, []);
 
@@ -589,7 +862,10 @@ Respond with ONLY the module type string, for example: 'ScoreModel'`;
   );
 
   const handleToggleRightPanel = () => {
-    setIsRightPanelVisible((prev) => !prev);
+    setIsRightPanelVisible((prev) => {
+      if (!prev) setIsCodePanelVisible(false); // 속성 패널 열면 코드 패널 닫기
+      return !prev;
+    });
   };
 
   const handleModuleDoubleClick = useCallback((id: string) => {
@@ -600,6 +876,7 @@ Respond with ONLY the module type string, for example: 'ScoreModel'`;
       return [id];
     });
     setIsRightPanelVisible(true);
+    setIsCodePanelVisible(false); // 모듈 더블클릭 시 코드 패널 닫기
     setActivePropertiesTab("properties");
   }, []);
 
@@ -2156,6 +2433,43 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
     }
   }, [resetModules, addLog]);
 
+  const handleFileDrop = useCallback(
+    (e: React.DragEvent<HTMLElement>) => {
+      const files = Array.from(e.dataTransfer.files);
+      const pipelineFile = files.find(
+        (f) => f.name.endsWith(".ins") || f.name.endsWith(".json")
+      );
+      if (!pipelineFile) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const parsed = JSON.parse(ev.target?.result as string);
+          if (!parsed.modules || !parsed.connections) {
+            addLog("WARN", "유효하지 않은 파이프라인 파일 형식입니다.");
+            return;
+          }
+          resetModules(parsed.modules);
+          _setConnections(parsed.connections);
+          if (parsed.projectName) setProjectName(parsed.projectName);
+          setSelectedModuleIds([]);
+          setIsDirty(false);
+          addLog(
+            "SUCCESS",
+            `파이프라인 불러오기 완료: '${pipelineFile.name}'. LoadData 모듈이 있다면 CSV 파일을 다시 선택해주세요.`
+          );
+        } catch {
+          addLog("ERROR", "파이프라인 파일 파싱 실패: 올바른 JSON 형식인지 확인하세요.");
+        }
+      };
+      reader.readAsText(pipelineFile);
+    },
+    [resetModules, addLog]
+  );
+
   const handleLoadSample = useCallback(
     async (
       sampleName: string,
@@ -3711,7 +4025,15 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
       return null;
     };
 
+    if (runAll && runQueue.length > 0) {
+      setRunAllProgress({ current: 0, total: runQueue.length });
+    }
+    let runQueueIndex = 0;
     for (const moduleId of runQueue) {
+      if (runAll) {
+        setRunAllProgress({ current: runQueueIndex, total: runQueue.length });
+      }
+      runQueueIndex++;
       const module = currentModules.find((m) => m.id === moduleId)!;
       const moduleName = module.name;
 
@@ -3746,6 +4068,32 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         continue;
       }
 
+      // #8: 입력 포트 연결 검사 (개별 실행 시)
+      if (!runAll) {
+        const connError = validateModuleConnections(module, connections);
+        if (connError) {
+          addLog("ERROR", `[${moduleName}] 연결 오류: ${connError}`);
+          setModules((prev) =>
+            prev.map((m) =>
+              m.id === moduleId ? { ...m, status: ModuleStatus.Error } : m
+            )
+          );
+          continue;
+        }
+      }
+
+      // #3: 파라미터 유효성 사전 검사
+      const paramError = validateModuleParameters(module);
+      if (paramError) {
+        addLog("ERROR", `[${moduleName}] 파라미터 오류: ${paramError}`);
+        setModules((prev) =>
+          prev.map((m) =>
+            m.id === moduleId ? { ...m, status: ModuleStatus.Error } : m
+          )
+        );
+        continue;
+      }
+
       setModules((prev) =>
         prev.map((m) =>
           m.id === moduleId ? { ...m, status: ModuleStatus.Running } : m
@@ -3753,8 +4101,9 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
       );
       addLog("INFO", `Module [${moduleName}] execution started.`);
 
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
+      const moduleStartTime = Date.now();
       let newStatus = ModuleStatus.Error;
       let newOutputData: CanvasModule["outputData"] | undefined = undefined;
       let logMessage = `Module [${moduleName}] failed.`;
@@ -3767,6 +4116,16 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             throw new Error(
               "No file content loaded. Please select a CSV file."
             );
+
+          // B-2: 대용량 파일 경고
+          const fileSizeMB = (new Blob([fileContent]).size) / (1024 * 1024);
+          if (fileSizeMB > 20) {
+            addLog("ERROR", `파일 크기가 ${fileSizeMB.toFixed(1)}MB로 너무 큽니다. Pyodide 실행 시 메모리 초과가 발생할 수 있습니다. 10MB 이하를 권장합니다.`);
+            throw new Error(`파일 크기(${fileSizeMB.toFixed(1)}MB)가 Pyodide 한계(20MB)를 초과합니다.`);
+          }
+          if (fileSizeMB > 10) {
+            addLog("WARN", `대용량 파일 감지: ${fileSizeMB.toFixed(1)}MB. Pyodide 실행이 느릴 수 있습니다. 데이터 일부만 사용하거나 외부 Python(Jupyter)에서 실행을 권장합니다.`);
+          }
 
           // CSV 파싱 함수 (따옴표 처리 포함)
           const parseCSVLine = (line: string): string[] => {
@@ -9798,15 +10157,16 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         logLevel = "ERROR";
         logMessage = `Module [${moduleName}] failed: ${error.message}`;
 
-        // 에러 모달 표시
+        // A-5: 오류 유형 분류 후 한국어 안내 표시
+        const { category, userMessage } = classifyPythonError(error);
+        const technicalDetail = error.message
+          ? `${error.message}${error.traceback || error.error_traceback ? `\n\n${error.traceback || error.error_traceback}` : ""}`
+          : String(error);
+
         setErrorModal({
           moduleName: moduleName,
-          message: error.message || String(error),
-          details:
-            error.stack ||
-            error.traceback ||
-            error.error_traceback ||
-            undefined,
+          message: `${category}\n\n${userMessage}`,
+          details: technicalDetail,
         });
       }
 
@@ -9814,6 +10174,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         ...module,
         status: newStatus,
         outputData: newOutputData,
+        executionTime: newStatus === ModuleStatus.Success ? Date.now() - moduleStartTime : module.executionTime,
         // outputData2가 있으면 포함
         ...((module as any).outputData2 && {
           outputData2: (module as any).outputData2,
@@ -9888,10 +10249,91 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         break;
       }
     }
+    if (runAll) {
+      setRunAllProgress(null);
+    }
   };
 
   const handleRunAll = () => {
     // Run All runs only the currently active tab's modules/connections (state is always active tab).
+
+    // A-1: 순환 참조(Circular Dependency) 검사
+    const detectCycles = (): string[][] => {
+      const graph = new Map<string, string[]>();
+      modules.forEach((m) => graph.set(m.id, []));
+      connections.forEach((c) => {
+        const downstream = graph.get(c.from.moduleId);
+        if (downstream) downstream.push(c.to.moduleId);
+      });
+
+      const cycles: string[][] = [];
+      const visited = new Set<string>();
+      const inStack = new Set<string>();
+      const stack: string[] = [];
+
+      const dfs = (id: string) => {
+        if (inStack.has(id)) {
+          const cycleStart = stack.indexOf(id);
+          const cycleModuleNames = stack.slice(cycleStart).map((mid) => {
+            const m = modules.find((mod) => mod.id === mid);
+            return m ? m.name : mid;
+          });
+          cycles.push(cycleModuleNames);
+          return;
+        }
+        if (visited.has(id)) return;
+        inStack.add(id);
+        stack.push(id);
+        for (const child of graph.get(id) || []) {
+          dfs(child);
+        }
+        stack.pop();
+        inStack.delete(id);
+        visited.add(id);
+      };
+
+      modules.forEach((m) => dfs(m.id));
+      return cycles;
+    };
+
+    const cycles = detectCycles();
+    if (cycles.length > 0) {
+      const cycleDescriptions = cycles
+        .map((c) => c.join(" → "))
+        .join("\n");
+      addLog(
+        "ERROR",
+        `⚠️ 순환 참조(Circular Dependency) 감지됨! 실행을 중단합니다.\n순환 경로:\n${cycleDescriptions}`
+      );
+      setErrorModal({
+        moduleName: "파이프라인 검증",
+        message: `순환 참조(Circular Dependency)가 감지되어 실행할 수 없습니다.`,
+        details: `다음 순환 경로를 제거한 후 다시 실행해주세요:\n\n${cycleDescriptions}`,
+      });
+      return;
+    }
+
+    // A-2: 필수 입력 포트 연결 검증
+    const unconnectedInputs: string[] = [];
+    modules.forEach((m) => {
+      if (m.inputs.length === 0) return; // 입력 포트 없는 모듈은 건너뜀
+      m.inputs.forEach((port) => {
+        const isConnected = connections.some(
+          (c) => c.to.moduleId === m.id && c.to.portName === port.name
+        );
+        if (!isConnected) {
+          unconnectedInputs.push(`• ${m.name}: '${port.name}' 입력 포트 미연결`);
+        }
+      });
+    });
+
+    if (unconnectedInputs.length > 0) {
+      addLog(
+        "WARN",
+        `⚠️ 미연결 입력 포트가 있습니다. 실행 중 오류가 발생할 수 있습니다:\n${unconnectedInputs.join("\n")}`
+      );
+    }
+
     const rootNodes = modules.filter(
       (m) => !connections.some((c) => c.to.moduleId === m.id)
     );
@@ -9913,7 +10355,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
     } else if (modules.length > 0) {
       addLog(
         "WARN",
-        "Circular dependency or no root nodes found. Starting from all modules."
+        "No root nodes found. Starting from all modules."
       );
       setModules((prev) =>
         prev.map((m) => ({
@@ -10187,6 +10629,25 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
 
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white h-screen w-screen flex flex-col overflow-hidden transition-colors duration-200">
+      {/* B-1: Pyodide 로딩 진행 표시 배너 */}
+      {pyodideStatus && (
+        <div className="fixed bottom-4 right-4 z-50 w-80 bg-gray-900 dark:bg-gray-800 text-white rounded-xl shadow-2xl px-4 py-3 flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <svg className="animate-spin h-4 w-4 text-blue-400 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            <span className="text-xs font-medium text-gray-100 truncate">{pyodideStatus.message}</span>
+          </div>
+          <div className="w-full bg-gray-700 rounded-full h-1.5">
+            <div
+              className="bg-blue-500 h-1.5 rounded-full transition-all duration-500"
+              style={{ width: `${pyodideStatus.progress}%` }}
+            />
+          </div>
+          <p className="text-xs text-gray-400">{pyodideStatus.progress}% 완료</p>
+        </div>
+      )}
       {isAiGenerating && (
         <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex flex-col items-center justify-center z-50">
           <div role="status">
@@ -10437,13 +10898,31 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             <span>{saveButtonText}</span>
           </button>
           <div className="h-5 border-l border-gray-300 dark:border-gray-700"></div>
+          <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
+            <button
+              onClick={handleRunAll}
+              disabled={!!runAllProgress}
+              className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-md font-semibold transition-colors flex-shrink-0 ${runAllProgress ? 'bg-green-700 opacity-70 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500'} text-white`}
+              title="Run All Modules"
+            >
+              <PlayIcon className="h-4 w-4" />
+              <span>{runAllProgress ? `실행 중 (${runAllProgress.current}/${runAllProgress.total})` : 'Run All'}</span>
+            </button>
+            {runAllProgress && (
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="bg-green-500 h-1.5 rounded-full transition-all duration-300"
+                  style={{ width: runAllProgress.total > 0 ? `${(runAllProgress.current / runAllProgress.total) * 100}%` : '0%' }}
+                />
+              </div>
+            )}
+          </div>
           <button
-            onClick={handleRunAll}
-            className="flex items-center gap-2 px-3 py-1.5 text-xs rounded-md font-semibold transition-colors flex-shrink-0 bg-green-600 hover:bg-green-500 text-white"
-            title="Run All Modules"
+            onClick={() => setShowModelComparison(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md font-semibold transition-colors flex-shrink-0 bg-indigo-600 hover:bg-indigo-500 text-white"
+            title="실행 완료된 모델들의 성능 지표 비교"
           >
-            <PlayIcon className="h-4 w-4" />
-            <span>Run All</span>
+            <span>⚖️ 모델 비교</span>
           </button>
         </div>
 
@@ -10768,7 +11247,10 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           </div>
           <div className="flex items-center gap-1 md:gap-2 ml-auto">
             <button
-              onClick={() => setIsCodePanelVisible((v) => !v)}
+              onClick={() => setIsCodePanelVisible((v) => {
+                if (!v) setIsRightPanelVisible(false); // 코드 패널 열면 속성 패널 닫기
+                return !v;
+              })}
               className="flex items-center gap-1 md:gap-2 px-1.5 md:px-2 py-0.5 md:py-1 text-[5px] md:text-[8px] bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-md font-semibold transition-colors flex-shrink-0"
               title="View Full Pipeline Code"
             >
@@ -10959,6 +11441,13 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           <main
             ref={canvasContainerRef}
             className={`flex-1 min-h-0 min-w-0 relative overflow-hidden ${theme === "dark" ? "canvas-bg" : "canvas-bg-light"}`}
+            onDragOver={(e) => {
+              if (e.dataTransfer.files.length > 0 || Array.from(e.dataTransfer.items).some((item) => item.kind === "file")) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "copy";
+              }
+            }}
+            onDrop={handleFileDrop}
           >
           <Canvas
             modules={modules}
@@ -11062,12 +11551,17 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
 
         {/* -- Unified Side Panels -- */}
         {/* Code Panel - Rightmost */}
-        <PipelineCodePanel
-          modules={modules}
-          connections={connections}
-          isVisible={isCodePanelVisible}
-          onToggle={() => setIsCodePanelVisible((v) => !v)}
-        />
+        <ErrorBoundary>
+          <PipelineCodePanel
+            modules={modules}
+            connections={connections}
+            isVisible={isCodePanelVisible}
+            onToggle={() => setIsCodePanelVisible((v) => {
+              if (!v) setIsRightPanelVisible(false);
+              return !v;
+            })}
+          />
+        </ErrorBoundary>
 
         <div
           className={`absolute top-0 right-0 h-full z-10 transition-transform duration-300 ease-in-out ${
@@ -11097,6 +11591,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 onViewDetails={handleViewDetails}
                 folderHandle={folderHandleRef.current}
                 onRunModule={(moduleId) => runSimulation(moduleId, false)}
+                validationError={selectedModule ? validateModuleParameters(selectedModule) : null}
               />
             </div>
           </div>
@@ -11470,6 +11965,14 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             />
           );
         })()}
+
+      {/* C-2: 모델 비교 모달 */}
+      {showModelComparison && (
+        <ModelComparisonModal
+          modules={modules}
+          onClose={() => setShowModelComparison(false)}
+        />
+      )}
 
       {/* Samples Modal */}
       <SamplesModal

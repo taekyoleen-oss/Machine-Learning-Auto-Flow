@@ -6,9 +6,26 @@
  */
 
 let pyodide: any = null;
-let isLoading = false;
-let loadPromise: Promise<any> | null = null;
+let loadPromise: Promise<any> | null = null;  // null이면 미시작, non-null이면 진행중/완료
 let loadStartTime: number = 0;
+
+// B-1: Pyodide 로딩 진행률 콜백
+type PyodideStatusCallback = (status: string, progress: number) => void;
+let statusCallback: PyodideStatusCallback | null = null;
+
+export function setPyodideStatusCallback(cb: PyodideStatusCallback | null): void {
+  statusCallback = cb;
+}
+
+export function getPyodideLoadingStatus(): { isLoading: boolean; isPyodideReady: boolean } {
+  return { isLoading: loadPromise !== null && !pyodide, isPyodideReady: !!pyodide };
+}
+
+function notifyStatus(status: string, progress: number): void {
+  if (statusCallback) {
+    statusCallback(status, progress);
+  }
+}
 
 /**
  * 타임아웃을 가진 Promise 래퍼
@@ -31,19 +48,21 @@ function withTimeout<T>(
  * 타임아웃: 30초
  */
 export async function loadPyodide(timeoutMs: number = 30000): Promise<any> {
+  // 이미 로드 완료
   if (pyodide) {
     return pyodide;
   }
 
-  if (isLoading && loadPromise) {
+  // 로딩 중이면 동일한 Promise 반환 (race condition 방지: 하나의 Promise만 생성)
+  if (loadPromise) {
     return loadPromise;
   }
 
-  isLoading = true;
   loadStartTime = Date.now();
+  // Promise 생성 즉시 변수에 할당하여 동시 호출 시 중복 초기화 방지
   loadPromise = (async () => {
     try {
-      // @ts-ignore - Pyodide는 전역에서 로드됩니다
+      notifyStatus("Python 환경(Pyodide) 초기화 중...", 10);
       const pyodideModule = await withTimeout(
         loadPyodideModule(),
         timeoutMs,
@@ -51,20 +70,40 @@ export async function loadPyodide(timeoutMs: number = 30000): Promise<any> {
       );
       pyodide = pyodideModule;
 
-      // 필요한 패키지 설치 (타임아웃: 90초)
-      // imblearn은 scikit-learn에 포함되어 있지만 별도 설치가 필요할 수 있음
+      notifyStatus("패키지 설치 중... (1/4) numpy", 55);
+      const packageList = ["numpy", "scipy", "pandas", "scikit-learn"];
+      const progressSteps = [55, 65, 75, 88];
+      let pkgIdx = 0;
+
+      const pkgMessageCallback = (msg: string) => {
+        // 새 패키지 로딩 시 메시지를 감지하여 진행률 업데이트
+        const match = msg.match(/(?:Loading|Installing|Loaded)\s+(\S+)/i);
+        if (match) {
+          const foundPkg = match[1].toLowerCase().replace(/[^a-z0-9-_]/g, '');
+          const idx = packageList.findIndex((p) => foundPkg.startsWith(p.replace('-', '_')) || foundPkg.startsWith(p));
+          if (idx >= 0 && idx !== pkgIdx) {
+            pkgIdx = idx;
+            notifyStatus(`패키지 설치 중... (${idx + 1}/${packageList.length}) ${packageList[idx]}`, progressSteps[idx]);
+          }
+        }
+      };
+
       await withTimeout(
-        pyodide.loadPackage(["pandas", "scikit-learn", "numpy", "scipy"]),
+        pyodide.loadPackage(
+          packageList,
+          pkgMessageCallback
+        ),
         90000,
         "패키지 설치 타임아웃 (90초 초과)"
       );
 
-      isLoading = false;
+      notifyStatus("Python 환경 준비 완료!", 100);
       loadStartTime = 0;
+      setTimeout(() => notifyStatus("", 0), 1500);
       return pyodide;
     } catch (error) {
-      isLoading = false;
-      loadPromise = null;
+      notifyStatus("", 0);
+      loadPromise = null;  // 실패 시 재시도 허용
       loadStartTime = 0;
       throw error;
     }
@@ -141,6 +180,57 @@ export function fromPython(pythonObj: any): any {
     return pythonObj.toJs({ dict_converter: Object.fromEntries });
   }
   return pythonObj;
+}
+
+/**
+ * Python 코드를 실행하고 stdout과 오류를 캡처하여 반환합니다
+ * 타임아웃: 90초
+ */
+export async function runPythonWithOutput(
+  code: string,
+  timeoutMs: number = 90000
+): Promise<{ stdout: string; error: string | null }> {
+  const py = await loadPyodide();
+
+  // 실행 전 이전 실행의 잔여 변수 및 메모리 정리
+  try {
+    await py.runPythonAsync(`
+import gc as _gc
+# 사용자 정의 변수 정리 (내부 변수 _ 로 시작하는 것 제외)
+_user_vars = [k for k in list(globals().keys()) if not k.startswith('_')]
+for _k in _user_vars:
+    try:
+        del globals()[_k]
+    except Exception:
+        pass
+_gc.collect()
+`);
+  } catch (_) {
+    // 정리 실패 시 무시하고 계속 진행
+  }
+
+  const indented = code.split('\n').map((l) => '    ' + l).join('\n');
+  const wrappedCode = `
+import io as _io, sys as _sys, traceback as _tb
+_buf = _io.StringIO()
+_old = _sys.stdout
+_sys.stdout = _buf
+_err = None
+try:
+${indented}
+except Exception as _e:
+    _err = _tb.format_exc()
+finally:
+    _sys.stdout = _old
+(_buf.getvalue(), _err)
+`;
+  const result = await withTimeout(
+    py.runPythonAsync(wrappedCode),
+    timeoutMs,
+    '실행 타임아웃 (90초 초과)'
+  );
+  const jsResult = result && typeof result.toJs === 'function' ? result.toJs() : result;
+  return { stdout: jsResult?.[0] || '', error: jsResult?.[1] || null };
 }
 
 /**

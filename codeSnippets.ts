@@ -9,8 +9,10 @@ const replacePlaceholders = (
     const placeholder = new RegExp(`{${key}}`, "g");
     let value = params[key];
     // Stringify only if it's not already a string that looks like code
-    if (value === null) {
+    if (value === null || value === undefined) {
       value = "None";
+    } else if (typeof value === "boolean") {
+      value = value ? "True" : "False"; // Python boolean
     } else if (typeof value !== "string" || !isNaN(Number(value))) {
       value = JSON.stringify(value);
     } else {
@@ -873,30 +875,27 @@ trained_model = model.fit(X_train, y_train)
   ScoreModel: `
 import pandas as pd
 
-# This module applies a trained model to a second dataset to generate predictions.
-# Parameters from UI (if needed for feature selection)
-# Note: Feature columns are typically inferred from the trained model
+# This module applies a trained model to a dataset to generate predictions.
+# Input: 'trained_model' (from TrainModel), 'dataframe' (data to score)
 
-# Assuming 'trained_model' (from TrainModel module) and 'second_data' (second dataset) are available
-# Extract feature columns from the trained model (sklearn models store feature names)
+# Extract feature columns from the trained model (sklearn stores feature names)
 if hasattr(trained_model, 'feature_names_in_'):
     feature_columns = list(trained_model.feature_names_in_)
 else:
-    # Fallback: use all numeric columns except the label column
-    # This assumes the second_data has the same structure as training data
-    feature_columns = second_data.select_dtypes(include=['number']).columns.tolist()
+    # Fallback: use all numeric columns in the dataset
+    feature_columns = dataframe.select_dtypes(include=['number']).columns.tolist()
 
-# Prepare the second dataset features
-X_second = second_data[feature_columns]
+# Prepare features
+X_second = dataframe[feature_columns]
 
-# Apply model.predict() to the second data
+# Apply model.predict()
 predictions = trained_model.predict(X_second)
 
-# Add predictions to the second dataset
-scored_data = second_data.copy()
+# Add predictions to the dataset
+scored_data = dataframe.copy()
 scored_data['Predict'] = predictions
 
-# The scored_data now contains the original data plus predictions
+# scored_data now contains original data plus predictions
 `,
   EvaluateModel: `
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, mean_squared_error, mean_absolute_error, r2_score
@@ -1779,9 +1778,9 @@ export const getModuleCode = (
     const { train_size, random_state, shuffle, stratify, stratify_column } =
       module.parameters;
 
-    // 값이 없으면 파라미터를 전달하지 않도록 처리
-    const params: Record<string, any> = {
-      ...module.parameters,
+    // Python 코드 스니펫은 replacePlaceholders를 거치지 않고 직접 치환
+    // (replacePlaceholders는 문자열을 따옴표로 감싸기 때문에 코드가 깨짐)
+    const codeSnippets: Record<string, string> = {
       split_train_size:
         train_size !== undefined && train_size !== null && train_size !== ""
           ? `p_train_size = ${train_size}`
@@ -1809,8 +1808,8 @@ export const getModuleCode = (
         stratify !== null &&
         stratify !== "" &&
         (stratify === "True" || stratify === true)
-          ? `if p_stratify and p_stratify_column and p_stratify_column != 'None':`
-          : `if p_stratify_column and p_stratify_column != 'None':`,
+          ? `if p_stratify and p_stratify_column and p_stratify_column != "None":\n    stratify_array = df[p_stratify_column]`
+          : `if p_stratify_column and p_stratify_column != "None":\n    stratify_array = df[p_stratify_column]`,
       split_train_size_kwarg:
         train_size !== undefined && train_size !== null && train_size !== ""
           ? "split_kwargs['train_size'] = p_train_size"
@@ -1829,7 +1828,14 @@ export const getModuleCode = (
 
     const template =
       templates[module.type] || `# Code for ${module.name} is not available.`;
-    return replacePlaceholders(template.trim(), params);
+
+    // 1단계: 코드 스니펫 플레이스홀더를 직접 치환 (따옴표 감싸기 없음)
+    let code = template.trim();
+    for (const key of Object.keys(codeSnippets)) {
+      code = code.replace(new RegExp(`\\{${key}\\}`, "g"), codeSnippets[key]);
+    }
+    // 2단계: 실제 파라미터 값을 Python 값으로 치환 (문자열은 따옴표로 감쌈)
+    return replacePlaceholders(code, module.parameters);
   }
 
   const template =

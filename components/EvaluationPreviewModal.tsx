@@ -2,6 +2,83 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { CanvasModule, EvaluationOutput, ConfusionMatrix, DataPreview, Connection } from '../types';
 import { XCircleIcon } from './icons';
 
+// C-1: 인터랙티브 메트릭 바 차트
+const MetricBarChart: React.FC<{ metrics: Record<string, number | string>; modelType: 'classification' | 'regression' }> = ({ metrics, modelType }) => {
+    const [hoveredKey, setHoveredKey] = useState<string | null>(null);
+
+    // 0~1 범위 지표 (높을수록 좋음)
+    const UNIT_METRICS = new Set(['Accuracy', 'Precision', 'Recall', 'F1-Score', 'AUC-ROC', 'R²', 'R2', 'R-squared']);
+    // 낮을수록 좋은 지표 (최대값 기준으로 역방향 표시)
+    const LOWER_BETTER = new Set(['MSE', 'RMSE', 'MAE', 'MedAE']);
+
+    const entries = Object.entries(metrics).filter(([, v]) => typeof v === 'number') as [string, number][];
+    if (entries.length === 0) return null;
+
+    const maxVal = Math.max(...entries.map(([, v]) => Math.abs(v)));
+
+    return (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mt-3">
+            <h4 className="text-sm font-semibold text-gray-700 mb-3">성능 지표 시각화</h4>
+            <div className="space-y-2.5">
+                {entries.map(([key, value]) => {
+                    const isUnit = UNIT_METRICS.has(key);
+                    const isLowerBetter = LOWER_BETTER.has(key);
+                    const barWidth = isUnit
+                        ? Math.max(Math.min(value * 100, 100), 0)
+                        : maxVal > 0 ? Math.min((Math.abs(value) / maxVal) * 100, 100) : 0;
+
+                    const barColor = isUnit
+                        ? value >= 0.9 ? 'bg-green-500' : value >= 0.7 ? 'bg-blue-500' : 'bg-orange-400'
+                        : isLowerBetter ? 'bg-orange-400' : 'bg-blue-400';
+
+                    const quality = isUnit
+                        ? value >= 0.9 ? '우수' : value >= 0.7 ? '양호' : '개선 필요'
+                        : null;
+
+                    return (
+                        <div
+                            key={key}
+                            className={`rounded p-2 transition-colors cursor-default ${hoveredKey === key ? 'bg-white shadow-sm' : ''}`}
+                            onMouseEnter={() => setHoveredKey(key)}
+                            onMouseLeave={() => setHoveredKey(null)}
+                        >
+                            <div className="flex justify-between items-center mb-1">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-medium text-gray-700">{key}</span>
+                                    {quality && (
+                                        <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                                            quality === '우수' ? 'bg-green-100 text-green-700'
+                                            : quality === '양호' ? 'bg-blue-100 text-blue-700'
+                                            : 'bg-orange-100 text-orange-700'
+                                        }`}>{quality}</span>
+                                    )}
+                                    {isLowerBetter && <span className="text-xs text-gray-400">↓ 낮을수록 좋음</span>}
+                                </div>
+                                <span className="text-xs font-mono font-bold text-gray-800">
+                                    {value.toFixed(4)}
+                                </span>
+                            </div>
+                            <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div
+                                    className={`absolute left-0 top-0 h-full rounded-full transition-all duration-500 ${barColor}`}
+                                    style={{ width: `${barWidth}%` }}
+                                />
+                            </div>
+                            {isUnit && (
+                                <div className="flex justify-between text-xs text-gray-300 mt-0.5">
+                                    <span>0</span>
+                                    <span>0.5</span>
+                                    <span>1.0</span>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
+
 interface EvaluationPreviewModalProps {
     module: CanvasModule;
     onClose: () => void;
@@ -626,6 +703,11 @@ export const EvaluationPreviewModal: React.FC<EvaluationPreviewModalProps> = ({
                                             </div>
                                         ))}
                                     </div>
+                                    {/* C-1: 분류 지표 바 차트 */}
+                                    <MetricBarChart
+                                        metrics={Object.fromEntries(Object.entries(metrics).filter(([k]) => !['TP','FP','TN','FN','Confusion Matrix'].includes(k)))}
+                                        modelType="classification"
+                                    />
                                 </div>
                             )}
 
@@ -844,6 +926,8 @@ export const EvaluationPreviewModal: React.FC<EvaluationPreviewModalProps> = ({
                                         </div>
                                     ))}
                                 </div>
+                                {/* C-1: 인터랙티브 바 차트 */}
+                                <MetricBarChart metrics={metrics} modelType={modelType} />
                             </div>
                             
                             {/* Regression Scatter Plot */}

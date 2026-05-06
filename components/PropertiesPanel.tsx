@@ -72,6 +72,7 @@ interface PropertiesPanelProps {
   onViewDetails: (moduleId: string) => void;
   folderHandle: FileSystemDirectoryHandle | null;
   onRunModule?: (moduleId: string) => void;
+  validationError?: string | null;
 }
 
 const ExplanationRenderer: React.FC<{ text: string }> = ({ text }) => {
@@ -4172,6 +4173,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   onViewDetails,
   folderHandle,
   onRunModule,
+  validationError,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logContainerRef = useRef<HTMLDivElement>(null);
@@ -5588,6 +5590,12 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             <>
               {activeTab === "properties" && (
                 <div>
+                  {validationError && (
+                    <div className="mb-3 flex items-start gap-2 rounded-md bg-red-900/40 border border-red-600/60 px-3 py-2 text-xs text-red-300">
+                      <span className="mt-0.5 flex-shrink-0">⚠</span>
+                      <span>{validationError}</span>
+                    </div>
+                  )}
                   <PropertyGroup title="Parameters" module={module}>
                     {renderParameters(
                       module,

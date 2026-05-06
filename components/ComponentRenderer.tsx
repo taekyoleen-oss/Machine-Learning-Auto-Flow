@@ -731,6 +731,13 @@ export const ComponentRenderer: React.FC<ModuleNodeProps> = ({
                 ? "View Details"
                 : module.status}
             </button>
+            {module.status === ModuleStatus.Success && module.executionTime !== undefined && (
+              <span className={`text-[10px] mt-0.5 ${theme === 'light' ? 'text-gray-400' : 'text-gray-500'}`}>
+                {module.executionTime < 1000
+                  ? `${module.executionTime}ms`
+                  : `${(module.executionTime / 1000).toFixed(1)}s`}
+              </span>
+            )}
           </>
         )}
       </div>
