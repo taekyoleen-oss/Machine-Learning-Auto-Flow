@@ -26,10 +26,8 @@ function statusColor(status: string): string {
 export const CanvasMinimap: React.FC<Props> = ({ modules, pan, scale, containerWidth, containerHeight, onPanTo }) => {
   const ref = useRef<SVGSVGElement>(null);
 
-  if (modules.length === 0) return null;
-
-  const xs = modules.map(m => m.position.x);
-  const ys = modules.map(m => m.position.y);
+  const xs = modules.length > 0 ? modules.map(m => m.position.x) : [0];
+  const ys = modules.length > 0 ? modules.map(m => m.position.y) : [0];
   const minX = Math.min(...xs) - PADDING;
   const minY = Math.min(...ys) - PADDING;
   const maxX = Math.max(...xs) + MODULE_W + PADDING;
@@ -40,20 +38,6 @@ export const CanvasMinimap: React.FC<Props> = ({ modules, pan, scale, containerW
   const scaleX = MINIMAP_W / worldW;
   const scaleY = MINIMAP_H / worldH;
   const ms = Math.min(scaleX, scaleY);
-
-  const toMX = (x: number) => (x - minX) * ms;
-  const toMY = (y: number) => (y - minY) * ms;
-
-  // Viewport rectangle in world coords
-  const vpX = -pan.x / scale;
-  const vpY = -pan.y / scale;
-  const vpW = containerWidth / scale;
-  const vpH = containerHeight / scale;
-
-  const vpMX = Math.max(0, toMX(vpX));
-  const vpMY = Math.max(0, toMY(vpY));
-  const vpMW = Math.min(MINIMAP_W - vpMX, vpW * ms);
-  const vpMH = Math.min(MINIMAP_H - vpMY, vpH * ms);
 
   const handleClick = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
     if (!ref.current) return;
@@ -67,6 +51,21 @@ export const CanvasMinimap: React.FC<Props> = ({ modules, pan, scale, containerW
       y: -(worldY * scale - containerHeight / 2),
     });
   }, [ms, minX, minY, scale, containerWidth, containerHeight, onPanTo]);
+
+  if (modules.length === 0) return null;
+
+  const toMX = (x: number) => (x - minX) * ms;
+  const toMY = (y: number) => (y - minY) * ms;
+
+  const vpX = -pan.x / scale;
+  const vpY = -pan.y / scale;
+  const vpW = containerWidth / scale;
+  const vpH = containerHeight / scale;
+
+  const vpMX = Math.max(0, toMX(vpX));
+  const vpMY = Math.max(0, toMY(vpY));
+  const vpMW = Math.min(MINIMAP_W - vpMX, vpW * ms);
+  const vpMH = Math.min(MINIMAP_H - vpMY, vpH * ms);
 
   return (
     <div className="absolute bottom-4 right-4 z-30 rounded-lg overflow-hidden shadow-lg border border-gray-600 bg-gray-900/85 backdrop-blur-sm" style={{ width: MINIMAP_W, height: MINIMAP_H }}>
