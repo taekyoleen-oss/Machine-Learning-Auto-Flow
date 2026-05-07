@@ -13,6 +13,7 @@ import {
   ModuleType,
   Connection,
 } from "../types";
+import { getModuleCsvData, downloadModuleDataAsCsv } from '../utils/csvExport';
 import {
   CheckCircleIcon,
   CogIcon,
@@ -737,6 +738,19 @@ export const ComponentRenderer: React.FC<ModuleNodeProps> = ({
                   ? `${module.executionTime}ms`
                   : `${(module.executionTime / 1000).toFixed(1)}s`}
               </span>
+            )}
+            {module.status === ModuleStatus.Success && getModuleCsvData(module) && (
+              <button
+                onClick={(e) => { e.stopPropagation(); downloadModuleDataAsCsv(module); }}
+                className={`text-[10px] mt-0.5 transition-colors ${
+                  theme === 'light'
+                    ? 'text-blue-500 hover:text-blue-700'
+                    : 'text-blue-400 hover:text-blue-300'
+                }`}
+                title="결과 데이터를 CSV로 다운로드"
+              >
+                ↓ CSV
+              </button>
             )}
           </>
         )}

@@ -111,6 +111,8 @@ import { HypothesisTestingPreviewModal } from "./components/HypothesisTestingPre
 import { NormalityCheckerPreviewModal } from "./components/NormalityCheckerPreviewModal";
 import { CorrelationPreviewModal } from "./components/CorrelationPreviewModal";
 import { ModelComparisonModal } from "./components/ModelComparisonModal";
+import { RunHistoryModal } from "./components/RunHistoryModal";
+import { ShortcutsModal } from "./components/ShortcutsModal";
 import { AIPipelineFromGoalModal } from "./components/AIPipelineFromGoalModal";
 import { AIPipelineFromDataModal } from "./components/AIPipelineFromDataModal";
 import { AIPlanDisplayModal } from "./components/AIPlanDisplayModal";
@@ -121,6 +123,9 @@ import { SamplesManagementModal } from "./components/SamplesManagementModal";
 import { GoogleGenAI, Type } from "@google/genai";
 import { savePipeline, loadPipeline } from "./utils/fileOperations";
 import { setPyodideStatusCallback } from "./utils/pyodideRunner";
+import { classifyPythonError, validateModuleParameters, validateModuleConnections } from "./utils/pipelineValidation";
+import { autoLayoutModules } from "./utils/autoLayout";
+import { useAutoSave } from "./hooks/useAutoSave";
 // Samples와 Examples는 빌드 시점에 생성된 JSON 파일에서 직접 로드하므로 import 제거
 
 type TerminalLog = {
@@ -130,207 +135,21 @@ type TerminalLog = {
   timestamp: string;
 };
 
+type RunHistorySession = {
+  id: string;
+  timestamp: number;
+  results: Array<{
+    name: string;
+    type: string;
+    status: ModuleStatus;
+    executionTime?: number;
+  }>;
+};
+
 type PropertiesTab = "properties" | "preview" | "code" | "terminal";
 
-// --- Helper Functions ---
-// Note: All mathematical/statistical calculations are now performed using Pyodide (Python)
-// JavaScript is only used for UI rendering and data structure transformations that don't modify Python results
-
-// A-5: Python 실행 오류 유형 분류 → 한국어 안내 메시지 반환
-function classifyPythonError(error: any): { category: string; userMessage: string } {
-  const msg = (error.message || String(error)).toLowerCase();
-  const errType = (error.error_type || "").toLowerCase();
-  const tb = (error.traceback || error.error_traceback || error.stack || "").toLowerCase();
-  const all = `${msg} ${errType} ${tb}`;
-
-  if (all.includes("modulenotfounderror") || all.includes("importerror") || all.includes("no module named"))
-    return { category: "📦 패키지 미설치", userMessage: "필요한 Python 패키지가 설치되지 않았습니다. Pyodide 환경에서 해당 패키지를 지원하지 않을 수 있습니다." };
-
-  if (all.includes("keyerror") || all.includes("not found in") || all.includes("dataframe is empty") || (all.includes("column") && all.includes("not found")))
-    return { category: "📋 데이터 컬럼 오류", userMessage: "입력 데이터의 컬럼명이나 형식이 맞지 않습니다. LoadData 모듈의 데이터와 컬럼 설정을 확인해주세요." };
-
-  if (all.includes("valueerror") || all.includes("no feature") || all.includes("label column") || all.includes("invalid value") || all.includes("must have same number") || all.includes("파라미터") || all.includes("설정값"))
-    return { category: "⚙️ 파라미터 오류", userMessage: "모듈 설정값이 올바르지 않습니다. 속성 패널에서 파라미터를 확인하고 수정해주세요." };
-
-  if (all.includes("typeerror") || all.includes("cannot convert") || all.includes("expected number") || all.includes("int() argument") || all.includes("unsupported operand") || all.includes("must be numeric"))
-    return { category: "🔢 데이터 타입 오류", userMessage: "데이터 타입이 맞지 않습니다. 숫자형 컬럼에 문자열이 포함되어 있거나 타입 변환이 필요합니다." };
-
-  if (all.includes("timeout") || all.includes("타임아웃") || all.includes("timed out"))
-    return { category: "⏱️ 타임아웃 오류", userMessage: "실행 시간이 초과되었습니다. 데이터 크기를 줄이거나 파라미터를 조정해주세요." };
-
-  if (all.includes("upstream") || all.includes("did not run successfully") || all.includes("no data available") || all.includes("먼저 실행") || all.includes("모듈을 먼저"))
-    return { category: "🔗 상위 모듈 미실행", userMessage: "연결된 이전 모듈이 성공적으로 실행되지 않았습니다. 상위 모듈부터 순서대로 실행해주세요." };
-
-  if (all.includes("memoryerror") || all.includes("out of memory") || all.includes("메모리"))
-    return { category: "💾 메모리 오류", userMessage: "데이터가 너무 크거나 메모리가 부족합니다. 데이터 크기를 줄이거나 샘플링을 적용해주세요." };
-
-  if (all.includes("zerodivisionerror") || all.includes("division by zero"))
-    return { category: "➗ 연산 오류", userMessage: "0으로 나누기 오류가 발생했습니다. 입력 데이터에 0 값이 있는지 확인해주세요." };
-
-  if (all.includes("indexerror") || all.includes("index out of") || all.includes("list index"))
-    return { category: "📌 인덱스 오류", userMessage: "데이터 인덱스가 범위를 벗어났습니다. 데이터 크기나 컬럼 선택을 확인해주세요." };
-
-  if (all.includes("runtimeerror") || all.includes("코드 생성에 실패") || all.includes("코드 생성 실패"))
-    return { category: "⚙️ 코드 생성 오류", userMessage: "모듈 코드 생성에 실패했습니다. 파라미터 설정을 확인하고 다시 실행해주세요." };
-
-  if (all.includes("순환 연결") || all.includes("circular") || all.includes("cycle"))
-    return { category: "🔄 순환 연결 오류", userMessage: "파이프라인에 순환 연결이 있습니다. 모듈 간 연결 방향을 확인해주세요." };
-
-  if (all.includes("convergencewarn") || all.includes("failed to converge") || all.includes("max_iter"))
-    return { category: "📈 수렴 경고", userMessage: "모델 학습이 수렴하지 않았습니다. max_iter를 늘리거나 데이터를 스케일링해보세요." };
-
-  if (all.includes("attributeerror") || all.includes("has no attribute") || all.includes("object has no"))
-    return { category: "🔗 모듈 연결 오류", userMessage: "모듈 간 데이터 타입이 맞지 않습니다. 연결된 모듈의 출력 형식을 확인해주세요." };
-
-  return { category: "❌ 실행 오류", userMessage: "모듈 실행 중 오류가 발생했습니다. 하단 터미널 로그에서 상세 내용을 확인하세요." };
-}
-
-/**
- * B-1: 모듈 파라미터 사전 유효성 검사
- * Python 실행 전에 잘못된 파라미터를 감지하여 빠른 피드백 제공
- */
-/**
- * 모듈 파라미터 사전 유효성 검사 (#3 확장 버전)
- * Python 실행 전 잘못된 파라미터를 감지하여 즉각적인 피드백 제공
- */
-function validateModuleParameters(module: CanvasModule): string | null {
-  const p = module.parameters || {};
-
-  switch (module.type) {
-    // ── 데이터 분할 ──────────────────────────────────────────────────────────
-    case 'SplitData': {
-      const ts = parseFloat(p.train_size);
-      if (!isNaN(ts) && (ts <= 0 || ts >= 1))
-        return `train_size는 0~1 사이 값이어야 합니다 (현재: ${ts}). 예: 0.8`;
-      break;
-    }
-
-    // ── 모델 학습/평가 ────────────────────────────────────────────────────────
-    case 'TrainModel': {
-      const fc = p.feature_columns;
-      if (!fc || (Array.isArray(fc) && fc.length === 0))
-        return '특성 컬럼(feature_columns)을 1개 이상 선택해야 합니다. 속성 패널에서 컬럼을 선택해주세요.';
-      if (!p.label_column || p.label_column === '')
-        return '레이블 컬럼(label_column)을 선택해야 합니다. 속성 패널에서 목표 컬럼을 선택해주세요.';
-      break;
-    }
-    case 'EvaluateModel': {
-      if (!p.label_column || p.label_column === '')
-        return '평가할 레이블 컬럼(label_column)을 선택해야 합니다.';
-      break;
-    }
-
-    // ── 데이터 선택/필터링 ────────────────────────────────────────────────────
-    case 'SelectData': {
-      const sel = p.columnSelections || p.selectedColumns || p.columns;
-      const hasSelection = sel && (
-        (Array.isArray(sel) && sel.length > 0) ||
-        (typeof sel === 'object' && Object.values(sel).some(Boolean))
-      );
-      if (!hasSelection)
-        return '출력할 컬럼을 1개 이상 선택해야 합니다.';
-      break;
-    }
-    case 'DataFiltering': {
-      if (!p.filter_column && !p.filterColumn)
-        return '필터링할 컬럼(filter_column)을 지정해야 합니다.';
-      break;
-    }
-
-    // ── k-최근접 이웃 ─────────────────────────────────────────────────────────
-    case 'KNN': {
-      const nn = parseInt(p.n_neighbors);
-      if (!isNaN(nn) && nn < 1)
-        return `n_neighbors는 1 이상이어야 합니다 (현재: ${nn})`;
-      break;
-    }
-
-    // ── 군집화 ───────────────────────────────────────────────────────────────
-    case 'KMeans': {
-      const nc = parseInt(p.n_clusters);
-      if (!isNaN(nc) && nc < 1)
-        return `n_clusters는 1 이상이어야 합니다 (현재: ${nc})`;
-      break;
-    }
-    case 'TrainClusteringModel': {
-      const nc = parseInt(p.n_clusters);
-      if (!isNaN(nc) && nc < 1)
-        return `n_clusters는 1 이상이어야 합니다 (현재: ${nc})`;
-      break;
-    }
-
-    // ── 차원 축소 ─────────────────────────────────────────────────────────────
-    case 'PCA': {
-      const nc = parseInt(p.n_components);
-      if (!isNaN(nc) && nc < 1)
-        return `n_components는 1 이상이어야 합니다 (현재: ${nc})`;
-      break;
-    }
-
-    // ── 트리 기반 모델 ───────────────────────────────────────────────────────
-    case 'DecisionTree':
-    case 'RandomForest': {
-      const md = parseInt(p.max_depth);
-      if (!isNaN(md) && md < 1)
-        return `max_depth는 1 이상이거나 비워두어야 합니다 (현재: ${md})`;
-      const nest = parseInt(p.n_estimators);
-      if (!isNaN(nest) && nest < 1)
-        return `n_estimators는 1 이상이어야 합니다 (현재: ${nest})`;
-      break;
-    }
-
-    // ── 결측치 처리 ──────────────────────────────────────────────────────────
-    case 'HandleMissingValues': {
-      if (p.strategy === 'constant' && (p.fill_value === undefined || p.fill_value === ''))
-        return '전략이 constant일 때 fill_value를 입력해야 합니다';
-      break;
-    }
-
-    // ── 신경망 ───────────────────────────────────────────────────────────────
-    case 'NeuralNetwork': {
-      const epochs = parseInt(p.epochs ?? p.max_iter);
-      if (!isNaN(epochs) && epochs < 1)
-        return `epochs는 1 이상이어야 합니다 (현재: ${epochs})`;
-      break;
-    }
-
-    // ── 컬럼 시각화 ──────────────────────────────────────────────────────────
-    case 'ColumnPlot': {
-      if (!p.column1 || p.column1 === '')
-        return '시각화할 컬럼(column1)을 선택해야 합니다.';
-      break;
-    }
-
-    // ── 상관관계 ─────────────────────────────────────────────────────────────
-    case 'Correlation': {
-      if (p.columns && Array.isArray(p.columns) && p.columns.length < 2)
-        return '상관관계 분석을 위해 컬럼을 2개 이상 선택해야 합니다.';
-      break;
-    }
-  }
-  return null;
-}
-
-/**
- * #8: 모듈 실행 전 필수 입력 포트 연결 검사
- * 연결되지 않은 필수 포트가 있으면 오류 메시지 반환
- */
-function validateModuleConnections(
-  module: CanvasModule,
-  connections: Connection[]
-): string | null {
-  if (module.inputs.length === 0) return null; // 입력 포트 없는 모듈은 통과
-
-  const unconnected = module.inputs.filter(
-    (port) => !connections.some((c) => c.to.moduleId === module.id && c.to.portName === port.name)
-  );
-
-  if (unconnected.length > 0) {
-    const portNames = unconnected.map((p) => `'${p.name}'`).join(', ');
-    return `필수 입력 포트가 연결되지 않았습니다: ${portNames}. 이전 모듈에서 연결선을 연결해주세요.`;
-  }
-  return null;
-}
+// --- Helper Functions (classifyPythonError, validateModuleParameters, validateModuleConnections
+//     are imported from utils/pipelineValidation.ts)
 
 // Sigmoid function for logistic regression predictions
 const sigmoid = (x: number): number => {
@@ -419,6 +238,9 @@ const App: React.FC = () => {
     useState<CanvasModule | null>(null);
 
   const [showModelComparison, setShowModelComparison] = useState(false);
+  const [showRunHistory, setShowRunHistory] = useState(false);
+  const [runHistory, setRunHistory] = useState<RunHistorySession[]>([]);
+  const [showShortcuts, setShowShortcuts] = useState(false);
 
   // #11: Run All 진행률 상태
   const [runAllProgress, setRunAllProgress] = useState<{ current: number; total: number } | null>(null);
@@ -573,57 +395,18 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // #5: 파이프라인 자동 저장 - modules/connections 변경 시 sessionStorage에 저장
-  // fileContent는 대용량이므로 제외, outputData는 재실행으로 복원 가능하므로 제외
-  const AUTO_SAVE_KEY = 'mlAutoFlow_pipeline_autosave';
-  useEffect(() => {
-    if (modules.length === 0 && connections.length === 0) return;
-    try {
-      const saveable = {
-        modules: modules.map((m) => ({
-          ...m,
-          outputData: undefined, // 실행 결과는 용량이 크므로 제외
-          parameters: {
-            ...m.parameters,
-            fileContent: m.parameters?.fileContent ? '__FILE_LOADED__' : undefined, // 파일 내용 제외
-          },
-        })),
-        connections,
-        projectName,
-        savedAt: Date.now(),
-      };
-      sessionStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(saveable));
-    } catch (_) {
-      // sessionStorage 용량 초과 등 실패 시 무시
-    }
-  }, [modules, connections, projectName]);
-
-  // #5: 앱 시작 시 자동 저장된 파이프라인 복원 (최초 1회)
-  const autoSaveRestoredRef = React.useRef(false);
-  useEffect(() => {
-    if (autoSaveRestoredRef.current) return;
-    autoSaveRestoredRef.current = true;
-    try {
-      const saved = sessionStorage.getItem(AUTO_SAVE_KEY);
-      if (!saved) return;
-      const parsed = JSON.parse(saved);
-      const ageSec = (Date.now() - (parsed.savedAt || 0)) / 1000;
-      // 1시간 이내에 저장된 데이터만 복원
-      if (ageSec > 3600) {
-        sessionStorage.removeItem(AUTO_SAVE_KEY);
-        return;
-      }
-      if (parsed.modules?.length > 0) {
-        resetModules(parsed.modules);
-        _setConnections(parsed.connections || []);
-        if (parsed.projectName) setProjectName(parsed.projectName);
-        addLog('INFO', `자동 저장된 파이프라인을 복원했습니다 (${parsed.modules.length}개 모듈). LoadData 모듈은 파일을 다시 선택해주세요.`);
-      }
-    } catch (_) {
-      // 복원 실패 시 무시
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // #5: 자동 저장 / 복원 (hooks/useAutoSave.ts)
+  useAutoSave({
+    modules,
+    connections,
+    projectName,
+    onRestore: (savedModules, savedConnections, savedProjectName) => {
+      resetModules(savedModules);
+      _setConnections(savedConnections);
+      if (savedProjectName) setProjectName(savedProjectName);
+    },
+    onRestoreLog: (message) => addLog('INFO', message),
+  });
 
   // When active tab changes, restore that tab's canvas state
   useEffect(() => {
@@ -10250,8 +10033,26 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
       }
     }
     if (runAll) {
+      const snapshot: RunHistorySession = {
+        id: Date.now().toString(),
+        timestamp: Date.now(),
+        results: currentModules.map(m => ({
+          name: m.name,
+          type: m.type,
+          status: m.status,
+          executionTime: m.executionTime,
+        })),
+      };
+      setRunHistory(prev => [snapshot, ...prev].slice(0, 10));
       setRunAllProgress(null);
     }
+  };
+
+  const handleAutoLayout = () => {
+    if (modules.length === 0) return;
+    const arranged = autoLayoutModules(modules, connections);
+    setModules(arranged);
+    addLog('INFO', `자동 레이아웃 적용됨 (${modules.length}개 모듈)`);
   };
 
   const handleRunAll = () => {
@@ -10863,6 +10664,30 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           >
             <ArrowUturnRightIcon className="h-5 w-5" />
           </button>
+          <button
+            onClick={() => setShowShortcuts(true)}
+            className="p-1.5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors flex-shrink-0 text-xs font-bold"
+            title="키보드 단축키 안내"
+          >
+            ?
+          </button>
+          <div className="h-5 border-l border-gray-700"></div>
+          <button
+            onClick={handleAutoLayout}
+            disabled={modules.length === 0}
+            className="p-1.5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md disabled:text-gray-400 dark:disabled:text-gray-600 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+            title="자동 레이아웃 — 연결 순서에 따라 모듈 정렬"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="5" height="5" rx="1"/>
+              <rect x="16" y="3" width="5" height="5" rx="1"/>
+              <rect x="16" y="16" width="5" height="5" rx="1"/>
+              <rect x="3" y="16" width="5" height="5" rx="1"/>
+              <line x1="8" y1="5.5" x2="16" y2="5.5"/>
+              <line x1="21" y1="8" x2="21" y2="16"/>
+              <line x1="16" y1="18.5" x2="8" y2="18.5"/>
+            </svg>
+          </button>
           <div className="h-5 border-l border-gray-700"></div>
           <button
             onClick={handleSetFolder}
@@ -11223,18 +11048,39 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                   {/* 저장된 모델 목록 */}
                   {myWorkModels && myWorkModels.length > 0 ? (
                     myWorkModels.map((saved: any) => (
-                      <button
-                        key={saved.name}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleLoadSample(saved.name, "mywork");
-                          setIsMyWorkMenuOpen(false);
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 last:rounded-b-md transition-colors cursor-pointer"
-                        type="button"
-                      >
-                        {saved.name}
-                      </button>
+                      <div key={saved.name} className="flex items-center group last:rounded-b-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLoadSample(saved.name, "mywork");
+                            setIsMyWorkMenuOpen(false);
+                          }}
+                          className="flex-1 text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer min-w-0"
+                          type="button"
+                        >
+                          <span className="truncate block">{saved.name}</span>
+                          {saved.modules && (
+                            <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                              {saved.modules.length}개 모듈
+                            </span>
+                          )}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!window.confirm(`"${saved.name}"을 삭제하시겠습니까?`)) return;
+                            const updatedModels = myWorkModels.filter((m: any) => m.name !== saved.name);
+                            localStorage.setItem("myWorkModels", JSON.stringify(updatedModels));
+                            setMyWorkModels(updatedModels);
+                            addLog("SUCCESS", `모델 "${saved.name}"이 삭제되었습니다.`);
+                          }}
+                          className="px-2 py-2 text-gray-400 hover:text-red-400 dark:text-gray-500 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                          title="삭제"
+                          type="button"
+                        >
+                          ✕
+                        </button>
+                      </div>
                     ))
                   ) : (
                     <div className="px-4 py-2 text-sm text-gray-400 last:rounded-b-md">
@@ -11246,6 +11092,17 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             </div>
           </div>
           <div className="flex items-center gap-1 md:gap-2 ml-auto">
+            {runHistory.length > 0 && (
+              <button
+                onClick={() => setShowRunHistory(true)}
+                className="flex items-center gap-1 md:gap-2 px-1.5 md:px-2 py-0.5 md:py-1 text-[5px] md:text-[8px] bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-md font-semibold transition-colors flex-shrink-0"
+                title="실행 히스토리 보기"
+              >
+                <span className="h-1.5 w-1.5 md:h-2.5 md:w-2.5 flex items-center justify-center text-[6px] md:text-[10px]">📋</span>
+                <span className="whitespace-nowrap">히스토리</span>
+                <span className="bg-blue-500 text-white text-[4px] md:text-[8px] rounded-full px-0.5 md:px-1 leading-tight">{runHistory.length}</span>
+              </button>
+            )}
             <button
               onClick={() => setIsCodePanelVisible((v) => {
                 if (!v) setIsRightPanelVisible(false); // 코드 패널 열면 속성 패널 닫기
@@ -11972,6 +11829,19 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           modules={modules}
           onClose={() => setShowModelComparison(false)}
         />
+      )}
+
+      {/* 실행 히스토리 모달 */}
+      {showRunHistory && (
+        <RunHistoryModal
+          sessions={runHistory}
+          onClose={() => setShowRunHistory(false)}
+        />
+      )}
+
+      {/* 단축키 안내 모달 */}
+      {showShortcuts && (
+        <ShortcutsModal onClose={() => setShowShortcuts(false)} />
       )}
 
       {/* Samples Modal */}

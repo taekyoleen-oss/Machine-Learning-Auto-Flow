@@ -42,6 +42,7 @@ import { DEFAULT_MODULES } from "../constants";
 import { ExcelInputModal } from "./ExcelInputModal";
 import { DataAnalysisRAGModal } from "./DataAnalysisRAGModal";
 import { useTheme } from "../contexts/ThemeContext";
+import { cacheFileContent, listCachedFiles, getCachedFileContent } from "../utils/fileContentCache";
 
 // Dynamic import for xlsx to handle module resolution issues
 let XLSX: any = null;
@@ -751,6 +752,38 @@ const renderParameters = (
                 Excel Sheet: {module.parameters.sheetName}
               </div>
             )}
+          {/* 다른 탭에서 로드된 파일 재사용 */}
+          {(() => {
+            const cached = listCachedFiles().filter(
+              (f) => f !== module.parameters.source
+            );
+            if (cached.length === 0) return null;
+            return (
+              <div className="mt-2">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">다른 탭에서 불러온 파일:</p>
+                <div className="flex flex-wrap gap-1">
+                  {cached.map((fname) => (
+                    <button
+                      key={fname}
+                      onClick={() => {
+                        const content = getCachedFileContent(fname);
+                        if (content) {
+                          const isExcel = fname.endsWith('.xlsx') || fname.endsWith('.xls');
+                          onParamChange('source', fname);
+                          onParamChange('fileContent', content);
+                          onParamChange('fileType', isExcel ? 'excel' : 'csv');
+                        }
+                      }}
+                      className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-800/60 transition-colors max-w-[180px] truncate"
+                      title={`클릭하면 ${fname} 파일을 재사용합니다`}
+                    >
+                      ♻ {fname}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
           {/* 엑셀 데이터 직접 입력 버튼 */}
           <button
             onClick={() => {
@@ -4574,6 +4607,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           };
 
           const csvContent = await convertExcelToCSV(workbook, firstSheetName);
+          cacheFileContent(file.name, csvContent);
           updateModuleParameters(module.id, {
             source: file.name,
             fileContent: csvContent,
@@ -4589,6 +4623,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
         const reader = new FileReader();
         reader.onload = (e) => {
           const content = e.target?.result as string;
+          cacheFileContent(file.name, content);
           updateModuleParameters(module.id, {
             source: file.name,
             fileContent: content,
