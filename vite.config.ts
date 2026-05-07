@@ -18,8 +18,8 @@ export default defineConfig(({ mode }) => {
       envPrefix: ['VITE_', 'NEXT_PUBLIC_'],
       server: {
         port: 3003,
-        // 프로덕션 빌드에서는 host 설정 제거 (로컬 네트워크 권한 요청 방지)
-        ...(isProduction ? {} : { host: '0.0.0.0' }),
+        // 로컬 실행 안정성을 위해 개발 모드에서는 127.0.0.1로 고정
+        ...(isProduction ? {} : { host: '127.0.0.1' }),
         proxy: {
           '/api/split-data': {
             target: 'http://localhost:3002',

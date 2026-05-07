@@ -5,6 +5,30 @@ interface CsvData {
   columns: Array<{ name: string; type?: string }>;
 }
 
+/** Check if module has SplitData output with separate train/test sets. */
+export function isSplitDataModule(module: CanvasModule): boolean {
+  return (module.outputData as any)?.type === 'SplitDataOutput';
+}
+
+/** Download train or test set from a SplitData module. */
+export function downloadSplitDataAsCsv(module: CanvasModule, split: 'train' | 'test'): void {
+  const od = module.outputData as any;
+  if (!od || od.type !== 'SplitDataOutput') return;
+  const target = split === 'train' ? od.train : od.test;
+  if (!target?.rows?.length) return;
+  const data: CsvData = { rows: target.rows, columns: target.columns || [] };
+  const csv = toCsvString(data);
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${module.name.replace(/[^a-zA-Z0-9가-힣_-]/g, '_')}_${split}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 /** Extract downloadable tabular data from a module's outputData. Returns null if none available. */
 export function getModuleCsvData(module: CanvasModule): CsvData | null {
   const od = module.outputData as any;
@@ -15,10 +39,8 @@ export function getModuleCsvData(module: CanvasModule): CsvData | null {
     return { rows: od.rows, columns: od.columns || [] };
   }
 
-  // SplitDataOutput — return train set (largest)
-  if (od.type === 'SplitDataOutput' && od.train?.rows?.length > 0) {
-    return { rows: od.train.rows, columns: od.train.columns || [] };
-  }
+  // SplitDataOutput — skip single download (handled by isSplitDataModule/downloadSplitDataAsCsv)
+  if (od.type === 'SplitDataOutput') return null;
 
   // Wrapper outputs (MissingHandlerOutput, EncoderOutput, NormalizerOutput, etc.)
   if (od.data?.type === 'DataPreview' && Array.isArray(od.data.rows) && od.data.rows.length > 0) {

@@ -65,6 +65,7 @@ interface PropertiesPanelProps {
   projectName: string;
   updateModuleParameters: (id: string, newParams: Record<string, any>) => void;
   updateModuleName: (id: string, newName: string) => void;
+  onUpdateNotes: (id: string, notes: string) => void;
   logs: TerminalLog[];
   modules: CanvasModule[];
   connections: Connection[];
@@ -4198,6 +4199,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   projectName,
   updateModuleParameters,
   updateModuleName,
+  onUpdateNotes,
   logs,
   modules,
   connections,
@@ -4210,8 +4212,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logContainerRef = useRef<HTMLDivElement>(null);
-  const [activePreviewTab, setActivePreviewTab] = useState<"Input" | "Output">(
-    "Input"
+  const [activePreviewTab, setActivePreviewTab] = useState<"입력" | "출력">(
+    "입력"
   );
   const [localModuleName, setLocalModuleName] = useState("");
   const [isCopied, setIsCopied] = useState(false);
@@ -4232,7 +4234,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     if (module) {
       setLocalModuleName(module.name);
       setActivePreviewTab(
-        module.status === ModuleStatus.Success ? "Output" : "Input"
+        module.status === ModuleStatus.Success ? "출력" : "입력"
       );
     }
   }, [module]);
@@ -5449,7 +5451,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 </div>
                 <div className="bg-green-900/30 p-3 rounded-lg border border-green-700/50">
                   <p className="text-xs text-green-300">
-                    이상치가 제거된 데이터가 출력됩니다. View Details에서 상세
+                    이상치가 제거된 데이터가 출력됩니다. 결과 보기에서 상세
                     정보를 확인할 수 있습니다.
                   </p>
                 </div>
@@ -5475,16 +5477,74 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       );
     })();
 
+    // 수치형 컬럼 통계 요약 (DataPreview 계열)
+    const statsRows: { col: string; mean: string; std: string; min: string; max: string }[] = (() => {
+      let rows: Record<string, any>[] | undefined;
+      let cols: Array<{ name: string; type?: string }> | undefined;
+      const od = outputData as any;
+      if (od.type === 'DataPreview') { rows = od.rows; cols = od.columns; }
+      else if (od.data?.type === 'DataPreview') { rows = od.data.rows; cols = od.data.columns; }
+      else if (od.type === 'SplitDataOutput' && od.train?.rows) { rows = od.train.rows; cols = od.train.columns; }
+      else if (od.clusterAssignments?.rows) { rows = od.clusterAssignments.rows; cols = od.clusterAssignments.columns; }
+      else if (od.transformedData?.rows) { rows = od.transformedData.rows; cols = od.transformedData.columns; }
+      if (!rows?.length || !cols?.length) return [];
+      const numericCols = cols.filter(c => {
+        const v = rows![0]?.[c.name];
+        return typeof v === 'number' || (!isNaN(Number(v)) && v !== '' && v !== null);
+      }).slice(0, 8);
+      return numericCols.map(c => {
+        const vals = rows!.map(r => Number(r[c.name])).filter(v => !isNaN(v));
+        if (!vals.length) return null;
+        const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+        const variance = vals.reduce((a, b) => a + (b - mean) ** 2, 0) / vals.length;
+        const std = Math.sqrt(variance);
+        const min = Math.min(...vals);
+        const max = Math.max(...vals);
+        const fmt = (n: number) => Math.abs(n) >= 1000 || (Math.abs(n) < 0.01 && n !== 0)
+          ? n.toExponential(2) : n.toFixed(3);
+        return { col: c.name, mean: fmt(mean), std: fmt(std), min: fmt(min), max: fmt(max) };
+      }).filter(Boolean) as any[];
+    })();
+
     return (
       <div className="space-y-4">
         {previewContent}
+        {statsRows.length > 0 && (
+          <div className="border-t border-gray-700 pt-3">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">수치형 컬럼 통계</p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-[10px]">
+                <thead>
+                  <tr className="text-gray-500 border-b border-gray-700">
+                    <th className="text-left pb-1 pr-2 font-semibold">컬럼</th>
+                    <th className="text-right pb-1 px-1 font-semibold">평균</th>
+                    <th className="text-right pb-1 px-1 font-semibold">표준편차</th>
+                    <th className="text-right pb-1 px-1 font-semibold">최솟값</th>
+                    <th className="text-right pb-1 font-semibold">최댓값</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {statsRows.map(r => (
+                    <tr key={r.col} className="border-b border-gray-800 hover:bg-gray-700/30">
+                      <td className="py-1 pr-2 text-gray-300 truncate max-w-[80px]" title={r.col}>{r.col}</td>
+                      <td className="py-1 px-1 text-right font-mono text-blue-300">{r.mean}</td>
+                      <td className="py-1 px-1 text-right font-mono text-gray-400">{r.std}</td>
+                      <td className="py-1 px-1 text-right font-mono text-orange-300">{r.min}</td>
+                      <td className="py-1 text-right font-mono text-green-300">{r.max}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
         {canVisualize() && (
           <div className="mt-4 border-t border-gray-700 pt-4">
             <button
               onClick={() => onViewDetails(module.id)}
               className="w-full px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 rounded-md font-semibold text-white transition-colors"
             >
-              View Details
+              결과 보기
             </button>
           </div>
         )}
@@ -5555,7 +5615,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   <button
                     onClick={() => onRunModule(module.id)}
                     className="p-2 bg-green-600 hover:bg-green-500 rounded-md transition-colors flex-shrink-0"
-                    title="Run Module"
+                    title="모듈 실행"
                   >
                     <PlayIcon className="w-4 h-4 text-white" />
                   </button>
@@ -5563,7 +5623,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               })()}
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            {module ? module.type : "No module selected"}
+            {module ? module.type : "모듈을 선택하세요"}
           </p>
         </div>
 
@@ -5578,7 +5638,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                     : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50"
                 }`}
               >
-                Properties
+                속성
               </button>
               <button
                 onClick={() => setActiveTab("preview")}
@@ -5588,7 +5648,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                     : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50"
                 }`}
               >
-                Preview
+                미리보기
               </button>
               <button
                 onClick={() => setActiveTab("code")}
@@ -5598,7 +5658,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                     : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50"
                 }`}
               >
-                Code
+                코드
               </button>
               <button
                 onClick={() => setActiveTab("terminal")}
@@ -5608,7 +5668,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                     : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50"
                 }`}
               >
-                Terminal
+                터미널
               </button>
             </div>
           </div>
@@ -5654,38 +5714,49 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                         onClick={() => onViewDetails(module.id)}
                         className="w-full px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 rounded-md font-semibold text-white transition-colors"
                       >
-                        View Details
+                        결과 보기
                       </button>
                     </div>
                   )}
+                  {/* 모듈 메모 */}
+                  <div className="mt-4 border-t border-gray-700 pt-4">
+                    <label className="block text-xs font-semibold text-gray-400 mb-1.5">📝 메모</label>
+                    <textarea
+                      value={module.notes ?? ''}
+                      onChange={e => onUpdateNotes(module.id, e.target.value)}
+                      placeholder="이 모듈에 대한 메모를 입력하세요..."
+                      rows={3}
+                      className="w-full px-2 py-1.5 text-xs bg-gray-700 dark:bg-gray-700 text-gray-200 border border-gray-600 rounded-md resize-none focus:outline-none focus:border-blue-500 placeholder-gray-500"
+                    />
+                  </div>
                 </div>
               )}
               {activeTab === "preview" && (
                 <div>
                   <div className="flex mb-3 rounded-md bg-gray-700 p-1">
                     <button
-                      onClick={() => setActivePreviewTab("Input")}
+                      onClick={() => setActivePreviewTab("입력")}
                       className={`flex-1 text-center text-sm py-1 rounded-md transition-colors ${
-                        activePreviewTab === "Input"
+                        activePreviewTab === "입력"
                           ? "bg-gray-600 font-semibold"
                           : "hover:bg-gray-600/50"
                       }`}
                     >
-                      Input
+                      입력
                     </button>
                     <button
-                      onClick={() => setActivePreviewTab("Output")}
+                      onClick={() => setActivePreviewTab("출력")}
                       className={`flex-1 text-center text-sm py-1 rounded-md transition-colors ${
-                        activePreviewTab === "Output"
+                        activePreviewTab === "출력"
                           ? "bg-gray-600 font-semibold"
                           : "hover:bg-gray-600/50"
                       }`}
                     >
-                      Output
+                      출력
                     </button>
                   </div>
                   <div className="bg-gray-900/50 p-3 rounded-lg">
-                    {activePreviewTab === "Input"
+                    {activePreviewTab === "입력"
                       ? renderInputPreview()
                       : renderOutputPreview()}
                   </div>

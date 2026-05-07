@@ -535,6 +535,7 @@ export interface CanvasModule {
     | MortalityModelOutput
     | MortalityResultOutput;
   executionTime?: number; // milliseconds, set after successful run
+  notes?: string; // user-written memo shown on the module card
   // Shape-specific properties
   shapeData?: {
     // For TextBox

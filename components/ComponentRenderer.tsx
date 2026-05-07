@@ -13,7 +13,6 @@ import {
   ModuleType,
   Connection,
 } from "../types";
-import { getModuleCsvData, downloadModuleDataAsCsv } from '../utils/csvExport';
 import {
   CheckCircleIcon,
   CogIcon,
@@ -305,14 +304,26 @@ const PortComponent: React.FC<PortComponentProps> = ({
 
   return (
     <div
-      ref={portRefCallback}
       style={style}
-      className={portDotClasses}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handlePortMouseUp}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    />
+      className="relative flex items-center justify-center"
+    >
+      {/* Enlarged invisible touch target for mobile */}
+      <div
+        className="absolute inset-0 -m-3"
+        onMouseDown={handleMouseDown}
+        onMouseUp={handlePortMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      />
+      <div
+        ref={portRefCallback}
+        className={portDotClasses}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handlePortMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      />
+    </div>
   );
 };
 
@@ -583,7 +594,7 @@ export const ComponentRenderer: React.FC<ModuleNodeProps> = ({
               ? "bg-gray-300 text-gray-700 hover:bg-red-500 hover:text-white"
               : "bg-gray-700 text-gray-300 hover:bg-red-600 hover:text-white"
           }`}
-          title="Delete Module"
+          title="모듈 삭제"
           aria-label="Delete Module"
         >
           <XMarkIcon className="w-3.5 h-3.5" />
@@ -682,8 +693,8 @@ export const ComponentRenderer: React.FC<ModuleNodeProps> = ({
                     }`}
                     title={
                       canRun
-                        ? "Run this module"
-                        : "Upstream modules must be executed first"
+                        ? "이 모듈 실행"
+                        : "상위 모듈을 먼저 실행해주세요"
                     }
                   >
                     <PlayIcon className="w-6 h-6" />
@@ -729,7 +740,7 @@ export const ComponentRenderer: React.FC<ModuleNodeProps> = ({
               disabled={module.status !== ModuleStatus.Success}
             >
               {module.status === ModuleStatus.Success
-                ? "View Details"
+                ? "결과 보기"
                 : module.status}
             </button>
             {module.status === ModuleStatus.Success && module.executionTime !== undefined && (
@@ -739,22 +750,23 @@ export const ComponentRenderer: React.FC<ModuleNodeProps> = ({
                   : `${(module.executionTime / 1000).toFixed(1)}s`}
               </span>
             )}
-            {module.status === ModuleStatus.Success && getModuleCsvData(module) && (
-              <button
-                onClick={(e) => { e.stopPropagation(); downloadModuleDataAsCsv(module); }}
-                className={`text-[10px] mt-0.5 transition-colors ${
-                  theme === 'light'
-                    ? 'text-blue-500 hover:text-blue-700'
-                    : 'text-blue-400 hover:text-blue-300'
-                }`}
-                title="결과 데이터를 CSV로 다운로드"
-              >
-                ↓ CSV
-              </button>
-            )}
           </>
         )}
       </div>
+
+      {/* 모듈 메모 미리보기 */}
+      {module.notes && (
+        <div
+          className={`mx-2 mb-2 px-2 py-1 rounded text-[10px] leading-snug border-l-2 truncate ${
+            theme === 'light'
+              ? 'bg-yellow-50 border-yellow-300 text-gray-600'
+              : 'bg-yellow-900/20 border-yellow-600 text-gray-400'
+          }`}
+          title={module.notes}
+        >
+          📝 {module.notes}
+        </div>
+      )}
 
       {module.outputs.map((port, index) => {
         const total = module.outputs.length;

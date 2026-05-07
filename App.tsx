@@ -125,6 +125,8 @@ import { savePipeline, loadPipeline } from "./utils/fileOperations";
 import { setPyodideStatusCallback } from "./utils/pyodideRunner";
 import { classifyPythonError, validateModuleParameters, validateModuleConnections } from "./utils/pipelineValidation";
 import { autoLayoutModules } from "./utils/autoLayout";
+import { copyShareLink, detectSharedPipeline } from "./utils/pipelineShare";
+import { CanvasMinimap } from "./components/CanvasMinimap";
 import { useAutoSave } from "./hooks/useAutoSave";
 // Samples와 Examples는 빌드 시점에 생성된 JSON 파일에서 직접 로드하므로 import 제거
 
@@ -241,6 +243,7 @@ const App: React.FC = () => {
   const [showRunHistory, setShowRunHistory] = useState(false);
   const [runHistory, setRunHistory] = useState<RunHistorySession[]>([]);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [shareLinkCopied, setShareLinkCopied] = useState(false);
 
   // #11: Run All 진행률 상태
   const [runAllProgress, setRunAllProgress] = useState<{ current: number; total: number } | null>(null);
@@ -304,7 +307,7 @@ const App: React.FC = () => {
   const pasteOffset = useRef(0);
 
   const [isDirty, setIsDirty] = useState(false);
-  const [saveButtonText, setSaveButtonText] = useState("Save");
+  const [saveButtonText, setSaveButtonText] = useState("저장");
   const [dfaPipelineInitialized, setDfaPipelineInitialized] = useState(false);
 
   // Canvas tabs: multiple canvases with add/rename
@@ -407,6 +410,19 @@ const App: React.FC = () => {
     },
     onRestoreLog: (message) => addLog('INFO', message),
   });
+
+  // URL 해시에서 공유 파이프라인 감지 및 복원
+  useEffect(() => {
+    const shared = detectSharedPipeline();
+    if (shared) {
+      resetModules(shared.modules);
+      _setConnections(shared.connections);
+      if (shared.projectName) setProjectName(shared.projectName);
+      window.history.replaceState(null, '', window.location.pathname);
+      addLog('SUCCESS', `공유된 파이프라인 '${shared.projectName}'을 불러왔습니다.`);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // When active tab changes, restore that tab's canvas state
   useEffect(() => {
@@ -1923,8 +1939,8 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           onSuccess: (fileName) => {
             addLog("SUCCESS", `Pipeline saved to '${fileName}'.`);
             setIsDirty(false);
-            setSaveButtonText("Saved!");
-            setTimeout(() => setSaveButtonText("Save"), 2000);
+            setSaveButtonText("저장됨!");
+            setTimeout(() => setSaveButtonText("저장"), 2000);
           },
           onError: (error) => {
             console.error("Failed to save pipeline:", error);
@@ -3262,6 +3278,13 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
       setIsDirty(true);
     },
     [setModules, connections, getDownstreamModules]
+  );
+
+  const updateModuleNotes = useCallback(
+    (id: string, notes: string) => {
+      setModules((prev) => prev.map((m) => m.id === id ? { ...m, notes } : m));
+    },
+    [setModules]
   );
 
   const deleteModules = useCallback(
@@ -10055,6 +10078,21 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
     addLog('INFO', `자동 레이아웃 적용됨 (${modules.length}개 모듈)`);
   };
 
+  const handleShareLink = async () => {
+    if (modules.length === 0) {
+      addLog('WARN', '공유할 모듈이 없습니다. 먼저 파이프라인을 구성해주세요.');
+      return;
+    }
+    try {
+      await copyShareLink(modules, connections, projectName);
+      setShareLinkCopied(true);
+      setTimeout(() => setShareLinkCopied(false), 2000);
+      addLog('SUCCESS', '공유 링크가 클립보드에 복사되었습니다.');
+    } catch {
+      addLog('ERROR', '링크 복사에 실패했습니다. 브라우저 권한을 확인해주세요.');
+    }
+  };
+
   const handleRunAll = () => {
     // Run All runs only the currently active tab's modules/connections (state is always active tab).
 
@@ -10623,7 +10661,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 <h2
                   onClick={() => setIsEditingProjectName(true)}
                   className="text-sm md:text-lg font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-2 py-1 rounded-md cursor-pointer truncate"
-                  title="Click to edit project name"
+                  title="클릭하여 프로젝트 이름 수정"
                 >
                   {projectName}
                 </h2>
@@ -10639,7 +10677,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             onClick={toggleTheme}
             className="p-1.5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors flex-shrink-0"
             title={
-              theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"
+              theme === "dark" ? "라이트 모드로 전환" : "다크 모드로 전환"
             }
           >
             {theme === "dark" ? (
@@ -10652,7 +10690,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             onClick={undo}
             disabled={!canUndo}
             className="p-1.5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md disabled:text-gray-400 dark:disabled:text-gray-600 disabled:cursor-not-allowed transition-colors flex-shrink-0"
-            title="Undo (Ctrl+Z)"
+            title="실행 취소 (Ctrl+Z)"
           >
             <ArrowUturnLeftIcon className="h-5 w-5" />
           </button>
@@ -10660,7 +10698,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             onClick={redo}
             disabled={!canRedo}
             className="p-1.5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md disabled:text-gray-400 dark:disabled:text-gray-600 disabled:cursor-not-allowed transition-colors flex-shrink-0"
-            title="Redo (Ctrl+Y)"
+            title="다시 실행 (Ctrl+Y)"
           >
             <ArrowUturnRightIcon className="h-5 w-5" />
           </button>
@@ -10673,37 +10711,35 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           </button>
           <div className="h-5 border-l border-gray-700"></div>
           <button
-            onClick={handleAutoLayout}
-            disabled={modules.length === 0}
-            className="p-1.5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md disabled:text-gray-400 dark:disabled:text-gray-600 disabled:cursor-not-allowed transition-colors flex-shrink-0"
-            title="자동 레이아웃 — 연결 순서에 따라 모듈 정렬"
+            onClick={handleShareLink}
+            className="p-1.5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors flex-shrink-0"
+            title="파이프라인 공유 링크 복사"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="5" height="5" rx="1"/>
-              <rect x="16" y="3" width="5" height="5" rx="1"/>
-              <rect x="16" y="16" width="5" height="5" rx="1"/>
-              <rect x="3" y="16" width="5" height="5" rx="1"/>
-              <line x1="8" y1="5.5" x2="16" y2="5.5"/>
-              <line x1="21" y1="8" x2="21" y2="16"/>
-              <line x1="16" y1="18.5" x2="8" y2="18.5"/>
-            </svg>
+            {shareLinkCopied ? (
+              <CheckIcon className="h-5 w-5 text-green-500" />
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+            )}
           </button>
           <div className="h-5 border-l border-gray-700"></div>
           <button
             onClick={handleSetFolder}
             className="flex items-center gap-2 px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-md font-semibold transition-colors flex-shrink-0"
-            title="Set Save Folder"
+            title="저장 폴더 설정"
           >
             <FolderOpenIcon className="h-4 w-4" />
-            <span>Set Folder</span>
+            <span>폴더 설정</span>
           </button>
           <button
             onClick={handleLoadPipeline}
             className="flex items-center gap-2 px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-md font-semibold transition-colors flex-shrink-0"
-            title="Load Pipeline"
+            title="파이프라인 불러오기"
           >
             <FolderOpenIcon className="h-4 w-4" />
-            <span>Load</span>
+            <span>불러오기</span>
           </button>
           <button
             onClick={handleSavePipeline}
@@ -10713,9 +10749,9 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 ? "bg-gray-400 dark:bg-gray-600 cursor-not-allowed opacity-50"
                 : "bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600"
             }`}
-            title="Save Pipeline"
+            title="파이프라인 저장"
           >
-            {saveButtonText === "Save" ? (
+            {saveButtonText === "저장" ? (
               <ArrowDownTrayIcon className="h-4 w-4" />
             ) : (
               <CheckIcon className="h-4 w-4" />
@@ -10728,10 +10764,10 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
               onClick={handleRunAll}
               disabled={!!runAllProgress}
               className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-md font-semibold transition-colors flex-shrink-0 ${runAllProgress ? 'bg-green-700 opacity-70 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500'} text-white`}
-              title="Run All Modules"
+              title="전체 모듈 실행"
             >
               <PlayIcon className="h-4 w-4" />
-              <span>{runAllProgress ? `실행 중 (${runAllProgress.current}/${runAllProgress.total})` : 'Run All'}</span>
+              <span>{runAllProgress ? `실행 중 (${runAllProgress.current}/${runAllProgress.total})` : '전체 실행'}</span>
             </button>
             {runAllProgress && (
               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
@@ -10757,8 +10793,8 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             <button
               onClick={() => setIsLeftPanelVisible((v) => !v)}
               className="p-1.5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors flex-shrink-0"
-              aria-label="Toggle modules panel"
-              title="Toggle Modules Panel"
+              aria-label="모듈 패널 토글"
+              title="모듈 패널 열기/닫기"
             >
               <Bars3Icon className="h-5 w-5" />
             </button>
@@ -10784,11 +10820,11 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                     ? "bg-purple-600 text-white"
                     : "bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-200"
                 }`}
-                title="Load Sample Model"
+                title="샘플 모델 불러오기"
                 type="button"
               >
                 <SparklesIcon className="h-4 w-4" />
-                <span>Samples</span>
+                <span>샘플</span>
               </button>
             </div>
             {/* My Work 버튼 */}
@@ -10807,11 +10843,11 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                     ? "bg-purple-600 text-white"
                     : "bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-200"
                 }`}
-                title="My Work"
+                title="내 작업"
                 type="button"
               >
                 <FolderOpenIcon className="h-4 w-4" />
-                <span>My Work</span>
+                <span>내 작업</span>
               </button>
               {isMyWorkMenuOpen && (
                 <div
@@ -11109,7 +11145,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 return !v;
               })}
               className="flex items-center gap-1 md:gap-2 px-1.5 md:px-2 py-0.5 md:py-1 text-[5px] md:text-[8px] bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-md font-semibold transition-colors flex-shrink-0"
-              title="View Full Pipeline Code"
+              title="전체 파이프라인 코드 보기"
             >
               <CodeBracketIcon className="h-1.5 w-1.5 md:h-2.5 md:w-2.5" />
               <span className="whitespace-nowrap">전체 코드</span>
@@ -11117,7 +11153,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             <button
               onClick={() => setIsGoalModalOpen(true)}
               className="flex items-center gap-1 md:gap-2 px-1.5 md:px-2 py-0.5 md:py-1 text-[5px] md:text-[8px] bg-purple-600 dark:bg-purple-600 hover:bg-purple-700 dark:hover:bg-purple-700 text-white rounded-md font-semibold transition-colors flex-shrink-0"
-              title="Generate pipeline from a goal"
+              title="목표로부터 파이프라인 자동 생성"
             >
               <SparklesIcon className="h-1.5 w-1.5 md:h-2.5 md:w-2.5" />
               <span className="whitespace-nowrap">
@@ -11127,7 +11163,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             <button
               onClick={() => setIsDataModalOpen(true)}
               className="flex items-center gap-1 md:gap-2 px-1.5 md:px-2 py-0.5 md:py-1 text-[5px] md:text-[8px] bg-indigo-600 dark:bg-indigo-600 hover:bg-indigo-700 dark:hover:bg-indigo-700 text-white rounded-md font-semibold transition-colors flex-shrink-0"
-              title="Generate pipeline from data"
+              title="데이터로부터 파이프라인 자동 생성"
             >
               <SparklesIcon className="h-1.5 w-1.5 md:h-2.5 md:w-2.5" />
               <span className="whitespace-nowrap">
@@ -11142,7 +11178,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                   ? "bg-gray-300 dark:bg-gray-600 cursor-not-allowed opacity-50"
                   : "bg-blue-600 dark:bg-blue-600 hover:bg-blue-500 dark:hover:bg-blue-500"
               } text-white`}
-              title="Generate PPTs for All Modules"
+              title="모든 모듈 PPT 생성"
             >
               {isGeneratingPPTs ? (
                 <ArrowPathIcon className="h-2.5 w-2.5 md:h-3.5 md:w-3.5 animate-spin" />
@@ -11156,7 +11192,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             <button
               onClick={handleToggleRightPanel}
               className="p-1 md:p-1.5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors flex-shrink-0"
-              title="Toggle Properties Panel"
+              title="속성 패널 열기/닫기"
             >
               <CogIcon className="h-4 w-4 md:h-5 md:w-5" />
             </button>
@@ -11331,6 +11367,14 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             onStartSuggestion={handleSuggestModule}
             areUpstreamModulesReady={areUpstreamModulesReady}
           />
+          <CanvasMinimap
+            modules={modules}
+            pan={pan}
+            scale={scale}
+            containerWidth={canvasContainerRef.current?.clientWidth ?? 800}
+            containerHeight={canvasContainerRef.current?.clientHeight ?? 600}
+            onPanTo={setPan}
+          />
           <div
             onMouseDown={handleControlPanelMouseDown}
             style={{
@@ -11351,7 +11395,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                   adjustScale(-0.1);
                 }}
                 className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700/50 rounded-full text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                title="Zoom Out"
+                title="축소"
               >
                 <MinusIcon className="w-4 h-4" />
               </button>
@@ -11362,7 +11406,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                   setPan({ x: 0, y: 0 });
                 }}
                 className="px-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white min-w-[2.5rem] text-center"
-                title="Reset View"
+                title="뷰 초기화"
               >
                 {Math.round(scale * 100)}%
               </button>
@@ -11372,7 +11416,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                   adjustScale(0.1);
                 }}
                 className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700/50 rounded-full text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                title="Zoom In"
+                title="확대"
               >
                 <PlusIcon className="w-4 h-4" />
               </button>
@@ -11387,7 +11431,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                   handleFitToView();
                 }}
                 className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700/50 rounded-full text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                title="Fit to View"
+                title="화면에 맞추기"
               >
                 <ArrowsPointingOutIcon className="w-4 h-4" />
               </button>
@@ -11397,7 +11441,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                   handleRearrangeModules();
                 }}
                 className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700/50 rounded-full text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                title="Auto Layout"
+                title="자동 레이아웃"
               >
                 <SparklesIcon className="w-4 h-4" />
               </button>
@@ -11432,7 +11476,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             <div
               onMouseDown={handleResizeMouseDown}
               className="flex-shrink-0 w-1.5 cursor-col-resize bg-gray-300 dark:bg-gray-700 hover:bg-blue-500 transition-colors"
-              title="Resize Panel"
+              title="패널 크기 조정"
             />
             <div className="flex-grow h-full min-w-0">
               <PropertiesPanel
@@ -11440,6 +11484,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 projectName={projectName}
                 updateModuleParameters={updateModuleParameters}
                 updateModuleName={updateModuleName}
+                onUpdateNotes={updateModuleNotes}
                 logs={terminalLogs}
                 modules={modules}
                 connections={connections}
