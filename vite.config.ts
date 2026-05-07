@@ -47,7 +47,21 @@ export default defineConfig(({ mode }) => {
         include: ['xlsx']
       },
       build: {
-        chunkSizeWarningLimit: 1000
+        chunkSizeWarningLimit: 2000,
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              // React core — almost never changes
+              'vendor-react': ['react', 'react-dom'],
+              // Supabase — large, rarely changes
+              'vendor-supabase': ['@supabase/supabase-js'],
+              // Google AI SDK
+              'vendor-ai': ['@google/genai'],
+              // xlsx — already auto-split but make it explicit
+              'vendor-xlsx': ['xlsx'],
+            },
+          },
+        },
       }
     };
 });
