@@ -1,26 +1,62 @@
 {
   "Linear_Reg in Boston.ins": {
     "inputData": "Boston House",
-    "description": "이 모델은 보스톤의 집의 위치 및 방수 등을 이용하여 가격을 예측하는 모델로써 회귀 모형인 선형회귀를 사용하여 분석"
+    "description": "이 모델은 보스톤의 집의 위치 및 방수 등을 이용하여 가격을 예측하는 모델로써 회귀 모형인 선형회귀를 사용하여 분석",
+    "tags": ["회귀", "선형회귀", "주택가격"],
+    "modelOrTask": "선형회귀 (회귀)"
   },
   "Linear Regression.ins": {
     "inputData": "데이터 소스",
-    "description": "선형 회귀 모델을 사용한 예측 분석"
+    "description": "선형 회귀 모델을 사용한 예측 분석",
+    "tags": ["회귀", "선형회귀"],
+    "modelOrTask": "선형회귀 (회귀)"
   },
   "Logistic Regression.ins": {
     "inputData": "데이터 소스",
-    "description": "로지스틱 회귀 모델을 사용한 분류 분석"
+    "description": "로지스틱 회귀 모델을 사용한 분류 분석",
+    "tags": ["분류", "로지스틱회귀"],
+    "modelOrTask": "로지스틱회귀 (분류)"
   },
   "Decision Tree.ins": {
     "inputData": "데이터 소스",
-    "description": "의사결정 트리를 사용한 분류 또는 회귀 분석"
+    "description": "의사결정 트리를 사용한 분류 또는 회귀 분석",
+    "tags": ["분류", "회귀", "의사결정나무"],
+    "modelOrTask": "의사결정나무 (분류/회귀)"
   },
   "K Means.ins": {
     "inputData": "데이터 소스",
-    "description": "K-Means 클러스터링을 사용한 비지도 학습 분석"
+    "description": "K-Means 클러스터링을 사용한 비지도 학습 분석",
+    "tags": ["군집", "비지도학습", "K-Means"],
+    "modelOrTask": "K-Means (군집)"
   },
   "Stat Model.ins": {
     "inputData": "데이터 소스",
-    "description": "통계 모델을 사용한 분석"
+    "description": "통계 모델을 사용한 분석",
+    "tags": ["통계", "분석"],
+    "modelOrTask": "통계 모델"
+  },
+  "Book_Automobile_LinearRegression.json": {
+    "inputData": "verify/datasets/imports-85-hdrs.csv (UCI Automobile)",
+    "description": "[Azure ML 책 Ch5] 자동차 특성으로 가격 예측 — 선형회귀. 수치형 10개 특성, train 0.75, seed 42.",
+    "tags": ["회귀", "선형회귀", "Azure ML 책", "Ch5"],
+    "dataFile": "verify/datasets/imports-85-hdrs.csv",
+    "expectedOutput": "R²≈0.7561, RMSE≈5129.9",
+    "modelOrTask": "선형회귀 (회귀)"
+  },
+  "Book_AdultIncome_DecisionTree.json": {
+    "inputData": "verify/datasets/adult.csv (UCI Adult Census Income)",
+    "description": "[Azure ML 책 Ch3] 인구통계로 소득(>50K) 분류 — 의사결정나무(max_depth=8). 책의 Boosted Decision Tree 대체.",
+    "tags": ["분류", "의사결정나무", "Azure ML 책", "Ch3"],
+    "dataFile": "verify/datasets/adult.csv",
+    "expectedOutput": "Accuracy≈0.8322",
+    "modelOrTask": "의사결정나무 (분류, max_depth=8)"
+  },
+  "Book_Wholesale_KMeans.json": {
+    "inputData": "verify/datasets/wholesale_customers.csv (UCI Wholesale customers)",
+    "description": "[Azure ML 책 Ch6] 도매고객 세분화 — K-Means(centroid 4). 책과 동일 군집 수.",
+    "tags": ["군집", "K-Means", "Azure ML 책", "Ch6"],
+    "dataFile": "verify/datasets/wholesale_customers.csv",
+    "expectedOutput": "4개 군집 (277 / 95 / 58 / 10)",
+    "modelOrTask": "K-Means (군집, n_clusters=4)"
   }
 }
