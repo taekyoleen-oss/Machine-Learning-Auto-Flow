@@ -138,3 +138,29 @@ ML Auto Flow는 이 흐름의 **모델링 부분(데이터셋~Evaluate)**을 이
 | 9 | 3-7 재학습 워크플로 | 상 | 장기 |
 
 > 모든 신규/강화 항목은 두 가지 **절대 불변식**을 지킨다: ①Python 재현성(`data_analysis_modules.py` ↔ `codeSnippets.ts` 정합 + 시드 고정 + verify 픽스처), ②두 앱 동기화(공통 변경은 양쪽 동일, JMDC 전용만 차이).
+
+
+---
+
+## 부록: 구현 결과 (2026-06-22)
+
+> 본 개선안의 **공통 I/O 6종 + 모델 개선 3종**이 실제 코드로 구현·검증되었습니다(에이전트 하네스 + Python 재현성 verify). 추천·재학습은 후속 진행 예정.
+
+### 항목별 구현 상태
+| 항목 | 상태 | 비고 |
+|---|---|---|
+| 2-1 Evaluate ROC/AUC·혼동행렬·임계값·PR | ✅ 구현 | EvaluateModel 분류에 ROC-AUC·Average Precision, 임계값 슬라이더·PR 차트(앱), 결정적 |
+| 2-2 회귀지표 정합(RMSE/MAE/상대오차) | ✅ 구현 | RSE·RAE 추가(기존 MSE/R² 보존) |
+| 2-3 데이터 개요/요약 패널 | ✅ 구현 | utils/dataOverview.ts + DataOverviewPanel(읽기전용·클라이언트 계산) |
+| 3-1 그래디언트 부스팅 모듈 | ✅ 구현 | GradientBoosting{Classifier,Regressor}, random_state=42, 픽스처 14 |
+| 3-2 URL 데이터 로더 | ✅ 구현 | 입력층 fetch+/api/proxy-csv, sourceType=url 가산 분기(LoadData 실행 불변) |
+| 3-3 번들 샘플 확장 | ✅ 구현 | Book_* 3종 + 메타 스키마 |
+| 3-4 하이퍼파라미터 스윕 | ✅ 구현 | SweepParameters(GridSearchCV, 정수 cv→결정적), 픽스처 15 |
+| 3-6 배포/스코어링 내보내기 | ✅ 구현 | utils/scoringExport.ts(joblib+FastAPI/Flask), 고급기능 게이트 |
+| 3-5 추천 시스템 모듈 | ⏳ 후속 | NMF/TruncatedSVD(Pyodide 호환) 기반 예정 — 에이전트 API 복구 후 |
+| 3-7 재학습/지속학습 | ⏳ 후속 | 장기 항목 — 후속 진행 |
+
+### 검증 (Python 재현성)
+- `npm run verify:pipelines` → **14/14 PASS** (신규 픽스처 14_gradient_boosting, 15_sweep_gridsearch 포함, 외부 Python 2회 byte-identical).
+- `vite build` 성공. 모든 변경은 가산적·하위호환(LoadData/실행/연결/시각화 불변식 불훼손).
+- ML Auto Flow ↔ JMDC 공통 코드 동기화(byte-identical), JMDC 전용 차이만 유지.
