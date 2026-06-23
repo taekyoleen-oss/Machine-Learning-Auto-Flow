@@ -82,10 +82,13 @@ NetPremiumCalculator · GrossPremiumCalculator · ReserveCalculator · ScenarioR
 배치만 가능하고 동작 불가**다 — DFA에는 군집 체인을 완성하는 **`TrainClusteringModel`·`ClusteringData` 모듈
 자체가 없고**(ML/JMDC에는 있음), 군집 export 템플릿도 없다. 즉 군집 파이프라인을 구성·검증할 수 없다.
 - 성격: 본 작업이 만든 회귀가 아니라 **기존 미완성**(DFA는 회귀/재무 중심이라 군집 패밀리가 미배선).
-- 권고(택1): ① DFA에 군집 패밀리(KMeans/DBSCAN/Hierarchical 템플릿 + TrainClusteringModel + ClusteringData +
-  python)를 ML/JMDC에서 포팅해 완성(군집이 DFA에 필요하면), 또는 ② 사용하지 않는 군집 팔레트 항목을 제거(혼란 방지).
-  ML/JMDC는 군집 패밀리가 완비·검증됨(픽스처 07/08/09/10).
-- **지도학습 핵심 원칙은 3개 앱 모두 충족**(0 갭). 군집은 DFA에서만 별도 결정 필요.
+- **조치(2026-06-23): 팔레트 정리(제거) 완료.** DFA는 회귀·재무 중심이고 군집 포팅은 크고 투기적이라,
+  비기능 군집/PCA 4종(KMeans/Hierarchical/DBSCAN/PCA)을 **DFA의 TOOLBOX + DEFAULT_MODULES에서 제거**했다
+  (enum·python create_*는 하위호환 위해 유지). 이제 DFA는 *배치 가능한 분석 모듈에 갭 0* — "배치 가능 = 검증
+  가능한 Python export"가 성립. build 성공, verify 7/7 유지. 추후 DFA에 군집이 필요해지면 ML/JMDC의 완비된
+  군집 패밀리(템플릿 + TrainClusteringModel + ClusteringData + 픽스처 07~10)를 그대로 포팅하면 된다.
+- **최종 감사 결과: 3개 앱 모두 배치 가능한 분석 모듈의 export 갭 0**(ML/JMDC의 PrincipalComponentAnalysis는
+  `PCA`와 동일 enum 값의 별칭이라 `PCA` 템플릿으로 해석됨 — 갭 아님). 지도학습 핵심 원칙 완전 충족.
 
 ---
 
