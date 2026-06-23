@@ -205,7 +205,7 @@ TransformData·DataFiltering·Correlation·ColumnPlot`을 갖췄다. **격차는
 |---|---|---|
 | (선결) RandomForest 전체코드 export 템플릿 | ✅ 구현 | codeSnippets.ts에 누락돼 있던 RandomForest 템플릿 신설(재현성 갭 해소). DecisionTree/GradientBoosting 미러 |
 | 3-1 자전거 수요예측 예제 | ✅ 구현 | UCI Bike Sharing(17,379행) + `17_bike_demand_rf` 픽스처(RandomForest 회귀, R²≈0.9422) + 샘플·메타 등록 |
-| 2-1 잔차 진단 (요약 통계) | ◑ 부분 구현 | EvaluateModel 회귀에 잔차 mean/std/5수요약/3σ이상치 **결정적 출력**. **시각 차트(EvaluationPreviewModal)는 후속** |
+| 2-1 잔차 진단 (요약 + 시각 차트) | ✅ 구현 | EvaluateModel 회귀에 잔차 mean/std/5수요약/3σ이상치 **결정적 출력**(export) + **EvaluationPreviewModal에 잔차 진단 차트**(잔차 vs 실제 산점도·잔차 분포 히스토그램, `generateResidualPlotPython`, 앱 표시용) |
 | 2-2 교차검증 폴드 리포트 | ✅ 구현 | SweepParameters에 폴드별 mean±std·split 점수 출력(정수 cv→결정적) |
 | 2-3 시계열·순환 특징공학 | ✅ 구현 | **신규 `FeatureEngineer` 모듈**(cyclical sin/cos · interaction a*b · trend 순번). export+인앱 모두 지원, 픽스처 `19_feature_engineer`. 자전거 R² 0.9422→0.9493 개선 |
 | 2-4 순열 특징중요도·가지치기 | ✅ 구현(export) | **신규 `FeatureImportance` 모듈**(sklearn permutation_importance, random_state=42). 픽스처 `20`. 자전거: hr≫workingday≫temp…(holiday·windspeed=가지치기 후보). 인앱은 안내(트리 모델 재예측 불가=정직한 한계), 실제 계산은 내보낸 Python |
@@ -220,7 +220,8 @@ TransformData·DataFiltering·Correlation·ColumnPlot`을 갖췄다. **격차는
 - `npm run verify:pipelines` → **19/19 PASS** (양쪽, 신규 `17_bike_demand_rf`·`18_datafilter_quantile`·`19_feature_engineer`·`20_feature_importance` 포함, 외부 Python 2회 byte-identical).
 - `npm run build` 성공(양쪽). 변경은 전부 가산적·결정적(`.6f`, `np.quantile`), 기존 지표·출력 보존.
 - 공통 변경(RF 템플릿·잔차 요약·CV 리포트·픽스처·샘플·데이터) **양쪽 byte-identical**, JMDC 전용 차이(cohort)만 유지.
-- 잔여(2-1 차트·2-3~2-7·3-2~3-4)는 다음 트랜치 — UI/Playwright 검증 또는 DFA·life matrix 코드베이스 확인이 필요한 항목.
+- 2-1 잔차 시각 차트(EvaluationPreviewModal)·2-3 FeatureEngineer·2-4 FeatureImportance·2-5 분위수 필터까지 구현 완료(빌드 성공·양쪽 byte-identical).
+- 잔여(2-6 EDA 시각화·2-7 커스텀 코드 모듈·3-2 JMDC 예제·3-3/3-4 DFA·life matrix)는 다음 트랜치.
 
 > 본 문서는 산출물 01(Essentials)·02(책자 방향)·03(모델 재현)의 후속이며, Elston 사례의 **공통 개선 + 예제 이식**을 정리했다.
 > 구현은 `ml-flow-orchestrator` 하네스로 두 불변식을 지키며 단계 진행한다.

@@ -3605,9 +3605,10 @@ Elston의 데이터엔 서로 강하게 상관된, 사실상 중복인 특징이
 > 좋은 평가는 단일 점수가 아니라 *오차의 구조*를 본다. 패턴 있는 잔차 → 빠진 특징(더 만들라, 28.2). 한쪽으로 치우친 잔차 →
 > 비대칭 손실 고려(가중·분위수회귀). 시기에 몰린 이상치 → 외생 사건(축제·연휴·타 교통 장애) 조사. 잔차는 다음 반복의 *지도*다.
 
-> **ML Auto Flow 연결.** 회귀 잔차 진단의 **요약 통계**(잔차 mean·std·5수요약·3σ 이상치 수)는 이미 `EvaluateModel`에
-> 가산되어 *결정적으로* 출력·검증된다(개선 2-1 1차 구현, 양쪽 앱 byte-identical). 잔차-vs-실제·시계열·박스플롯의 **시각 차트**는
-> 후속(EvaluationPreviewModal)으로 남겨 두었다. 잔차는 예측−실제로 결정적이라 재현성 불변식에 영향이 없다(5장 임계값 슬라이더와 같은 *앱 표시용* 패턴).
+> **ML Auto Flow 연결.** 회귀 잔차 진단의 **요약 통계**(잔차 mean·std·5수요약·3σ 이상치 수)는 `EvaluateModel`에
+> 가산되어 *결정적으로* 출력·검증된다(개선 2-1, 양쪽 앱 byte-identical). 그리고 **`EvaluateModel` 평가 미리보기 모달에
+> 잔차 진단 차트**가 함께 뜬다 — 왼쪽은 *잔차 vs 실제* 산점도(0 기준선 주위 무작위가 이상적), 오른쪽은 *잔차 분포*
+> 히스토그램(치우침·이상치 확인). 이 차트는 *앱 표시용*이라 내보낸 코드·재현성 불변식에 영향이 없다(5장 임계값 슬라이더와 같은 패턴).
 
 ### 28.7 이상치 필터와 반복 — 폐회로
 
@@ -3668,7 +3669,7 @@ Elston의 데이터엔 서로 강하게 상관된, 사실상 중복인 특징이
 | 신규열·순환·상호작용 특징 | **`FeatureEngineer`**(cyclical·interaction·trend) | ✅ 구현(2-3, 픽스처 19, R² 0.9422→0.9493) |
 | Decision Forest Regression | `RandomForest`(회귀) | ✅ 전체코드 export 템플릿 신설(갭 해소) |
 | Permutation Feature Importance | **`FeatureImportance`**(permutation_importance) | ✅ 구현(2-4, 픽스처 20; export 계산·인앱 안내) |
-| 잔차 플롯(vs실제·시계열·박스) | `EvaluateModel` 잔차 진단 | ◑ 잔차 **요약 통계** 구현(결정적) · 시각 차트는 후속(2-1) |
+| 잔차 플롯(vs실제·시계열·박스) | `EvaluateModel` 잔차 진단(요약+차트) | ✅ 요약 통계 + **잔차 vs 실제·잔차 분포 차트**(2-1); 시계열·범주별 박스는 후속 |
 | Apply SQL Transformation(분위수 필터) | `DataFiltering`(`quantile_above`/`quantile_below`) | ✅ 구현(2-5, 픽스처 18) |
 | Sweep Parameters(랜덤) | `SweepParameters`(결정적 GridSearchCV) | ✅(랜덤은 외부) |
 | Cross Validate(폴드별 평균·std) | `SweepParameters` 폴드별 mean±std·split 점수 | ✅ 구현(2-2) |
