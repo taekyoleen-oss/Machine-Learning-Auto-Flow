@@ -1,7 +1,9 @@
 # ML Auto Flow / JMDC — 프로젝트 지침
 
 ## 절대 불변식
-1. **Python 재현성:** 모든 분석 모듈은 사용자가 내보낸 Python 코드로 동일 결과를 재현 가능해야 한다. `data_analysis_modules.py` ↔ `codeSnippets.ts` 정합성을 항상 유지한다.
+1. **Python 재현성(★최우선):** **모든 데이터 분석은 오직 검증 가능한 Python으로 수행된다.** 캔버스 모듈은 브라우저 Pyodide로 실행되고, "전체 코드 보기"는 외부에서 그대로 도는 standalone Python을 내보내며, `npm run verify:pipelines`가 외부 Python **2회 실행 byte-identical**로 이를 강제한다. `data_analysis_modules.py` ↔ `codeSnippets.ts` 정합성을 항상 유지한다.
+   - **새 분석 모듈 추가 시 반드시 ① `codeSnippets.ts` export 템플릿(결정적, 시드 고정) + ② `verify/pipelines/` 픽스처를 함께 추가**한다. "설정만 출력"하는 인앱 전용 스텁은 금지(분석 로직이 export에 빠지면 외부 재현 불가 = 불변식 위반).
+   - 2026-06-23 전수 점검·복구 완료: RandomForest·LogisticRegression/SVM/LDA/NaiveBayes(분류 4종)·Correlation/OutlierDetector/HypothesisTesting(통계 3종) export 갭 해소, FeatureEngineer·FeatureImportance·PythonScript 신설. ML verify 27/27. (웹 Pyodide 한계로 인앱 미지원인 최신 기법은 `docs/azure_ml_book/05` 참조 — 내보낸 코드는 사용자 환경에서 무제한 확장 가능.)
 2. **두 앱 동기화:** `ML Auto Flow`(베이스)와 `ML_Auto_Flow-JMDC`(JMDC 상위집합)의 공통 변경은 양쪽에 동일 적용하고, JMDC 전용만 차이로 남긴다.
 
 ## 하네스: ML Flow (두 앱 수정·강화·테스트)

@@ -186,3 +186,36 @@ if 'scripted_data' not in dir(): scripted_data = dataframe
 - **검증:** ML 26/26 · JMDC 27/27 PASS, build 성공(양쪽). 3종 템플릿 ML↔JMDC byte-identical. (DFA에는 이 3모듈 없음.)
 - (잔여) ColumnPlot 등 *시각화* 모듈은 matplotlib 이미지 산출이 본질이라 그림은 앱 표시용으로 두되, 수치 분석은
   Correlation/통계 모듈로 충당된다 — 핵심 *수치 분석*의 검증 가능성은 충족.
+
+---
+
+## 6. PythonScript → DFA 적용 + life matrix verify 확장 (2026-06-23)
+
+- **DFA에 PythonScript 적용 완료:** types/constants(팔레트+DEFAULT)·getModuleCode 특수처리(사용자 코드 RAW 삽입)·MODULE_OUTPUT_VAR·PropertiesPanel(⚠️경고; DFA엔 고급 게이트 시스템이 없어 게이트 대신 경고+Pyodide 샌드박스)·pyodideRunner.runUserScriptPython·App.tsx 분기·픽스처 `08_python_script`(dfa_claims_numeric). DFA verify **8/8 PASS**, build 성공.
+- **life matrix flow new verify 확장:** 자체 Vitest 하네스(`verify/pipelines.repro.test.ts`)에 레퍼런스 픽스처 `Reference_TermLife_Age45.lifx`(entryAge 35→45 변형, 결정적·기존과 구분되는 보험료) 추가 → 픽스처 5종, **6 tests PASS**. (life matrix는 Python이 아니라 **순수 TypeScript 계리 엔진**이라 verify도 TS/Vitest. Python-only 원칙은 ML/JMDC/DFA 3개 Pyodide 앱에 적용.)
+
+## 7. ★ 웹 Pyodide(브라우저 Python)의 한계 — 인앱 미지원 최신 데이터분석 기법
+
+질문: "웹베이스 Python을 쓰면 최신 데이터 분석 기법이 적용 안 되는 모델이 있다는데 무엇인가?"
+
+**핵심 구분:** 한계는 **인앱(브라우저 Pyodide) 실행에만** 적용된다. 앱이 내보낸 "전체 코드"는 *표준 Python*이라
+사용자 환경(로컬/서버/Colab)에서 아래 라이브러리로 **무제한 확장 가능**하다.
+
+### 인앱 Pyodide에서 사용 불가(또는 제한) — 그래서 앱이 채택하지 않은 기법
+| 범주 | 미지원 라이브러리 | 사유 | 앱의 대안(인앱) |
+|---|---|---|---|
+| 현대 부스팅 | **XGBoost · LightGBM · CatBoost** | 네이티브 C++/OpenMP 확장 — Pyodide(WASM) 미빌드 | sklearn `GradientBoosting`/`HistGradientBoosting`(22장) |
+| 딥러닝 | **TensorFlow · PyTorch · Keras · JAX** | GPU·대형 네이티브 런타임 부재 | sklearn `MLP`(얕은 신경망, 23장) |
+| 딥러닝 응용 | CNN·RNN/LSTM·**Transformer/BERT**·전이학습·딥 추천(NCF/Wide&Deep) | 위 프레임워크 의존 | 개념만(23·26장), 외부 |
+| GPU 가속 | RAPIDS(cuDF/cuML)·CuPy | GPU 없음 | — |
+| 분산/대용량 | **PySpark · Dask · Ray** | 단일 스레드 브라우저 | 단일 머신(25장) |
+| AutoML | auto-sklearn · TPOT · FLAML · H2O | 무거운 네이티브/탐색 | 결정적 `SweepParameters`(GridSearchCV, 24장) |
+| 현대 NLP | HuggingFace transformers · spaCy 대형 모델 · word2vec/GloVe 사전학습 | 대형 모델·네이티브 | sklearn `TfidfVectorizer`+`NaiveBayes`/`LogisticRegression`(21장) |
+| 베이지안 HPO | Optuna/Hyperopt(부분) | 비결정·외부 의존 | 결정적 격자탐색만(24장) |
+
+### 인앱에서 사용 가능(앱의 모든 모듈은 이 범위로 구현)
+`numpy` · `pandas` · `scikit-learn` · `scipy` · `statsmodels` — 회귀·분류·군집·PCA·통계·가설검정·NMF 추천 등.
+
+### 결론
+- 앱은 **Pyodide 호환 라이브러리(sklearn/statsmodels/scipy)** 만으로 모듈을 구성해 *인앱 실행 + 내보낸 코드 재현*이 모두 성립하도록 설계됨(재현성 불변식).
+- "최신 기법"(XGBoost·딥러닝·분산·AutoML)이 필요하면: **PythonScript**(고급)로 인앱 시제하거나, 더 일반적으로는 **내보낸 standalone Python을 사용자 환경에서 해당 라이브러리로 확장**한다 — 이것이 "재현 가능한 작은 프로토타입 → 외부 대규모"의 다리(책자 20·25·27장).
