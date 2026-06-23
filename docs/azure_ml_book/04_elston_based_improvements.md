@@ -213,7 +213,8 @@ TransformData·DataFiltering·Correlation·ColumnPlot`을 갖췄다. **격차는
 | 2-6 EDA 시각화 강화 | ✅ 이미 충족 | 기존 `ColumnPlot`가 산점도·박스·라인(시계열)·바이올린·KDE·ECDF·QQ·헥스빈·조인트·회귀·히트맵 등 다수 제공(단일/이중 × 수치/범주). Elston EDA 요구를 이미 포괄 — 중복 추가 불필요(de-trend 상관만 niche 후속) |
 | 2-7 커스텀 Python 코드 모듈 | ⏳ 계획(장기) | 고급 게이트·보안 검토 |
 | 3-2 헬스케어 수요예측 예제(JMDC) | ✅ 구현(JMDC 전용) | 합성 일별 외래 수요(730행, `jmdc_monthly_utilization.csv`) + 샘플 `JMDC_Utilization_DemandForecast` + 픽스처 `21`(FeatureEngineer 순환→RF). R²≈0.9676. 자전거 구조의 헬스케어 이전(28.9). JMDC verify 20/20 |
-| 3-3 / 3-4 DFA·life matrix 이식 | ⏳ 계획 | 코드베이스 확인 선행 |
+| 3-3 DFA RandomForest 갭 해소 | ✅ 구현 | DFA-Auto-Flow도 RandomForest 모듈은 있으나 전체코드 템플릿 누락 → 신설(검증된 GB 패턴 미러) + 픽스처 `04_random_forest`. DFA verify **4/4 PASS**, build 성공, push 완료 |
+| 3-4 life matrix 이식 | ⏳ 보류(검증 불가) | "life matrix flow"는 RandomForest 등 지도학습 모듈은 있으나 **verify 하네스·data_analysis_modules.py 부재**→byte-identical 검증 불가. "life matrix flow new"는 WIP(vitest verify, 픽스처 0). 캐노니컬 버전 확정 + verify 하네스 구축이 선행되어야 안전한 이식 가능 |
 | booklet 제9부(28장) | ✅ 작성 완료 | 28장 "구현 상태" 표에 위 1차 결과 반영 |
 
 ### 1차 구현 검증 (Python 재현성·두 앱 동기화)
@@ -221,7 +222,8 @@ TransformData·DataFiltering·Correlation·ColumnPlot`을 갖췄다. **격차는
 - `npm run build` 성공(양쪽). 변경은 전부 가산적·결정적(`.6f`, `np.quantile`), 기존 지표·출력 보존.
 - 공통 변경(RF 템플릿·잔차 요약·CV 리포트·픽스처·샘플·데이터) **양쪽 byte-identical**, JMDC 전용 차이(cohort)만 유지.
 - 2-1 잔차 시각 차트(EvaluationPreviewModal)·2-3 FeatureEngineer·2-4 FeatureImportance·2-5 분위수 필터까지 구현 완료(빌드 성공·양쪽 byte-identical).
-- 잔여(2-6 EDA 시각화·2-7 커스텀 코드 모듈·3-2 JMDC 예제·3-3/3-4 DFA·life matrix)는 다음 트랜치.
+- 2-6 EDA는 기존 ColumnPlot로 충족, 3-2 JMDC 예제·3-3 DFA RandomForest 갭까지 완료.
+- 잔여: **2-7 커스텀 코드 모듈**(보안 검토 필요, 장기) · **3-4 life matrix 이식**(verify 하네스 부재·캐노니컬 버전 미확정으로 보류).
 
 > 본 문서는 산출물 01(Essentials)·02(책자 방향)·03(모델 재현)의 후속이며, Elston 사례의 **공통 개선 + 예제 이식**을 정리했다.
 > 구현은 `ml-flow-orchestrator` 하네스로 두 불변식을 지키며 단계 진행한다.
