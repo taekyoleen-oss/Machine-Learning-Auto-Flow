@@ -41,3 +41,6 @@ database/*.db-wal
 __pycache__/
 *.pyc
 .gstack/
+
+# Playwright MCP session artifacts
+.playwright-mcp/

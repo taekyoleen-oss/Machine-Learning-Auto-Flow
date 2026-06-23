@@ -222,24 +222,19 @@ if 'scripted_data' not in dir(): scripted_data = dataframe
 
 ---
 
-## 8. ★ 발견된 버그 — 인앱 트리모델 스코어링은 선형 근사(export는 정확) [QA #2, 2026-06-23]
+## 8. ★ 인앱 RandomForest/GradientBoosting 정확도 — ✅ 해결됨(2026-06-23) + 잔여 버그
 
-**증상(실증 확인).** `ScoreModel`의 **인앱(브라우저) 실행**은 `scoreModelPython`에서 예측을
-`predictions = intercept + np.dot(X, coefficients)` (선형 공식)로 계산한다. 트리 모델
-(DecisionTree/RandomForest/GradientBoosting)은 계수가 없으므로 `TrainModel`이
-**feature importances를 coefficients 자리에 넣는다**(App.tsx ~6273, `intercept=0`). 결과적으로
-인앱 트리 예측 = `Σ(featureImportance·feature)` 라는 **선형 근사**가 되어 실제 트리 예측과 전혀 다르다.
+### 8.1 진단 정정 (이전 "선형 근사" 기술은 부정확했음)
+재조사 결과, 인앱 `ScoreModel`은 모델별로 경로가 다르다:
+- **선형군(Linear/Logistic/Poisson 등):** `scoreModelPython`의 `intercept + np.dot(X, coefficients)` — 계수가 실제라 정확.
+- **DecisionTree/KNN/NeuralNetwork(ML/JMDC):** App.tsx ScoreModel이 **훈련 데이터로 모델을 재적합**한 뒤 `.predict`하는 전용 `score*Python`(예: `scoreDecisionTreePython`, `random_state=42`)을 호출 — **정확**. (즉 트리 전반이 선형 근사였다는 이전 기술은 틀렸다.)
+- **RandomForest/GradientBoosting(수정 전):** 인앱 `TrainModel`에 **전용 분기가 없어** 회귀/분류 모두 `Math.random()` 시뮬레이션 폴백(App.tsx 구 6497/7649)으로 빠져 **가짜·비결정적** 계수·메트릭을 만들고, ScoreModel은 그 난수에 선형식을 적용 → 무의미한 예측. **재현성 불변식(결정성)도 위반**.
 
-**정량(iris, RandomForest n=40):** 실제 모델 `.predict` **R²=0.9960** vs 인앱 선형근사 **R²=−1.0354**.
-→ 인앱 ScoreModel/EvaluateModel의 트리 결과·지표가 크게 틀리며, TrainModel이 (실제 모델로) 보고하는
-metrics와도 불일치한다.
+### 8.2 수정 (3개 앱 적용·검증 완료)
+- `utils/pyodideRunner.ts`에 **`fitRandomForestPython`·`fitGradientBoostingPython`**(실제 sklearn.ensemble 적합, `random_state=42`, metrics+feature_importances 반환)와 **`scoreRandomForestPython`·`scoreGradientBoostingPython`**(훈련 데이터 재적합 후 `.predict`, DecisionTree score 패턴 미러) 신설.
+- `App.tsx`: TrainModel 회귀·분류 블록에 RF/GB 분기 추가(Math.random 폴백 대체), ScoreModel 재적합 디스패치 조건+핸들러에 RF/GB 추가.
+- **가산적·하위호환**, codeSnippets/create_*와 정합. **export·verify 불변**.
+- **검증:** build 성공(3앱); `verify:pipelines` ML 27/27·JMDC 28/28·DFA 8/8 PASS(내보내기 무변경); **실제 브라우저 Pyodide**에서 fit RF R²≈0.99·GB≈0.999, feature importance가 실제 관계 복원, ScoreModel 2회 재현 동일. 공통 코드 ML↔JMDC byte-identical(DFA는 score 함수 주석만 차이).
 
-**범위·심각도.**
-- **export(내보낸 전체코드)는 정확**하다 — 실제 fitted 모델 `.predict`를 쓰며 `verify:pipelines`로 byte-identical 검증됨(불변식 무관).
-- **인앱 미리보기/평가만** 영향 — 트리 계열에서 잘못된 예측/지표 표시. **3개 Pyodide 앱(ML/JMDC/DFA) 공통**, **기존(pre-existing) 버그**(이번 작업이 만든 것 아님).
-- 선형 모델(Linear/Logistic 등)은 coefficients가 실제 계수라 인앱도 정확.
-
-**권고 수정안(추후, 승인 후 — 핵심 실행엔진 변경이라 신중).**
-- `trainModelPython`이 적합된 모델을 **pickle→base64**로 직렬화해 `TrainedModelOutput`에 저장(가산 필드).
-- `scoreModelPython`은 model_b64가 있으면 **`pickle.loads` 후 `model.predict(X)`**(모든 모델 정확), 없으면 기존 선형 폴백.
-- 가산·하위호환(저장된 구 파이프라인은 폴백). Pyodide에서 pickle/base64 동작. **인앱 검증은 Playwright 필요**(이 변경은 execution engine을 건드리므로 메모리 불변식상 인앱 QA 후 반영).
+### 8.3 ⚠️ 잔여 버그(별개·미해결) — 일부 분류기 인앱 score 함수 누락
+App.tsx ScoreModel은 `scoreSVMPython`·`scoreLDAPython`·`scoreNaiveBayesPython`(그리고 DFA는 `scoreDecisionTreePython`도)를 호출하지만 해당 `pyodideRunner.ts`에 **정의가 없다**(브라우저에서 `typeof === "undefined"` 실증 확인). → **SVM/LDA/NaiveBayes 인앱 스코어링이 런타임 크래시**(ML/JMDC/DFA 공통), DFA는 DecisionTree도 크래시. **export·verify는 정확**(영향 없음, 동적 import라 빌드도 통과해 잠복). 권고: KNN/DecisionTree/RF/GB와 동일하게 훈련 데이터 재적합 `score*Python`을 추가(가산·결정적). RF/GB 수정으로 동일 패턴이 이미 확립되어 있어 낮은 위험. 승인 시 후속 트랜치로 진행.
