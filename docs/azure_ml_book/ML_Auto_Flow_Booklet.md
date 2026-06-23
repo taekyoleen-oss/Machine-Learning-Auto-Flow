@@ -24,7 +24,7 @@
 > 가입·결제·서버 프로비저닝 없이, 웹페이지 하나만 열면 같은 개념을 곧바로 손에 익힐 수 있다.
 >
 > 본문의 모든 **수치·코드·결과**는 앱이 실제로 내보내는 Python을 외부에서 2회 실행해
-> **바이트 단위로 동일(byte-identical)**한지 자동 검증한(`npm run verify:pipelines`, **19/19 PASS**)
+> **바이트 단위로 동일(byte-identical)**한지 자동 검증한(`npm run verify:pipelines`, **27/27 PASS**)
 > 것만 실었다. "책에 적힌 대로 실행하면 같은 결과"가 이 책의 약속이다.
 
 ---
@@ -812,7 +812,7 @@ npm run verify:pipelines
 ```
 
 이 명령은 각 픽스처의 내보낸 코드를 외부 Python으로 **2회 실행**해
-출력이 **바이트 단위로 동일(byte-identical)**한지 단언한다. 현재 **19/19 PASS**이며,
+출력이 **바이트 단위로 동일(byte-identical)**한지 단언한다. 현재 **27/27 PASS**이며,
 다음을 모두 포함한다 — 회귀·분류·전처리·statsmodels(OLS)·신경망·군집 4종(K-Means/DBSCAN/계층적/PCA)·
 책 예제 3종(자동차/도매고객/성인소득)·**그래디언트 부스팅**·**하이퍼파라미터 스윕**·**추천(협업 필터링)**·
 **자전거 수요예측(랜덤 포레스트 회귀, 제9부 28장)**·**분위수 이상치 필터(DataFiltering)**·**특징 공학(FeatureEngineer: 순환·상호작용·추세)**·**순열 특징중요도(FeatureImportance)**.
@@ -3718,7 +3718,7 @@ Elston의 데이터엔 서로 강하게 상관된, 사실상 중복인 특징이
 | `ratings_small.csv` | 사용자-아이템 평점 | `user_id, item_id, rating` |
 | `bike_sharing_hourly.csv` | 자전거 대여 시간별 수요 (17,379행) | UCI Bike Sharing, 원본 헤더 (제9부 28장) |
 
-**검증 픽스처(`verify/pipelines/`) — 19종, `npm run verify:pipelines` 19/19 PASS:**
+**검증 픽스처(`verify/pipelines/`) — 27종, `npm run verify:pipelines` 27/27 PASS:**
 
 ```
 01 회귀(선형)         02 분류(트리)          03 전처리·분석
@@ -3728,9 +3728,12 @@ Elston의 데이터엔 서로 강하게 상관된, 사실상 중복인 특징이
 14 그래디언트 부스팅  15 하이퍼파라미터 스윕  16 추천(협업 필터링)
 17 자전거 수요예측(랜덤 포레스트 회귀, Elston)   18 분위수 이상치 필터(DataFiltering, Elston)
 19 특징 공학(FeatureEngineer: 순환·상호작용·추세, Elston)   20 순열 특징중요도(FeatureImportance, Elston)
+22 로지스틱 회귀      23 SVM 분류            24 LDA 분류
+25 나이브 베이즈      26 상관분석(Correlation)  27 이상치 탐지(OutlierDetector)
+28 가설검정(HypothesisTesting)   29 커스텀 코드(PythonScript)
 ```
 
-*(04는 결번. 클러스터링은 transductive 분기를 포함해 모두 외부 Python 2회 byte-identical로 검증됨.)*
+*(04·21은 결번[21은 JMDC 전용 헬스케어 수요예측]. 22~29는 재현성 원칙 전수 점검 시 추가된 내보내기 갭 복구·신규 모듈 픽스처 — `docs/azure_ml_book/05` 참조. 클러스터링은 transductive 분기 포함 모두 외부 Python 2회 byte-identical로 검증됨.)*
 
 **앱 로드용 샘플(4종):** `Book_Automobile_LinearRegression`, `Book_AdultIncome_DecisionTree`,
 `Book_Wholesale_KMeans`, **`Book_RestaurantRatings_Recommender`**(신규, 12장) — 앱 **"샘플"** 패널에서
@@ -3793,7 +3796,7 @@ Elston의 데이터엔 서로 강하게 상관된, 사실상 중복인 특징이
 - 군집 패밀리 완성(K-Means·DBSCAN·계층적·PCA) 전체코드 내보내기.
 - **`Recommender`(협업 필터링/NMF)** + **재학습 버전 스냅샷 내보내기**.
 - 책 예제 4종(+추천 신규)을 **Samples 패널(Supabase)** 과 **LoadData Examples(데이터)** 에 등록 — 앱 내 즉시 사용.
-- 검증 픽스처 **15/15 PASS** 유지(외부 Python 2회 byte-identical).
+- 검증 픽스처 **27/27 PASS**(외부 Python 2회 byte-identical; 재현성 원칙 전수 점검 후 분류·통계·커스텀코드 픽스처 추가).
 - **제8부(20~27장) 신설** — *Mastering Azure Machine Learning*(Packt, 2020) 기반 대규모·고급 ML 8개 장
   (E2E 파이프라인·특징공학/NLP·앙상블/부스팅·딥러닝·HPO/AutoML·분산학습·추천 심화·배포/MLOps).
   전 장 "개념 → ML Auto Flow 등가 → 정직한 한계·외부 확장" 세 박자, 원문·도식 무복제(도식 전부 새로 작도).

@@ -219,3 +219,27 @@ if 'scripted_data' not in dir(): scripted_data = dataframe
 ### 결론
 - 앱은 **Pyodide 호환 라이브러리(sklearn/statsmodels/scipy)** 만으로 모듈을 구성해 *인앱 실행 + 내보낸 코드 재현*이 모두 성립하도록 설계됨(재현성 불변식).
 - "최신 기법"(XGBoost·딥러닝·분산·AutoML)이 필요하면: **PythonScript**(고급)로 인앱 시제하거나, 더 일반적으로는 **내보낸 standalone Python을 사용자 환경에서 해당 라이브러리로 확장**한다 — 이것이 "재현 가능한 작은 프로토타입 → 외부 대규모"의 다리(책자 20·25·27장).
+
+---
+
+## 8. ★ 발견된 버그 — 인앱 트리모델 스코어링은 선형 근사(export는 정확) [QA #2, 2026-06-23]
+
+**증상(실증 확인).** `ScoreModel`의 **인앱(브라우저) 실행**은 `scoreModelPython`에서 예측을
+`predictions = intercept + np.dot(X, coefficients)` (선형 공식)로 계산한다. 트리 모델
+(DecisionTree/RandomForest/GradientBoosting)은 계수가 없으므로 `TrainModel`이
+**feature importances를 coefficients 자리에 넣는다**(App.tsx ~6273, `intercept=0`). 결과적으로
+인앱 트리 예측 = `Σ(featureImportance·feature)` 라는 **선형 근사**가 되어 실제 트리 예측과 전혀 다르다.
+
+**정량(iris, RandomForest n=40):** 실제 모델 `.predict` **R²=0.9960** vs 인앱 선형근사 **R²=−1.0354**.
+→ 인앱 ScoreModel/EvaluateModel의 트리 결과·지표가 크게 틀리며, TrainModel이 (실제 모델로) 보고하는
+metrics와도 불일치한다.
+
+**범위·심각도.**
+- **export(내보낸 전체코드)는 정확**하다 — 실제 fitted 모델 `.predict`를 쓰며 `verify:pipelines`로 byte-identical 검증됨(불변식 무관).
+- **인앱 미리보기/평가만** 영향 — 트리 계열에서 잘못된 예측/지표 표시. **3개 Pyodide 앱(ML/JMDC/DFA) 공통**, **기존(pre-existing) 버그**(이번 작업이 만든 것 아님).
+- 선형 모델(Linear/Logistic 등)은 coefficients가 실제 계수라 인앱도 정확.
+
+**권고 수정안(추후, 승인 후 — 핵심 실행엔진 변경이라 신중).**
+- `trainModelPython`이 적합된 모델을 **pickle→base64**로 직렬화해 `TrainedModelOutput`에 저장(가산 필드).
+- `scoreModelPython`은 model_b64가 있으면 **`pickle.loads` 후 `model.predict(X)`**(모든 모델 정확), 없으면 기존 선형 폴백.
+- 가산·하위호환(저장된 구 파이프라인은 폴백). Pyodide에서 pickle/base64 동작. **인앱 검증은 Playwright 필요**(이 변경은 execution engine을 건드리므로 메모리 불변식상 인앱 QA 후 반영).
