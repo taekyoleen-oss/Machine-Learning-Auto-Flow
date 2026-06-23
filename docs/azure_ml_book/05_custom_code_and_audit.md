@@ -71,6 +71,22 @@ NetPremiumCalculator · GrossPremiumCalculator · ReserveCalculator · ScenarioR
 
 **우선순위: ★최우선(RandomForest와 동급 버그).** 난이도 낮음~중. 예상 픽스처 +4(ML/JMDC), +3(DFA).
 
+### 2.1 구현 완료 (2026-06-23)
+위 4종 갭을 **수정 완료**했다(원칙 회복 — 모든 지도학습 분석 모듈이 검증 가능한 Python으로 export):
+- **ML/JMDC:** LogisticRegression·SVM·LDA·NaiveBayes 템플릿 신설 + LDA를 DEFAULT_MODULES에 추가(누락분) + 픽스처 22~25(iris 분류). `create_*` 함수와 정합, 결정적(random_state는 해당 모델만).
+- **DFA:** LogisticRegression·SVM·NaiveBayes 템플릿 신설(LDA는 DFA에 없음) + 파생 분류 데이터 `dfa_claims_class.csv`(claim_amount 중앙값 분할) + 픽스처 05~07.
+- **검증:** `verify:pipelines` — **ML 23/23 · JMDC 24/24 · DFA 7/7 PASS**, 3개 앱 build 성공. 공통 코드(템플릿) ML↔JMDC byte-identical.
+
+### 2.2 추가 발견 — DFA 군집(clustering) 패밀리 미완성(원칙 점검 결과)
+원칙 종합 감사 중 발견: **DFA의 KMeans/DBSCAN/HierarchicalClustering은 팔레트·DEFAULT_MODULES에 있으나
+배치만 가능하고 동작 불가**다 — DFA에는 군집 체인을 완성하는 **`TrainClusteringModel`·`ClusteringData` 모듈
+자체가 없고**(ML/JMDC에는 있음), 군집 export 템플릿도 없다. 즉 군집 파이프라인을 구성·검증할 수 없다.
+- 성격: 본 작업이 만든 회귀가 아니라 **기존 미완성**(DFA는 회귀/재무 중심이라 군집 패밀리가 미배선).
+- 권고(택1): ① DFA에 군집 패밀리(KMeans/DBSCAN/Hierarchical 템플릿 + TrainClusteringModel + ClusteringData +
+  python)를 ML/JMDC에서 포팅해 완성(군집이 DFA에 필요하면), 또는 ② 사용하지 않는 군집 팔레트 항목을 제거(혼란 방지).
+  ML/JMDC는 군집 패밀리가 완비·검증됨(픽스처 07/08/09/10).
+- **지도학습 핵심 원칙은 3개 앱 모두 충족**(0 갭). 군집은 DFA에서만 별도 결정 필요.
+
 ---
 
 ## 3. 2-7 커스텀 Python 코드 모듈 설계안 (`PythonScript`)
