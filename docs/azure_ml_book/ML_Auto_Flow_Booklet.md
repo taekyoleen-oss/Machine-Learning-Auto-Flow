@@ -701,6 +701,12 @@ ML Auto Flow의 `Recommender` 모듈은 **자기완결적(self-contained) 협업
 이로써 책의 추천 장(레스토랑 평점 추천)의 학습 목표 — *희소 평점 행렬에서 추천을 생성하기* — 를
 클라우드 추천 서비스 없이 재현한다. 보험/헬스케어 맥락에서는 상품 교차판매 추천 등으로 확장할 여지가 있다.
 
+![Recommender 결과 — 사용자별 Top-N 추천(user_id·rank·item_id·predicted_rating)](images/07_result_recommender.png)
+
+> **그림 12-1.** `Recommender`(NMF) 실행 결과 미리보기. `(user_id, item_id, rating)` 평점 테이블에서
+> 사용자별 상위 추천 아이템과 예측 평점을 돌려준다(앱 샘플 `Book_RestaurantRatings_Recommender`,
+> 데이터 `ratings_small.csv`). 같은 입력이면 같은 추천(결정적, `random_state=42`).
+
 ---
 
 ## 13장 — 모델 재학습과 지속학습

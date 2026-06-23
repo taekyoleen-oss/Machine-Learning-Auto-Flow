@@ -132,12 +132,25 @@ print("RMSE =", mean_squared_error(y_te, pred) ** 0.5)
 
 ---
 
-## 5. 주제 D — 추천: 레스토랑 평점 (책 Ch7) — 확장 제안
+## 5. 주제 D — 추천: 레스토랑 평점 (책 Ch7) — ✅ 구현 완료
 
 - 책은 **Matchbox Recommender**로 사용자×아이템 평점에서 추천을 생성한다.
-- **앱 현황**: 추천(협업 필터링) 모듈 **없음** → 현재 재현 불가.
-- **제안**: 산출물 1의 **3-5 추천 시스템 모듈**(행렬분해/`surprise` 등) 신설 후 재현. Pyodide 패키지 가용성 확인 필요(미지원 시 외부 Python 전용).
+- **앱 현황(갱신):** `Recommender` 모듈 **신설 완료** — 협업 필터링을 **NMF(비음수 행렬분해)** 로 구현
+  (`init='nndsvda'`, `random_state=42` → 완전 결정적). 외부 `surprise`는 Pyodide에 없어, Pyodide의 scikit-learn에
+  포함된 NMF/TruncatedSVD만으로 자기완결 구현 → 브라우저·외부 Python 동일 동작.
+- **데이터/샘플:** `ratings_small.csv`(`user_id, item_id, rating`) + 앱 샘플 `Book_RestaurantRatings_Recommender`
+  (LoadData → Recommender). 검증 픽스처 `16_recommender`.
+- **결과:** 사용자별 Top-N 추천(`user_id, rank, item_id, predicted_rating`) 반환 — 앱 실행으로 확인.
 - 보험/헬스케어 맥락 확장: 상품 교차판매 추천 등 JMDC 시나리오와 연계 여지.
+
+### 0-추가. 앱 내 사용성 개선 (2026-06-23)
+
+- **Samples 패널(DB) 등록:** 4개 Book 샘플을 Supabase `autoflow_samples`(app_section=ML)에 추가 →
+  앱 "샘플"에서 바로 보임(`book-Ch5 automobile…`/`book-Ch3 adult…`/`book-Ch6 wholesale…`/`Book_RestaurantRatings_Recommender`).
+  Supabase는 두 앱 공유라 한 번 등록으로 베이스·JMDC 모두 반영.
+- **LoadData Examples 등록:** 책 데이터 4종(`imports-85-hdrs.csv`·`adult.csv`·`wholesale_customers.csv`·`ratings_small.csv`)을
+  `Examples_in_Load/` + `public/examples-in-load.json`(build)으로 추가 → LoadData에서 더블클릭 로드 가능(양쪽 앱).
+- 검증 픽스처 **15/15 PASS** 유지(양쪽), 모든 공통 자산 byte-identical.
 
 ---
 
@@ -147,10 +160,10 @@ print("RMSE =", mean_squared_error(y_te, pred) ** 0.5)
    ```bash
    npm run verify:pipelines
    ```
-   → `11/12/13_book_*` 포함 **12/12 PASS** 확인(외부 Python 2회 byte-identical).
-2. **앱에서 직접 실행**: 앱 실행(`npm run dev`, http://127.0.0.1:3003) → 샘플 불러오기 →
-   `Book_Automobile_LinearRegression` / `Book_AdultIncome_DecisionTree` / `Book_Wholesale_KMeans` 로드 →
-   `LoadData`의 데이터로 `verify/datasets/`의 해당 CSV 지정 후 실행 → 결과 미리보기/평가 확인.
+   → `11/12/13_book_*` + `16_recommender` 포함 **15/15 PASS** 확인(외부 Python 2회 byte-identical).
+2. **앱에서 직접 실행**: 앱 실행(`npm run dev`, http://127.0.0.1:3003) → **"샘플"** 패널에서
+   `book-Ch5 automobile…` / `book-Ch3 adult…` / `book-Ch6 wholesale…` / `Book_RestaurantRatings_Recommender` 로드 →
+   `LoadData` 선택 후 **Examples**에서 해당 CSV(`imports-85-hdrs.csv` 등) 더블클릭 로드 → 전체 실행 → 결과 미리보기/평가 확인.
 3. **코드 내보내기**: 각 파이프라인 "전체 코드 보기" → 외부 Jupyter/Python에 붙여넣어 동일 결과 재현.
 
 ---
