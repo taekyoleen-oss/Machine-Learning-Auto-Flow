@@ -1,0 +1,408 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e6]:
+      - img [ref=e7]
+      - heading "ML Auto Flow" [level=1] [ref=e9]
+      - generic [ref=e10]:
+        - generic [ref=e11]: "|"
+        - heading "Data Analysis" [level=2] [ref=e12] [cursor=pointer]
+    - generic [ref=e13]:
+      - button "다크 모드로 전환" [ref=e14] [cursor=pointer]:
+        - img [ref=e15]
+      - button "실행 취소 (Ctrl+Z)" [disabled] [ref=e17]:
+        - img [ref=e18]
+      - button "다시 실행 (Ctrl+Y)" [disabled] [ref=e20]:
+        - img [ref=e21]
+      - button "?" [ref=e23] [cursor=pointer]
+      - button "파이프라인 공유 링크 복사" [ref=e25] [cursor=pointer]:
+        - img [ref=e26]
+      - button "폴더 설정" [ref=e33] [cursor=pointer]:
+        - img [ref=e34]
+        - generic [ref=e36]: 폴더 설정
+      - button "불러오기" [ref=e37] [cursor=pointer]:
+        - img [ref=e38]
+        - generic [ref=e40]: 불러오기
+      - button "저장" [disabled] [ref=e41]:
+        - img [ref=e42]
+        - generic [ref=e44]: 저장
+      - button "전체 실행" [ref=e47] [cursor=pointer]:
+        - img [ref=e48]
+        - generic [ref=e50]: 전체 실행
+      - button "⚖️ 모델 비교" [ref=e51] [cursor=pointer]:
+        - generic [ref=e52]: ⚖️ 모델 비교
+    - generic [ref=e53]:
+      - generic [ref=e54]:
+        - button "모듈 패널 토글" [ref=e55] [cursor=pointer]:
+          - img [ref=e56]
+        - button "샘플" [active] [ref=e60] [cursor=pointer]:
+          - img [ref=e61]
+          - generic [ref=e63]: 샘플
+        - button "내 작업" [ref=e65] [cursor=pointer]:
+          - img [ref=e66]
+          - generic [ref=e68]: 내 작업
+      - generic [ref=e69]:
+        - button "고급기능 실행" [ref=e70] [cursor=pointer]:
+          - generic [ref=e71]: 🔒
+          - generic [ref=e72]: 고급기능 실행
+        - button "속성 패널 열기/닫기" [ref=e73] [cursor=pointer]:
+          - img [ref=e74]
+  - generic [ref=e76]:
+    - generic [ref=e77]:
+      - generic [ref=e79] [cursor=pointer]: Tab 1
+      - button "탭 추가" [ref=e80] [cursor=pointer]:
+        - img [ref=e81]
+    - generic [ref=e83]:
+      - complementary [ref=e85]:
+        - generic [ref=e86]:
+          - heading "Modules" [level=3] [ref=e87]
+          - textbox "검색..." [ref=e88]
+        - generic [ref=e90]:
+          - generic [ref=e92]:
+            - generic "텍스트 상자" [ref=e93]:
+              - img [ref=e94]
+              - generic: 텍스트 상자
+            - generic "그룹 상자" [ref=e96] [cursor=pointer]:
+              - img [ref=e97]
+              - generic: 그룹 상자
+            - generic [ref=e99]:
+              - button "글자 크게" [ref=e100] [cursor=pointer]:
+                - img [ref=e101]
+              - button "글자 작게" [ref=e103] [cursor=pointer]:
+                - img [ref=e104]
+          - generic [ref=e106]:
+            - button "Data Preprocess" [ref=e107] [cursor=pointer]:
+              - generic [ref=e108]: Data Preprocess
+              - img [ref=e109]
+            - generic [ref=e111]:
+              - generic "Loads a dataset from a CSV file." [ref=e112]:
+                - img [ref=e113]
+                - generic [ref=e115]: Load Data
+              - generic "Joins two datasets using inner, outer, left, or right join based on key columns." [ref=e116]:
+                - img [ref=e117]
+                - generic [ref=e119]: Data Joiner
+              - generic "Concatenates two datasets vertically (rows) or horizontally (columns)." [ref=e120]:
+                - img [ref=e121]
+                - generic [ref=e123]: Data Concatenator
+              - generic "Selects or removes columns from the data." [ref=e124]:
+                - img [ref=e125]
+                - generic [ref=e127]: Select Data
+              - generic "Filters rows or columns based on specified conditions." [ref=e128]:
+                - img [ref=e129]
+                - generic [ref=e131]: Data Filtering
+              - generic "Resamples data to handle class imbalance (e.g., SMOTE, NearMiss)." [ref=e132]:
+                - img [ref=e133]
+                - generic [ref=e135]: Resample Data
+              - button "Transformer" [ref=e137] [cursor=pointer]:
+                - generic [ref=e138]: Transformer
+                - img [ref=e139]
+          - generic [ref=e141]:
+            - button "Stat Lab" [ref=e142] [cursor=pointer]:
+              - generic [ref=e143]: Stat Lab
+              - img [ref=e144]
+            - generic [ref=e146]:
+              - generic "Computes descriptive statistics for the dataset." [ref=e147]:
+                - img [ref=e148]
+                - generic [ref=e150]: Statistics
+              - generic "Creates various plots for single or double columns." [ref=e151]:
+                - img [ref=e152]
+                - generic [ref=e154]: Column Plot
+              - generic "Detects outliers using multiple methods (IQR, Z-score, Isolation Forest, Boxplot)." [ref=e155]:
+                - img [ref=e156]
+                - generic [ref=e158]: Outlier Detector
+              - generic "Performs various hypothesis tests (t-test, chi-square, ANOVA, KS-test, Shapiro-Wilk, Levene)." [ref=e159]:
+                - img [ref=e160]
+                - generic [ref=e162]: Hypothesis Testing
+              - generic "Checks normality of data using various statistical tests (Shapiro-Wilk, KS-test, Anderson-Darling, D'Agostino's K2)." [ref=e163]:
+                - img [ref=e164]
+                - generic [ref=e166]: Normality Checker
+              - generic "Analyzes correlations between variables (Pearson/Spearman/Kendall, Cramér's V, Heatmap, Pairplot)." [ref=e167]:
+                - img [ref=e168]
+                - generic [ref=e170]: Correlation
+              - generic "Checks Variance Inflation Factor (VIF) to detect multicollinearity in features." [ref=e171]:
+                - img [ref=e172]
+                - generic [ref=e174]: VIF Checker
+          - generic [ref=e175]:
+            - button "Data Analysis" [ref=e176] [cursor=pointer]:
+              - generic [ref=e177]: Data Analysis
+              - img [ref=e178]
+            - generic [ref=e180]:
+              - generic [ref=e181]:
+                - button "Operations" [ref=e182] [cursor=pointer]:
+                  - generic [ref=e183]: Operations
+                  - img [ref=e184]
+                - generic [ref=e186]:
+                  - generic "Splits data into training and testing sets." [ref=e187]:
+                    - img [ref=e188]
+                    - generic [ref=e190]: Split Data
+                  - generic "Trains a machine learning model with data." [ref=e191]:
+                    - img [ref=e192]
+                    - generic [ref=e194]: Train Model
+                  - generic "Tunes a model with GridSearchCV (deterministic) and outputs the best fitted estimator." [ref=e195]:
+                    - img [ref=e196]
+                    - generic [ref=e198]: Sweep Parameters
+                  - generic "Generates predictions on data using a trained model." [ref=e199]:
+                    - img [ref=e200]
+                    - generic [ref=e202]: Score Model
+                  - generic "Evaluates the performance of a model's predictions." [ref=e203]:
+                    - img [ref=e204]
+                    - generic [ref=e206]: Evaluate Model
+                  - generic "Trains a clustering model (K-Means, PCA) with data." [ref=e207]:
+                    - img [ref=e208]
+                    - generic [ref=e210]: Train Clustering Model
+                  - generic "Applies a trained clustering model to assign clusters or transform data." [ref=e211]:
+                    - img [ref=e212]
+                    - generic [ref=e214]: Clustering Data
+                  - generic "Collaborative-filtering recommender (NMF matrix factorization) that outputs Top-N item suggestions per user from a long-format ratings table." [ref=e215]:
+                    - img [ref=e216]
+                    - generic [ref=e218]: Recommender
+              - generic [ref=e219]:
+                - button "Supervised Learning" [ref=e220] [cursor=pointer]:
+                  - generic [ref=e221]: Supervised Learning
+                  - img [ref=e222]
+                - generic [ref=e224]:
+                  - generic "A regression algorithm for predicting continuous values." [ref=e225]:
+                    - img [ref=e226]
+                    - generic [ref=e228]: Linear Regression
+                  - generic "A classification algorithm for predicting binary outcomes." [ref=e229]:
+                    - img [ref=e230]
+                    - generic [ref=e232]: Logistic Regression
+                  - generic "A model using a tree-like structure for classification or regression." [ref=e233]:
+                    - img [ref=e234]
+                    - generic [ref=e236]: Decision Tree
+                  - generic "An ensemble of decision trees for classification or regression." [ref=e237]:
+                    - img [ref=e238]
+                    - generic [ref=e240]: Random Forest
+                  - generic "A boosted ensemble of decision trees for classification or regression." [ref=e241]:
+                    - img [ref=e242]
+                    - generic [ref=e244]: Gradient Boosting
+                  - generic "A multi-layer perceptron for classification or regression." [ref=e245]:
+                    - img [ref=e246]
+                    - generic [ref=e248]: Neural Network
+                  - generic "A model finding the optimal hyperplane for classification or regression." [ref=e249]:
+                    - img [ref=e250]
+                    - generic [ref=e252]: Support Vector Machine
+                  - generic "A dimensionality reduction and classification technique." [ref=e253]:
+                    - img [ref=e254]
+                    - generic [ref=e256]: Linear Discriminant Analysis
+                  - generic "A probabilistic classifier based on Bayes' theorem." [ref=e257]:
+                    - img [ref=e258]
+                    - generic [ref=e260]: Naive Bayes
+                  - generic "An algorithm for classification or regression based on nearest neighbors." [ref=e261]:
+                    - img [ref=e262]
+                    - generic [ref=e264]: K-Nearest Neighbors
+              - generic [ref=e265]:
+                - button "Unsupervised Learning" [ref=e266] [cursor=pointer]:
+                  - generic [ref=e267]: Unsupervised Learning
+                  - img [ref=e268]
+                - generic [ref=e270]:
+                  - generic "An unsupervised algorithm for partitioning data into K clusters." [ref=e271]:
+                    - img [ref=e272]
+                    - generic [ref=e274]: K-Means Clustering
+                  - generic "A technique for dimensionality reduction." [ref=e275]:
+                    - img [ref=e276]
+                    - generic [ref=e279]: Principal Component Analysis
+          - generic [ref=e280]:
+            - button "Tradition Analysis" [ref=e281] [cursor=pointer]:
+              - generic [ref=e282]: Tradition Analysis
+              - img [ref=e283]
+            - generic [ref=e285]:
+              - generic [ref=e286]:
+                - button "Operations" [ref=e287] [cursor=pointer]:
+                  - generic [ref=e288]: Operations
+                  - img [ref=e289]
+                - generic [ref=e291]:
+                  - generic "Advanced statistical models (Gamma, Tweedie)." [ref=e292]:
+                    - img [ref=e293]
+                    - generic [ref=e295]: Stat Models
+                  - generic "Fits a statistical model and shows the summary." [ref=e296]:
+                    - img [ref=e297]
+                    - generic [ref=e299]: Result Model
+                  - generic "Generates predictions using a fitted statistical model." [ref=e300]:
+                    - img [ref=e301]
+                    - generic [ref=e303]: Predict Model
+                  - generic "Checks for overdispersion in count data and recommends appropriate regression models." [ref=e304]:
+                    - img [ref=e305]
+                    - generic [ref=e307]: Diversion Checker
+                  - generic "Evaluates statistical model performance with various metrics." [ref=e308]:
+                    - img [ref=e309]
+                    - generic [ref=e311]: Evaluate Stat
+              - generic [ref=e312]:
+                - button "Statistical Model" [ref=e313] [cursor=pointer]:
+                  - generic [ref=e314]: Statistical Model
+                  - img [ref=e315]
+                - generic [ref=e317]:
+                  - generic "Ordinary Least Squares regression model." [ref=e318]:
+                    - img [ref=e319]
+                    - generic [ref=e321]: OLS Model
+                  - generic "Logistic regression model for binary classification." [ref=e322]:
+                    - img [ref=e323]
+                    - generic [ref=e325]: Logistic Model
+                  - generic "Poisson regression model for count data." [ref=e326]:
+                    - img [ref=e327]
+                    - generic [ref=e329]: Poisson Model
+                  - generic "Quasi-Poisson regression model for overdispersed count data." [ref=e330]:
+                    - img [ref=e331]
+                    - generic [ref=e333]: Quasi-Poisson Model
+                  - generic "Negative Binomial regression model for overdispersed count data." [ref=e334]:
+                    - img [ref=e335]
+                    - generic [ref=e337]: Negative Binomial Model
+          - generic [ref=e338]:
+            - button "Advanced Model" [ref=e339] [cursor=pointer]:
+              - generic [ref=e340]: Advanced Model
+              - img [ref=e341]
+            - generic [ref=e344]:
+              - button "Mortality Model" [ref=e345] [cursor=pointer]:
+                - generic [ref=e346]: Mortality Model
+                - img [ref=e347]
+              - generic [ref=e349]:
+                - generic "Compares and visualizes multiple mortality models." [ref=e350]:
+                  - img [ref=e351]
+                  - generic [ref=e353]: Mortality Result
+                - generic "Lee-Carter mortality forecasting model." [ref=e354]:
+                  - img [ref=e355]
+                  - generic [ref=e357]: Lee-Carter Model
+                - generic "Cairns-Blake-Dowd mortality forecasting model." [ref=e358]:
+                  - img [ref=e359]
+                  - generic [ref=e361]: CBD Model
+                - generic "Age-Period-Cohort mortality forecasting model." [ref=e362]:
+                  - img [ref=e363]
+                  - generic [ref=e365]: APC Model
+                - generic "Renshaw-Haberman mortality forecasting model." [ref=e366]:
+                  - img [ref=e367]
+                  - generic [ref=e369]: RH Model
+                - generic "Plat mortality forecasting model (Lee-Carter + CBD)." [ref=e370]:
+                  - img [ref=e371]
+                  - generic [ref=e373]: Plat Model
+                - generic "P-Spline mortality forecasting model." [ref=e374]:
+                  - img [ref=e375]
+                  - generic [ref=e377]: P-Spline Model
+        - generic [ref=e378]:
+          - paragraph [ref=e379]: Developed by TKLEEN
+          - link "Go to ai4insurance.com" [ref=e380] [cursor=pointer]:
+            - /url: https://www.ai4insurance.com
+            - img [ref=e381]
+      - main [ref=e383]:
+        - generic [ref=e384]:
+          - img
+        - generic [ref=e385]:
+          - generic [ref=e386]:
+            - button "축소" [ref=e387] [cursor=pointer]:
+              - img [ref=e388]
+            - button "80%" [ref=e389] [cursor=pointer]
+            - button "확대" [ref=e390] [cursor=pointer]:
+              - img [ref=e391]
+          - generic [ref=e394]:
+            - button "화면에 맞추기" [ref=e395] [cursor=pointer]:
+              - img [ref=e396]
+            - button "자동 레이아웃" [ref=e398] [cursor=pointer]:
+              - img [ref=e399]
+    - generic [ref=e401]:
+      - generic [ref=e402]:
+        - generic [ref=e403]:
+          - img [ref=e404]
+          - heading "전체 파이프라인 코드" [level=3] [ref=e406]
+        - generic [ref=e407]:
+          - button "?" [ref=e408] [cursor=pointer]
+          - button "코드 복사 (외부 Python 실행용)" [ref=e409] [cursor=pointer]:
+            - img [ref=e410]
+          - button "📓 .ipynb" [disabled] [ref=e412]:
+            - generic [ref=e413]: 📓
+            - generic [ref=e414]: .ipynb
+          - button "▶ 실행" [disabled] [ref=e415]
+      - code [ref=e418]: "# 파이프라인이 비어있습니다. 모듈을 추가해주세요."
+    - generic [ref=e420]:
+      - generic "패널 크기 조정" [ref=e421]
+      - generic [ref=e424]:
+        - generic [ref=e425]:
+          - textbox "Module Name" [disabled] [ref=e427]
+          - paragraph [ref=e428]: 모듈을 선택하세요
+        - paragraph [ref=e431]: Select a module to see its properties.
+  - generic [ref=e433]:
+    - generic [ref=e434]:
+      - generic [ref=e435]:
+        - heading "Samples" [level=2] [ref=e436]
+        - generic [ref=e437]:
+          - button "데이터 입력" [ref=e438] [cursor=pointer]:
+            - img [ref=e439]
+            - text: 데이터 입력
+          - button "Close" [ref=e441] [cursor=pointer]:
+            - img [ref=e442]
+      - generic [ref=e444]:
+        - button "전체" [ref=e445] [cursor=pointer]
+        - button "Regression" [ref=e446] [cursor=pointer]
+        - button "Classification" [ref=e447] [cursor=pointer]
+        - button "Cluster" [ref=e448] [cursor=pointer]
+        - button "ML기타" [ref=e449] [cursor=pointer]
+    - generic [ref=e451]:
+      - generic [ref=e452]:
+        - button "편집" [ref=e453] [cursor=pointer]:
+          - img [ref=e454]
+        - heading "Stat Model" [level=3] [ref=e456]
+        - generic [ref=e457]:
+          - generic [ref=e458]: "카테고리: Regression"
+          - generic [ref=e459]: "모델: Stat Model"
+          - generic [ref=e460]: "입력데이터: N/A"
+          - generic [ref=e461]:
+            - text: "모델 설명:"
+            - paragraph [ref=e462]: 설명 없음
+        - button "모델 실행" [ref=e463] [cursor=pointer]
+      - generic [ref=e464]:
+        - button "편집" [ref=e465] [cursor=pointer]:
+          - img [ref=e466]
+        - heading "Linear_Reg in Boston" [level=3] [ref=e468]
+        - generic [ref=e469]:
+          - generic [ref=e470]: "카테고리: Regression"
+          - generic [ref=e471]: "모델: Linear_Reg in Boston"
+          - generic [ref=e472]: "입력데이터: N/A"
+          - generic [ref=e473]:
+            - text: "모델 설명:"
+            - paragraph [ref=e474]: 설명 없음
+        - button "모델 실행" [ref=e475] [cursor=pointer]
+      - generic [ref=e476]:
+        - button "편집" [ref=e477] [cursor=pointer]:
+          - img [ref=e478]
+        - heading "Linear Regression" [level=3] [ref=e480]
+        - generic [ref=e481]:
+          - generic [ref=e482]: "카테고리: Regression"
+          - generic [ref=e483]: "모델: Linear Regression"
+          - generic [ref=e484]: "입력데이터: N/A"
+          - generic [ref=e485]:
+            - text: "모델 설명:"
+            - paragraph [ref=e486]: 설명 없음
+        - button "모델 실행" [ref=e487] [cursor=pointer]
+      - generic [ref=e488]:
+        - button "편집" [ref=e489] [cursor=pointer]:
+          - img [ref=e490]
+        - heading "Logistic Regression" [level=3] [ref=e492]
+        - generic [ref=e493]:
+          - generic [ref=e494]: "카테고리: Classification"
+          - generic [ref=e495]: "모델: Logistic Regression"
+          - generic [ref=e496]: "입력데이터: N/A"
+          - generic [ref=e497]:
+            - text: "모델 설명:"
+            - paragraph [ref=e498]: 설명 없음
+        - button "모델 실행" [ref=e499] [cursor=pointer]
+      - generic [ref=e500]:
+        - button "편집" [ref=e501] [cursor=pointer]:
+          - img [ref=e502]
+        - heading "K Means" [level=3] [ref=e504]
+        - generic [ref=e505]:
+          - generic [ref=e506]: "카테고리: Classification"
+          - generic [ref=e507]: "모델: K Means"
+          - generic [ref=e508]: "입력데이터: N/A"
+          - generic [ref=e509]:
+            - text: "모델 설명:"
+            - paragraph [ref=e510]: 설명 없음
+        - button "모델 실행" [ref=e511] [cursor=pointer]
+      - generic [ref=e512]:
+        - button "편집" [ref=e513] [cursor=pointer]:
+          - img [ref=e514]
+        - heading "Decision Tree" [level=3] [ref=e516]
+        - generic [ref=e517]:
+          - generic [ref=e518]: "카테고리: Classification"
+          - generic [ref=e519]: "모델: Decision Tree"
+          - generic [ref=e520]: "입력데이터: N/A"
+          - generic [ref=e521]:
+            - text: "모델 설명:"
+            - paragraph [ref=e522]: 설명 없음
+        - button "모델 실행" [ref=e523] [cursor=pointer]

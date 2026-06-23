@@ -1,0 +1,455 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e6]:
+      - img [ref=e7]
+      - heading "ML Auto Flow" [level=1] [ref=e9]
+      - generic [ref=e10]:
+        - generic [ref=e11]: "|"
+        - heading "Decision Tree" [level=2] [ref=e917] [cursor=pointer]
+    - generic [ref=e13]:
+      - button "다크 모드로 전환" [ref=e14] [cursor=pointer]:
+        - img [ref=e15]
+      - button "실행 취소 (Ctrl+Z)" [ref=e17] [cursor=pointer]:
+        - img [ref=e18]
+      - button "다시 실행 (Ctrl+Y)" [disabled] [ref=e20]:
+        - img [ref=e21]
+      - button "?" [ref=e23] [cursor=pointer]
+      - button "파이프라인 공유 링크 복사" [ref=e25] [cursor=pointer]:
+        - img [ref=e26]
+      - button "폴더 설정" [ref=e33] [cursor=pointer]:
+        - img [ref=e34]
+        - generic [ref=e36]: 폴더 설정
+      - button "불러오기" [ref=e37] [cursor=pointer]:
+        - img [ref=e38]
+        - generic [ref=e40]: 불러오기
+      - button "저장" [ref=e41] [cursor=pointer]:
+        - img [ref=e42]
+        - generic [ref=e44]: 저장
+      - button "전체 실행" [ref=e47] [cursor=pointer]:
+        - img [ref=e48]
+        - generic [ref=e50]: 전체 실행
+      - button "⚖️ 모델 비교" [ref=e51] [cursor=pointer]:
+        - generic [ref=e52]: ⚖️ 모델 비교
+    - generic [ref=e53]:
+      - generic [ref=e54]:
+        - button "모듈 패널 토글" [ref=e55] [cursor=pointer]:
+          - img [ref=e56]
+        - button "샘플" [ref=e60] [cursor=pointer]:
+          - img [ref=e61]
+          - generic [ref=e63]: 샘플
+        - button "내 작업" [ref=e65] [cursor=pointer]:
+          - img [ref=e66]
+          - generic [ref=e68]: 내 작업
+      - generic [ref=e69]:
+        - button "고급기능 실행" [ref=e70] [cursor=pointer]:
+          - generic [ref=e71]: 🔒
+          - generic [ref=e72]: 고급기능 실행
+        - button "📋 히스토리 1" [ref=e778] [cursor=pointer]:
+          - generic [ref=e779]: 📋
+          - generic [ref=e780]: 히스토리
+          - generic [ref=e781]: "1"
+        - button "속성 패널 열기/닫기" [ref=e73] [cursor=pointer]:
+          - img [ref=e74]
+  - generic [ref=e76]:
+    - generic [ref=e77]:
+      - generic [ref=e79] [cursor=pointer]: Tab 1
+      - button "탭 추가" [ref=e80] [cursor=pointer]:
+        - img [ref=e81]
+    - generic [ref=e83]:
+      - complementary [ref=e85]:
+        - generic [ref=e86]:
+          - heading "Modules" [level=3] [ref=e87]
+          - textbox "검색..." [ref=e88]
+        - generic [ref=e90]:
+          - generic [ref=e92]:
+            - generic "텍스트 상자" [ref=e93]:
+              - img [ref=e94]
+              - generic: 텍스트 상자
+            - generic "그룹 상자" [ref=e96] [cursor=pointer]:
+              - img [ref=e97]
+              - generic: 그룹 상자
+            - generic [ref=e99]:
+              - button "글자 크게" [ref=e100] [cursor=pointer]:
+                - img [ref=e101]
+              - button "글자 작게" [ref=e103] [cursor=pointer]:
+                - img [ref=e104]
+          - generic [ref=e106]:
+            - button "Data Preprocess" [ref=e107] [cursor=pointer]:
+              - generic [ref=e108]: Data Preprocess
+              - img [ref=e109]
+            - generic [ref=e111]:
+              - generic "Loads a dataset from a CSV file." [ref=e112]:
+                - img [ref=e113]
+                - generic [ref=e115]: Load Data
+              - generic "Joins two datasets using inner, outer, left, or right join based on key columns." [ref=e116]:
+                - img [ref=e117]
+                - generic [ref=e119]: Data Joiner
+              - generic "Concatenates two datasets vertically (rows) or horizontally (columns)." [ref=e120]:
+                - img [ref=e121]
+                - generic [ref=e123]: Data Concatenator
+              - generic "Selects or removes columns from the data." [ref=e124]:
+                - img [ref=e125]
+                - generic [ref=e127]: Select Data
+              - generic "Filters rows or columns based on specified conditions." [ref=e128]:
+                - img [ref=e129]
+                - generic [ref=e131]: Data Filtering
+              - generic "Resamples data to handle class imbalance (e.g., SMOTE, NearMiss)." [ref=e132]:
+                - img [ref=e133]
+                - generic [ref=e135]: Resample Data
+              - button "Transformer" [ref=e137] [cursor=pointer]:
+                - generic [ref=e138]: Transformer
+                - img [ref=e139]
+          - generic [ref=e141]:
+            - button "Stat Lab" [ref=e142] [cursor=pointer]:
+              - generic [ref=e143]: Stat Lab
+              - img [ref=e144]
+            - generic [ref=e146]:
+              - generic "Computes descriptive statistics for the dataset." [ref=e147]:
+                - img [ref=e148]
+                - generic [ref=e150]: Statistics
+              - generic "Creates various plots for single or double columns." [ref=e151]:
+                - img [ref=e152]
+                - generic [ref=e154]: Column Plot
+              - generic "Detects outliers using multiple methods (IQR, Z-score, Isolation Forest, Boxplot)." [ref=e155]:
+                - img [ref=e156]
+                - generic [ref=e158]: Outlier Detector
+              - generic "Performs various hypothesis tests (t-test, chi-square, ANOVA, KS-test, Shapiro-Wilk, Levene)." [ref=e159]:
+                - img [ref=e160]
+                - generic [ref=e162]: Hypothesis Testing
+              - generic "Checks normality of data using various statistical tests (Shapiro-Wilk, KS-test, Anderson-Darling, D'Agostino's K2)." [ref=e163]:
+                - img [ref=e164]
+                - generic [ref=e166]: Normality Checker
+              - generic "Analyzes correlations between variables (Pearson/Spearman/Kendall, Cramér's V, Heatmap, Pairplot)." [ref=e167]:
+                - img [ref=e168]
+                - generic [ref=e170]: Correlation
+              - generic "Checks Variance Inflation Factor (VIF) to detect multicollinearity in features." [ref=e171]:
+                - img [ref=e172]
+                - generic [ref=e174]: VIF Checker
+          - generic [ref=e175]:
+            - button "Data Analysis" [ref=e176] [cursor=pointer]:
+              - generic [ref=e177]: Data Analysis
+              - img [ref=e178]
+            - generic [ref=e180]:
+              - generic [ref=e181]:
+                - button "Operations" [ref=e182] [cursor=pointer]:
+                  - generic [ref=e183]: Operations
+                  - img [ref=e184]
+                - generic [ref=e186]:
+                  - generic "Splits data into training and testing sets." [ref=e187]:
+                    - img [ref=e188]
+                    - generic [ref=e190]: Split Data
+                  - generic "Trains a machine learning model with data." [ref=e191]:
+                    - img [ref=e192]
+                    - generic [ref=e194]: Train Model
+                  - generic "Tunes a model with GridSearchCV (deterministic) and outputs the best fitted estimator." [ref=e195]:
+                    - img [ref=e196]
+                    - generic [ref=e198]: Sweep Parameters
+                  - generic "Generates predictions on data using a trained model." [ref=e199]:
+                    - img [ref=e200]
+                    - generic [ref=e202]: Score Model
+                  - generic "Evaluates the performance of a model's predictions." [ref=e203]:
+                    - img [ref=e204]
+                    - generic [ref=e206]: Evaluate Model
+                  - generic "Trains a clustering model (K-Means, PCA) with data." [ref=e207]:
+                    - img [ref=e208]
+                    - generic [ref=e210]: Train Clustering Model
+                  - generic "Applies a trained clustering model to assign clusters or transform data." [ref=e211]:
+                    - img [ref=e212]
+                    - generic [ref=e214]: Clustering Data
+                  - generic "Collaborative-filtering recommender (NMF matrix factorization) that outputs Top-N item suggestions per user from a long-format ratings table." [ref=e215]:
+                    - img [ref=e216]
+                    - generic [ref=e218]: Recommender
+              - generic [ref=e219]:
+                - button "Supervised Learning" [ref=e220] [cursor=pointer]:
+                  - generic [ref=e221]: Supervised Learning
+                  - img [ref=e222]
+                - generic [ref=e224]:
+                  - generic "A regression algorithm for predicting continuous values." [ref=e225]:
+                    - img [ref=e226]
+                    - generic [ref=e228]: Linear Regression
+                  - generic "A classification algorithm for predicting binary outcomes." [ref=e229]:
+                    - img [ref=e230]
+                    - generic [ref=e232]: Logistic Regression
+                  - generic "A model using a tree-like structure for classification or regression." [ref=e233]:
+                    - img [ref=e234]
+                    - generic [ref=e236]: Decision Tree
+                  - generic "An ensemble of decision trees for classification or regression." [ref=e237]:
+                    - img [ref=e238]
+                    - generic [ref=e240]: Random Forest
+                  - generic "A boosted ensemble of decision trees for classification or regression." [ref=e241]:
+                    - img [ref=e242]
+                    - generic [ref=e244]: Gradient Boosting
+                  - generic "A multi-layer perceptron for classification or regression." [ref=e245]:
+                    - img [ref=e246]
+                    - generic [ref=e248]: Neural Network
+                  - generic "A model finding the optimal hyperplane for classification or regression." [ref=e249]:
+                    - img [ref=e250]
+                    - generic [ref=e252]: Support Vector Machine
+                  - generic "A dimensionality reduction and classification technique." [ref=e253]:
+                    - img [ref=e254]
+                    - generic [ref=e256]: Linear Discriminant Analysis
+                  - generic "A probabilistic classifier based on Bayes' theorem." [ref=e257]:
+                    - img [ref=e258]
+                    - generic [ref=e260]: Naive Bayes
+                  - generic "An algorithm for classification or regression based on nearest neighbors." [ref=e261]:
+                    - img [ref=e262]
+                    - generic [ref=e264]: K-Nearest Neighbors
+              - generic [ref=e265]:
+                - button "Unsupervised Learning" [ref=e266] [cursor=pointer]:
+                  - generic [ref=e267]: Unsupervised Learning
+                  - img [ref=e268]
+                - generic [ref=e270]:
+                  - generic "An unsupervised algorithm for partitioning data into K clusters." [ref=e271]:
+                    - img [ref=e272]
+                    - generic [ref=e274]: K-Means Clustering
+                  - generic "A technique for dimensionality reduction." [ref=e275]:
+                    - img [ref=e276]
+                    - generic [ref=e279]: Principal Component Analysis
+          - generic [ref=e280]:
+            - button "Tradition Analysis" [ref=e281] [cursor=pointer]:
+              - generic [ref=e282]: Tradition Analysis
+              - img [ref=e283]
+            - generic [ref=e285]:
+              - generic [ref=e286]:
+                - button "Operations" [ref=e287] [cursor=pointer]:
+                  - generic [ref=e288]: Operations
+                  - img [ref=e289]
+                - generic [ref=e291]:
+                  - generic "Advanced statistical models (Gamma, Tweedie)." [ref=e292]:
+                    - img [ref=e293]
+                    - generic [ref=e295]: Stat Models
+                  - generic "Fits a statistical model and shows the summary." [ref=e296]:
+                    - img [ref=e297]
+                    - generic [ref=e299]: Result Model
+                  - generic "Generates predictions using a fitted statistical model." [ref=e300]:
+                    - img [ref=e301]
+                    - generic [ref=e303]: Predict Model
+                  - generic "Checks for overdispersion in count data and recommends appropriate regression models." [ref=e304]:
+                    - img [ref=e305]
+                    - generic [ref=e307]: Diversion Checker
+                  - generic "Evaluates statistical model performance with various metrics." [ref=e308]:
+                    - img [ref=e309]
+                    - generic [ref=e311]: Evaluate Stat
+              - generic [ref=e312]:
+                - button "Statistical Model" [ref=e313] [cursor=pointer]:
+                  - generic [ref=e314]: Statistical Model
+                  - img [ref=e315]
+                - generic [ref=e317]:
+                  - generic "Ordinary Least Squares regression model." [ref=e318]:
+                    - img [ref=e319]
+                    - generic [ref=e321]: OLS Model
+                  - generic "Logistic regression model for binary classification." [ref=e322]:
+                    - img [ref=e323]
+                    - generic [ref=e325]: Logistic Model
+                  - generic "Poisson regression model for count data." [ref=e326]:
+                    - img [ref=e327]
+                    - generic [ref=e329]: Poisson Model
+                  - generic "Quasi-Poisson regression model for overdispersed count data." [ref=e330]:
+                    - img [ref=e331]
+                    - generic [ref=e333]: Quasi-Poisson Model
+                  - generic "Negative Binomial regression model for overdispersed count data." [ref=e334]:
+                    - img [ref=e335]
+                    - generic [ref=e337]: Negative Binomial Model
+          - generic [ref=e338]:
+            - button "Advanced Model" [ref=e339] [cursor=pointer]:
+              - generic [ref=e340]: Advanced Model
+              - img [ref=e341]
+            - generic [ref=e344]:
+              - button "Mortality Model" [ref=e345] [cursor=pointer]:
+                - generic [ref=e346]: Mortality Model
+                - img [ref=e347]
+              - generic [ref=e349]:
+                - generic "Compares and visualizes multiple mortality models." [ref=e350]:
+                  - img [ref=e351]
+                  - generic [ref=e353]: Mortality Result
+                - generic "Lee-Carter mortality forecasting model." [ref=e354]:
+                  - img [ref=e355]
+                  - generic [ref=e357]: Lee-Carter Model
+                - generic "Cairns-Blake-Dowd mortality forecasting model." [ref=e358]:
+                  - img [ref=e359]
+                  - generic [ref=e361]: CBD Model
+                - generic "Age-Period-Cohort mortality forecasting model." [ref=e362]:
+                  - img [ref=e363]
+                  - generic [ref=e365]: APC Model
+                - generic "Renshaw-Haberman mortality forecasting model." [ref=e366]:
+                  - img [ref=e367]
+                  - generic [ref=e369]: RH Model
+                - generic "Plat mortality forecasting model (Lee-Carter + CBD)." [ref=e370]:
+                  - img [ref=e371]
+                  - generic [ref=e373]: Plat Model
+                - generic "P-Spline mortality forecasting model." [ref=e374]:
+                  - img [ref=e375]
+                  - generic [ref=e377]: P-Spline Model
+        - generic [ref=e378]:
+          - paragraph [ref=e379]: Developed by TKLEEN
+          - link "Go to ai4insurance.com" [ref=e380] [cursor=pointer]:
+            - /url: https://www.ai4insurance.com
+            - img [ref=e381]
+      - main [ref=e383]:
+        - generic [ref=e384]:
+          - generic:
+            - generic [ref=e918]:
+              - button "Delete Module" [ref=e1101] [cursor=pointer]:
+                - img [ref=e1102]
+              - generic [ref=e920]:
+                - generic [ref=e921]:
+                  - 'generic "Status: Pending" [ref=e922]'
+                  - generic "데이터 로드" [ref=e923]
+                - img [ref=e924]
+              - generic [ref=e926]:
+                - button "이 모듈 실행" [ref=e927] [cursor=pointer]:
+                  - img [ref=e928]
+                - button "Pending" [disabled] [ref=e930]
+            - generic [ref=e934]:
+              - generic [ref=e942]:
+                - generic [ref=e943]:
+                  - 'generic "Status: Pending" [ref=e944]'
+                  - generic "결측치 처리" [ref=e945]
+                - img [ref=e946]
+              - generic [ref=e948]:
+                - button "상위 모듈을 먼저 실행해주세요" [disabled] [ref=e949]:
+                  - img [ref=e950]
+                - button "Pending" [disabled] [ref=e952]
+            - generic [ref=e959]:
+              - generic [ref=e967]:
+                - generic [ref=e968]:
+                  - 'generic "Status: Pending" [ref=e969]'
+                  - generic "데이터 스케일링" [ref=e970]
+                - img [ref=e971]
+              - generic [ref=e973]:
+                - button "상위 모듈을 먼저 실행해주세요" [disabled] [ref=e974]:
+                  - img [ref=e975]
+                - button "Pending" [disabled] [ref=e977]
+            - generic [ref=e984]:
+              - generic [ref=e989]:
+                - generic [ref=e990]:
+                  - 'generic "Status: Pending" [ref=e991]'
+                  - generic "데이터 분할" [ref=e992]
+                - img [ref=e993]
+              - generic [ref=e995]:
+                - button "상위 모듈을 먼저 실행해주세요" [disabled] [ref=e996]:
+                  - img [ref=e997]
+                - button "Pending" [disabled] [ref=e999]
+            - generic [ref=e1006]:
+              - generic [ref=e1014]:
+                - generic [ref=e1015]:
+                  - 'generic "Status: Pending" [ref=e1016]'
+                  - generic "모델 학습" [ref=e1017]
+                - img [ref=e1018]
+              - generic [ref=e1020]:
+                - button "상위 모듈을 먼저 실행해주세요" [disabled] [ref=e1021]:
+                  - img [ref=e1022]
+                - button "Pending" [disabled] [ref=e1024]
+            - generic [ref=e1028]:
+              - generic [ref=e1036]:
+                - generic [ref=e1037]:
+                  - 'generic "Status: Pending" [ref=e1038]'
+                  - generic "모델 예측" [ref=e1039]
+                - img [ref=e1040]
+              - generic [ref=e1042]:
+                - button "상위 모듈을 먼저 실행해주세요" [disabled] [ref=e1043]:
+                  - img [ref=e1044]
+                - button "Pending" [disabled] [ref=e1046]
+            - generic [ref=e1050]:
+              - generic [ref=e1055]:
+                - generic [ref=e1056]:
+                  - 'generic "Status: Pending" [ref=e1057]'
+                  - generic "모델 평가" [ref=e1058]
+                - img [ref=e1059]
+              - generic [ref=e1061]:
+                - button "상위 모듈을 먼저 실행해주세요" [disabled] [ref=e1062]:
+                  - img [ref=e1063]
+                - button "Pending" [disabled] [ref=e1065]
+            - generic [ref=e1069]:
+              - generic [ref=e1071]:
+                - generic [ref=e1072]:
+                  - 'generic "Status: Pending" [ref=e1073]'
+                  - generic "Decision Tree 1" [ref=e1074]
+                - img [ref=e1075]
+              - button "Pending" [disabled] [ref=e1078]
+          - img:
+            - generic:
+              - generic "Double-click to delete connection" [ref=e1082] [cursor=pointer]
+              - generic "Double-click to delete connection" [ref=e1083] [cursor=pointer]
+              - generic "Double-click to delete connection" [ref=e1084] [cursor=pointer]
+              - generic "Double-click to delete connection" [ref=e1085] [cursor=pointer]
+              - generic "Double-click to delete connection" [ref=e1086] [cursor=pointer]
+              - generic "Double-click to delete connection" [ref=e1087] [cursor=pointer]
+              - generic "Double-click to delete connection" [ref=e1088] [cursor=pointer]
+              - generic "Double-click to delete connection" [ref=e1089] [cursor=pointer]
+        - img [ref=e717]
+        - generic [ref=e385]:
+          - generic [ref=e386]:
+            - button "축소" [ref=e387] [cursor=pointer]:
+              - img [ref=e388]
+            - button "26%" [ref=e799] [cursor=pointer]
+            - button "확대" [ref=e390] [cursor=pointer]:
+              - img [ref=e391]
+          - generic [ref=e394]:
+            - button "화면에 맞추기" [ref=e395] [cursor=pointer]:
+              - img [ref=e396]
+            - button "자동 레이아웃" [ref=e398] [cursor=pointer]:
+              - img [ref=e399]
+    - generic [ref=e401]:
+      - generic [ref=e402]:
+        - generic [ref=e403]:
+          - img [ref=e404]
+          - heading "전체 파이프라인 코드" [level=3] [ref=e406]
+        - generic [ref=e407]:
+          - button "?" [ref=e408] [cursor=pointer]
+          - button "코드 복사 (외부 Python 실행용)" [ref=e409] [cursor=pointer]:
+            - img [ref=e410]
+          - button "📓 .ipynb" [ref=e412] [cursor=pointer]:
+            - generic [ref=e413]: 📓
+            - generic [ref=e414]: .ipynb
+          - button "▶ 실행" [ref=e415] [cursor=pointer]
+      - paragraph [ref=e1099]: ⚠️ LoadData 모듈을 먼저 실행해야 Pyodide에서 데이터를 읽을 수 있습니다.
+      - code [ref=e418]: "# 전체 파이프라인 실행 코드 (외부 Python에서 그대로 실행 가능 · 동일 결과 재현) import pandas as pd import numpy as np # ── [1/8] 데이터 로드 (LoadData) ── import pandas as pd file_path = 'glass06.csv' dataframe = pd.read_csv(file_path) data_module_1 = dataframe print(f\"[데이터 로드] shape: {data_module_1.shape}\") print(data_module_1.head(5).to_string()) print() # ── [2/8] 결측치 처리 (HandleMissingValues) ── dataframe = data_module_1 # ← [데이터 로드] 출력 import pandas as pd import numpy as np from sklearn.impute import SimpleImputer, KNNImputer def handle_missing_values(df: pd.DataFrame, method: str = 'remove_row', strategy: str = 'mean', columns: list = None, n_neighbors: int = 5): \"\"\" 결측치를 처리합니다. \"\"\" print(f\"결측치 처리 방법: 'remove_row'\") df_processed = df.copy() if method == 'remove_row': original_shape = df_processed.shape df_processed = df_processed.dropna() print(f\"행 제거 완료. {original_shape[0]} -> {df_processed.shape[0]} 행\") elif method == 'impute': cols_to_impute = columns if columns else df_processed.select_dtypes(include=[np.number]).columns.tolist() for col in cols_to_impute: if col not in df_processed.columns: continue if df_processed[col].isnull().any(): if strategy == 'mean': fill_value = df_processed[col].mean() elif strategy == 'median': fill_value = df_processed[col].median() elif strategy == 'mode': fill_value = df_processed[col].mode()[0] if not df_processed[col].mode().empty else 0 else: fill_value = df_processed[col].mean() df_processed[col].fillna(fill_value, inplace=True) print(f\"컬럼 '{col}' 결측치를 'mean' 값({fill_value:.2f})으로 대체\") elif method == 'knn': numeric_cols = df_processed.select_dtypes(include=[np.number]).columns.tolist() if len(numeric_cols) > 0: imputer = KNNImputer(n_neighbors=n_neighbors) df_processed[numeric_cols] = imputer.fit_transform(df_processed[numeric_cols]) print(f\"KNN 방법으로 결측치 처리 완료 (n_neighbors=5)\") else: print(\"경고: 수치형 컬럼이 없어 KNN 방법을 사용할 수 없습니다.\") return df_processed p_column_selections = {'y': {'type': 'number', 'selected': True}, 'x1': {'type': 'number', 'selected': True}, 'x2': {'type': 'number', 'selected': True}, 'x3': {'type': 'number', 'selected': True}, 'x4': {'type': 'number', 'selected': True}, 'x5': {'type': 'number', 'selected': True}, 'x6': {'type': 'number', 'selected': True}, 'x7': {'type': 'number', 'selected': True}, 'x8': {'type': 'number', 'selected': True}, 'x9': {'type': 'number', 'selected': True}} p_columns = [c for c, s in p_column_selections.items() if isinstance(s, dict) and s.get('selected', False)] or None cleaned_data = handle_missing_values(dataframe, 'remove_row', 'mean', p_columns, 5) data_module_1 = cleaned_data print(f\"[결측치 처리] shape: {data_module_1.shape}\") print(data_module_1.head(5).to_string()) print() # ── [3/8] 데이터 스케일링 (ScalingTransform) ── dataframe = data_module_1 # ← [결측치 처리] 출력 from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler import pandas as pd import numpy as np def normalize_data(df: pd.DataFrame, method: str = 'MinMax', columns: list = None): \"\"\" 데이터를 정규화합니다. \"\"\" print(f\"데이터 정규화 방법: 'MinMax'\") df_normalized = df.copy() if not columns: # None 또는 빈 리스트면 전체 수치형 컬럼을 대상으로 함 columns = df_normalized.select_dtypes(include=[np.number]).columns.tolist() if method == 'MinMax': scaler = MinMaxScaler() elif method == 'StandardScaler': scaler = StandardScaler() elif method == 'RobustScaler': scaler = RobustScaler() else: print(f\"알 수 없는 정규화 방법: 'MinMax'. MinMax를 사용합니다.\") scaler = MinMaxScaler() df_normalized[columns] = scaler.fit_transform(df_normalized[columns]) print(f\"정규화 완료. 컬럼: {columns}\") return df_normalized column_selections = {'y': {'type': 'number', 'selected': True}, 'x1': {'type': 'number', 'selected': True}, 'x2': {'type': 'number', 'selected': True}, 'x3': {'type': 'number', 'selected': True}, 'x4': {'type': 'number', 'selected': True}, 'x5': {'type': 'number', 'selected': True}, 'x6': {'type': 'number', 'selected': True}, 'x7': {'type': 'number', 'selected': True}, 'x8': {'type': 'number', 'selected': True}, 'x9': {'type': 'number', 'selected': True}} p_columns = [col for col, sel in column_selections.items() if sel.get('selected', False) and col in dataframe.columns] normalized_data = normalize_data(dataframe, 'MinMax', p_columns) data_module_1 = normalized_data print(f\"[데이터 스케일링] shape: {data_module_1.shape}\") print(data_module_1.head(5).to_string()) print() # ── [4/8] 데이터 분할 (SplitData) ── dataframe = data_module_1 # ← [데이터 스케일링] 출력 from sklearn.model_selection import train_test_split import pandas as pd df = dataframe.copy() df.index = range(len(df)) stratify_array = None if None and None != \"None\": stratify_array = df[None] split_kwargs = {} split_kwargs['train_size'] = 0.75 split_kwargs['random_state'] = 43 split_kwargs['shuffle'] = True if stratify_array is not None: split_kwargs['stratify'] = stratify_array train_data, test_data = train_test_split(df, **split_kwargs) data_module_1_train = train_data data_module_1_test = test_data print(f\"[데이터 분할] train: {data_module_1_train.shape}, test: {data_module_1_test.shape}\") print() # ── [5/8] Decision Tree 1 (DecisionTree) ── from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor p_max_depth = None if None else None p_class_weight = None if None else None if 'classification' == 'classification': criterion_clf = 'gini'.lower() if 'gini' else 'gini' model = DecisionTreeClassifier( criterion=criterion_clf, max_depth=p_max_depth, min_samples_split=2, min_samples_leaf=1, class_weight=p_class_weight, random_state=42 ) else: criterion_reg = 'squared_error' if 'gini' == 'mse' else 'absolute_error' model = DecisionTreeRegressor( criterion=criterion_reg, max_depth=p_max_depth, min_samples_split=2, min_samples_leaf=1, random_state=42 ) print(f\"Decision Tree model instance created successfully ({'classification'}).\") print(f\" Criterion: {'gini'}\") print(f\" Max Depth: {p_max_depth}\") print(f\" Min Samples Split: {2}\") print(f\" Min Samples Leaf: {1}\") if 'classification' == 'classification': print(f\" Class Weight: {p_class_weight}\") model_module_1 = model print(f\"[Decision Tree 1] 모델: {model_module_1}\") print() # ── [6/8] 모델 학습 (TrainModel) ── dataframe = data_module_1_train # ← [데이터 분할] 출력 trained_model = model_module_1 # ← [Decision Tree 1] 출력 import pandas as pd p_feature_columns = ['x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x7', 'x8', 'x9'] X_train = dataframe[p_feature_columns] y_train = dataframe['y'] trained_model = model.fit(X_train, y_train) model_module_1 = trained_model print(f\"[모델 학습] 모델: {model_module_1}\") print() # ── [7/8] 모델 예측 (ScoreModel) ── dataframe = data_module_1_test # ← [데이터 분할] 출력 trained_model = model_module_1 # ← [모델 학습] 출력 import pandas as pd if hasattr(trained_model, 'feature_names_in_'): feature_columns = list(trained_model.feature_names_in_) else: feature_columns = dataframe.select_dtypes(include=['number']).columns.tolist() X_second = dataframe[feature_columns] predictions = trained_model.predict(X_second) scored_data = dataframe.copy() scored_data['Predict'] = predictions data_module_1 = scored_data print(f\"[모델 예측] shape: {data_module_1.shape}\") print(data_module_1.head(5).to_string()) print() # ── [8/8] 모델 평가 (EvaluateModel) ── dataframe = data_module_1 # ← [모델 예측] 출력 from sklearn.metrics import ( accuracy_score, precision_score, recall_score, f1_score, mean_squared_error, mean_absolute_error, r2_score, roc_auc_score, average_precision_score, ) import pandas as pd import numpy as np y_true = scored_data['y'] y_pred = scored_data['y_Predict_Proba_1'] if 'classification' == 'classification': accuracy = accuracy_score(y_true, y_pred) precision = precision_score(y_true, y_pred, average='weighted', zero_division=0) recall = recall_score(y_true, y_pred, average='weighted', zero_division=0) f1 = f1_score(y_true, y_pred, average='weighted', zero_division=0) evaluation_metrics = { 'accuracy': accuracy, 'precision': precision, 'recall': recall, 'f1_score': f1 } print(\"Classification Evaluation Metrics:\") print(f\" Accuracy: {accuracy:.6f}\") print(f\" Precision: {precision:.6f}\") print(f\" Recall: {recall:.6f}\") print(f\" F1-Score: {f1:.6f}\") roc_auc = None avg_precision = None try: classes_sorted = sorted(pd.unique(y_true).tolist()) feat_cols = list(getattr(trained_model, 'feature_names_in_', [])) if not feat_cols: feat_cols = scored_data.select_dtypes(include=['number']).columns.tolist() X_eval = scored_data[feat_cols] if hasattr(trained_model, 'predict_proba'): y_score = np.asarray(trained_model.predict_proba(X_eval)) elif hasattr(trained_model, 'decision_function'): y_score = np.asarray(trained_model.decision_function(X_eval)) else: y_score = None if y_score is not None: if len(classes_sorted) == 2: if y_score.ndim == 2 and y_score.shape[1] >= 2: pos_score = y_score[:, 1] else: pos_score = y_score.ravel() pos_label = classes_sorted[1] y_bin = (np.asarray(y_true) == pos_label).astype(int) roc_auc = float(roc_auc_score(y_bin, pos_score)) avg_precision = float(average_precision_score(y_bin, pos_score)) else: roc_auc = float(roc_auc_score( y_true, y_score, multi_class='ovr', average='macro' )) except Exception: roc_auc = None avg_precision = None if roc_auc is not None: evaluation_metrics['roc_auc'] = roc_auc print(f\" ROC-AUC: {roc_auc:.6f}\") else: print(\" ROC-AUC: N/A (model has no probability/score output)\") if avg_precision is not None: evaluation_metrics['average_precision'] = avg_precision print(f\" Average Precision (PR-AUC): {avg_precision:.6f}\") else: print(\" Average Precision (PR-AUC): N/A (binary probability scores required)\") else: # regression mse = mean_squared_error(y_true, y_pred) rmse = np.sqrt(mse) mae = mean_absolute_error(y_true, y_pred) r2 = r2_score(y_true, y_pred) y_true_arr = np.asarray(y_true, dtype=float) y_pred_arr = np.asarray(y_pred, dtype=float) y_mean = float(np.mean(y_true_arr)) ss_res = float(np.sum((y_true_arr - y_pred_arr) ** 2)) ss_tot = float(np.sum((y_true_arr - y_mean) ** 2)) abs_res = float(np.sum(np.abs(y_true_arr - y_pred_arr))) abs_tot = float(np.sum(np.abs(y_true_arr - y_mean))) rse = (ss_res / ss_tot) if ss_tot > 0 else float('nan') # Relative Squared Error rae = (abs_res / abs_tot) if abs_tot > 0 else float('nan') # Relative Absolute Error evaluation_metrics = { 'mse': mse, 'rmse': rmse, 'mae': mae, 'r2': r2, 'relative_squared_error': rse, 'relative_absolute_error': rae } print(\"Regression Evaluation Metrics:\") print(f\" Mean Squared Error (MSE): {mse:.6f}\") print(f\" Root Mean Squared Error (RMSE): {rmse:.6f}\") print(f\" Mean Absolute Error (MAE): {mae:.6f}\") print(f\" R-squared (R²): {r2:.6f}\") print(f\" Relative Squared Error (RSE): {rse:.6f}\") print(f\" Relative Absolute Error (RAE): {rae:.6f}\") eval_module_1 = evaluation_metrics print(f\"[모델 평가] 완료\") print(eval_module_1) print() # ── 파이프라인 실행 완료 ──"
+    - generic [ref=e420]:
+      - generic "패널 크기 조정" [ref=e421]
+      - generic [ref=e424]:
+        - generic [ref=e425]:
+          - generic [ref=e426]:
+            - textbox "Module Name" [ref=e427]: 데이터 로드
+            - button "설명" [ref=e1104] [cursor=pointer]:
+              - img [ref=e1105]
+              - text: 설명
+            - button "모듈 실행" [ref=e1107] [cursor=pointer]:
+              - img [ref=e1108]
+          - paragraph [ref=e428]: LoadData
+        - generic [ref=e1111]:
+          - button "속성" [ref=e1112] [cursor=pointer]
+          - button "미리보기" [ref=e1113] [cursor=pointer]
+          - button "터미널" [ref=e1114] [cursor=pointer]
+        - generic [ref=e430]:
+          - generic [ref=e1115]:
+            - heading "Parameters" [level=4] [ref=e1116]
+            - generic [ref=e1118]:
+              - generic [ref=e1119]: Source
+              - generic [ref=e1120]:
+                - textbox "No file selected" [ref=e1121]: glass06.csv
+                - button "Browse..." [ref=e1122] [cursor=pointer]
+              - generic [ref=e1123]:
+                - generic [ref=e1124]: 또는 URL에서 불러오기
+                - generic [ref=e1125]:
+                  - textbox "https://example.com/data.csv" [ref=e1126]
+                  - button "URL 로드" [ref=e1127] [cursor=pointer]
+              - button "엑셀 데이터 직접 입력" [ref=e1128] [cursor=pointer]
+              - generic [ref=e1129]:
+                - generic [ref=e1130]:
+                  - heading "Examples" [level=4] [ref=e1131]
+                  - button "Example로 저장" [disabled] [ref=e1132]:
+                    - img [ref=e1133]
+                    - generic [ref=e1135]: Example로 저장
+                - generic [ref=e1136]:
+                  - generic "Double-click to load" [ref=e1137] [cursor=pointer]: binary_classification_data.csv
+                  - generic "Double-click to load" [ref=e1138] [cursor=pointer]: BostonHousing.csv
+                  - generic "Double-click to load" [ref=e1139] [cursor=pointer]: customer_churn.csv
+                  - generic "Double-click to load" [ref=e1140] [cursor=pointer]: glass06.csv
+                  - generic "Double-click to load" [ref=e1141] [cursor=pointer]: insurance_claims.csv
+                  - generic "Double-click to load" [ref=e1142] [cursor=pointer]: iris.csv
+                  - generic "Double-click to load" [ref=e1143] [cursor=pointer]: titanic_train.csv
+                  - generic "Double-click to load" [ref=e1144] [cursor=pointer]: xol_claims_data.csv
+          - generic [ref=e1145]:
+            - generic [ref=e1146]: 📝 메모
+            - textbox "이 모듈에 대한 메모를 입력하세요..." [ref=e1147]
