@@ -210,9 +210,9 @@ TransformData·DataFiltering·Correlation·ColumnPlot`을 갖췄다. **격차는
 | 2-3 시계열·순환 특징공학 | ✅ 구현 | **신규 `FeatureEngineer` 모듈**(cyclical sin/cos · interaction a*b · trend 순번). export+인앱 모두 지원, 픽스처 `19_feature_engineer`. 자전거 R² 0.9422→0.9493 개선 |
 | 2-4 순열 특징중요도·가지치기 | ✅ 구현(export) | **신규 `FeatureImportance` 모듈**(sklearn permutation_importance, random_state=42). 픽스처 `20`. 자전거: hr≫workingday≫temp…(holiday·windspeed=가지치기 후보). 인앱은 안내(트리 모델 재예측 불가=정직한 한계), 실제 계산은 내보낸 Python |
 | 2-5 분위수 이상치 필터 | ✅ 구현 | DataFiltering에 `quantile_above`/`quantile_below` 연산자 + UI + 픽스처 `18_datafilter_quantile`(자전거 5~95% 트리밍). 결정적·훈련셋 한정 권장 |
-| 2-6 EDA 시각화 강화 | ⏳ 계획 | 후속 |
+| 2-6 EDA 시각화 강화 | ✅ 이미 충족 | 기존 `ColumnPlot`가 산점도·박스·라인(시계열)·바이올린·KDE·ECDF·QQ·헥스빈·조인트·회귀·히트맵 등 다수 제공(단일/이중 × 수치/범주). Elston EDA 요구를 이미 포괄 — 중복 추가 불필요(de-trend 상관만 niche 후속) |
 | 2-7 커스텀 Python 코드 모듈 | ⏳ 계획(장기) | 고급 게이트·보안 검토 |
-| 3-2 헬스케어 수요예측 예제(JMDC) | ⏳ 계획 | 후속 |
+| 3-2 헬스케어 수요예측 예제(JMDC) | ✅ 구현(JMDC 전용) | 합성 일별 외래 수요(730행, `jmdc_monthly_utilization.csv`) + 샘플 `JMDC_Utilization_DemandForecast` + 픽스처 `21`(FeatureEngineer 순환→RF). R²≈0.9676. 자전거 구조의 헬스케어 이전(28.9). JMDC verify 20/20 |
 | 3-3 / 3-4 DFA·life matrix 이식 | ⏳ 계획 | 코드베이스 확인 선행 |
 | booklet 제9부(28장) | ✅ 작성 완료 | 28장 "구현 상태" 표에 위 1차 결과 반영 |
 
