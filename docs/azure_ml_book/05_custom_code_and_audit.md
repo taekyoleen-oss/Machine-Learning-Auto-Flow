@@ -158,3 +158,22 @@ if 'scripted_data' not in dir(): scripted_data = dataframe
 > **요지.** 이번 점검의 최대 수확은 **#1(4개 export 템플릿 갭)** 이다 — RandomForest와 같은 잠복 버그가
 > 4종 더 있었고 실증으로 확인했다. life matrix 하네스는 이미 존재(통과)하므로 별도 구축 불필요.
 > 커스텀 코드 모듈(2-7)은 보안 설계를 갖춘 위 설계안대로 진행하면 된다.
+
+---
+
+## 5. 인앱 전용 분석 모듈의 export-Python화 (2026-06-23 완료)
+
+원칙("모든 분석 모듈의 작업이 검증 가능한 Python으로 export") 점검 중, **export가 설정-스텁**이던
+분석 모듈 3종을 발견하고 실제 Python으로 교체했다(인앱 전용 → 외부 재현 가능).
+
+| 모듈 | 이전(스텁) | 변경(실제 Python) |
+|---|---|---|
+| Correlation | `print("...configured...")` | `dataframe[cols].corr('pearson')` 상관행렬 출력 |
+| OutlierDetector | `print("...configured...")` | IQR 1.5배 규칙으로 열별 이상치 수·경계 출력 |
+| HypothesisTesting | `print("...configured...")` | scipy 검정 디스패치(t/카이제곱/ANOVA/KS/Shapiro/Levene) — 인앱 `performHypothesisTests`와 동일 로직, 결과 출력 |
+
+- 전부 결정적(고정 데이터→고정 통계/p값). 분석 모듈이라 `dataframe`은 변경 없이 통과(MODULE_OUTPUT_VAR=dataframe).
+- 픽스처 `26_correlation`·`27_outlier_detector`·`28_hypothesis_testing`(iris) 추가.
+- **검증:** ML 26/26 · JMDC 27/27 PASS, build 성공(양쪽). 3종 템플릿 ML↔JMDC byte-identical. (DFA에는 이 3모듈 없음.)
+- (잔여) ColumnPlot 등 *시각화* 모듈은 matplotlib 이미지 산출이 본질이라 그림은 앱 표시용으로 두되, 수치 분석은
+  Correlation/통계 모듈로 충당된다 — 핵심 *수치 분석*의 검증 가능성은 충족.
