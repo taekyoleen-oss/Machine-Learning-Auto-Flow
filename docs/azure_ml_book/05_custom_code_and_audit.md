@@ -144,6 +144,15 @@ if 'scripted_data' not in dir(): scripted_data = dataframe
 
 **우선순위: 중(2번 항목 이후).** 보안 검토 동반 권장.
 
+### 3.6 구현 완료 (2026-06-23)
+`PythonScript` 모듈을 설계안대로 **ML·JMDC에 구현**했다:
+- types/constants(TOOLBOX+DEFAULT, `code` 파라미터)·`getModuleCode`(사용자 코드 RAW 삽입, replacePlaceholders 우회)·
+  `MODULE_OUTPUT_VAR=scripted_data`·PropertiesPanel(코드 에디터 + **AdvancedOnly 게이트** + ⚠️경고)·
+  `pyodideRunner.runUserScriptPython`(샌드박스 실행)·App.tsx 가산 분기·픽스처 `29_python_script`(결정적 스니펫).
+- 실행 계약: 입력 `dataframe` → 사용자 코드 → 출력 `scripted_data`(없으면 입력 통과). 내보낸 코드에 사용자 코드 그대로 포함.
+- 보안: 고급 게이트 의무·브라우저 Pyodide 샌드박스(호스트 FS/네트워크 차단)·60초 타임아웃·시드 고정 가이드·재현성 사용자 책임 고지.
+- **검증:** ML 27/27 · JMDC 28/28 PASS, build 성공(양쪽). 공통 코드 byte-identical. (DFA는 후순위 — 미적용.)
+
 ---
 
 ## 4. 권고 실행 순서 (추가 작업)
