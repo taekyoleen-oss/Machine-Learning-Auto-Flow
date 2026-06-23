@@ -236,5 +236,13 @@ if 'scripted_data' not in dir(): scripted_data = dataframe
 - **가산적·하위호환**, codeSnippets/create_*와 정합. **export·verify 불변**.
 - **검증:** build 성공(3앱); `verify:pipelines` ML 27/27·JMDC 28/28·DFA 8/8 PASS(내보내기 무변경); **실제 브라우저 Pyodide**에서 fit RF R²≈0.99·GB≈0.999, feature importance가 실제 관계 복원, ScoreModel 2회 재현 동일. 공통 코드 ML↔JMDC byte-identical(DFA는 score 함수 주석만 차이).
 
-### 8.3 ⚠️ 잔여 버그(별개·미해결) — 일부 분류기 인앱 score 함수 누락
-App.tsx ScoreModel은 `scoreSVMPython`·`scoreLDAPython`·`scoreNaiveBayesPython`(그리고 DFA는 `scoreDecisionTreePython`도)를 호출하지만 해당 `pyodideRunner.ts`에 **정의가 없다**(브라우저에서 `typeof === "undefined"` 실증 확인). → **SVM/LDA/NaiveBayes 인앱 스코어링이 런타임 크래시**(ML/JMDC/DFA 공통), DFA는 DecisionTree도 크래시. **export·verify는 정확**(영향 없음, 동적 import라 빌드도 통과해 잠복). 권고: KNN/DecisionTree/RF/GB와 동일하게 훈련 데이터 재적합 `score*Python`을 추가(가산·결정적). RF/GB 수정으로 동일 패턴이 이미 확립되어 있어 낮은 위험. 승인 시 후속 트랜치로 진행.
+### 8.3 ✅ 해결됨(2026-06-23) — 일부 분류기 인앱 score 함수 누락
+App.tsx ScoreModel은 `scoreSVMPython`·`scoreLDAPython`·`scoreNaiveBayesPython`(그리고 DFA는 `scoreDecisionTreePython`도)를 호출하지만 해당 `pyodideRunner.ts`에 **정의가 없었다**(브라우저 `typeof === "undefined"` 실증) → SVM/LDA/NaiveBayes 인앱 스코어링 런타임 크래시(3앱 공통), DFA는 DecisionTree도. 동적 import라 빌드는 통과해 잠복했었다.
+
+**수정.** 훈련 데이터로 재적합 후 `.predict`하는 `score*Python`을 신설(fit* 정합):
+- `scoreSVMPython`(classification은 `probability=True`·`random_state=42`로 proba 출력), `scoreLDAPython`, `scoreNaiveBayesPython`(GaussianNB 기본, fit_prior=True) — ML/JMDC/DFA에 추가.
+- `scoreDecisionTreePython` — DFA에만 추가(ML/JMDC는 기존 존재). 함수 본문은 ML과 **byte-identical**.
+- 인앱 전용·가산적, App.tsx 호출 시그니처와 정합. **export·verify 무관**(ML 27/27·JMDC 28/28·DFA 8/8 유지).
+- **검증:** build 성공(3앱), 실제 브라우저 Pyodide에서 DecisionTree/SVM/LDA/NaiveBayes 분류 정확도 1.0·proba 컬럼·SVM 2회 재현 동일.
+
+> 참고: NaiveBayes score는 App.tsx 호출 시그니처(model_type·alpha)를 따르며 `fit_prior`는 기본 True(sklearn 기본)로 재적합한다. DFA NaiveBayes가 `var_smoothing`을 쓰더라도 score는 GaussianNB 기본으로 재적합(모델 클래스·결정성 동일, 학습 시 비기본 var_smoothing을 쓴 경우의 미세 차이는 후속 정합 대상).
