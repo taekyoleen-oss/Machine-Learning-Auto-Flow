@@ -4528,7 +4528,7 @@ const StatRow: React.FC<{ label: string; value: React.ReactNode }> = ({
   <div className="flex justify-between items-center text-sm py-1.5 px-2 border-b border-gray-700 last:border-b-0">
     <span className="text-gray-400">{label}</span>
     <span
-      className="font-mono text-gray-200 font-medium truncate"
+      className="font-mono text-gray-800 dark:text-gray-200 font-medium truncate"
       title={String(value)}
     >
       {value}
@@ -4699,7 +4699,7 @@ const DataTableStats: React.FC<{
   return (
     <div>
       {title && (
-        <h3 className="text-md font-semibold mb-2 text-gray-300">{title}</h3>
+        <h3 className="text-md font-semibold mb-2 text-gray-700 dark:text-gray-300">{title}</h3>
       )}
       <div className="bg-gray-900 rounded-lg overflow-hidden">
         <div className="text-gray-200">
@@ -4760,7 +4760,7 @@ const PanelModelMetrics: React.FC<{
   metrics: Record<string, string | number>;
 }> = ({ metrics }) => (
   <div>
-    <h3 className="text-md font-semibold mb-2 text-gray-300">
+    <h3 className="text-md font-semibold mb-2 text-gray-700 dark:text-gray-300">
       Performance Metrics
     </h3>
     <div className="bg-gray-800 rounded-lg p-3 space-y-2">
@@ -5510,7 +5510,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     };
 
     const renderTitle = (title: string) => (
-      <h3 className="text-md font-semibold mb-2 text-gray-300">{title}</h3>
+      <h3 className="text-md font-semibold mb-2 text-gray-700 dark:text-gray-300">{title}</h3>
     );
 
     const previewContent = (() => {
@@ -5519,7 +5519,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           if (outputData.type === "DataPreview") {
             return (
               <>
-                <h3 className="text-md font-semibold mb-2 text-gray-300">
+                <h3 className="text-md font-semibold mb-2 text-gray-700 dark:text-gray-300">
                   Column Structure
                 </h3>
                 <ColumnInfoTable columns={outputData.columns} />
@@ -5532,10 +5532,10 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             return (
               <div>
                 {renderTitle("Column Statistics")}
-                <div className="bg-gray-900 rounded-lg overflow-hidden">
-                  <div className="text-gray-200">
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-transparent rounded-lg overflow-hidden">
+                  <div className="text-gray-800 dark:text-gray-200">
                     {/* Header */}
-                    <div className="grid grid-cols-4 gap-4 px-4 py-2 border-b border-gray-600 font-semibold text-sm text-gray-400">
+                    <div className="grid grid-cols-4 gap-4 px-4 py-2 border-b border-gray-300 dark:border-gray-600 font-semibold text-sm text-gray-500 dark:text-gray-400">
                       <div>Column</div>
                       <div className="text-right">Mean</div>
                       <div className="text-right">Median</div>
@@ -5548,7 +5548,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                         return (
                           <div
                             key={col}
-                            className="grid grid-cols-4 gap-4 px-4 py-2.5 text-sm border-b border-gray-800 last:border-b-0"
+                            className="grid grid-cols-4 gap-4 px-4 py-2.5 text-sm border-b border-gray-200 dark:border-gray-800 last:border-b-0"
                           >
                             <div className="font-mono truncate" title={col}>
                               {col}
@@ -5609,10 +5609,10 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   <h4 className="text-xs text-gray-500 uppercase font-bold mb-2">
                     VIF Results
                   </h4>
-                  <div className="bg-gray-900/50 rounded-lg p-3 space-y-2">
+                  <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-transparent rounded-lg p-3 space-y-2">
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-gray-400">Total Columns:</span>
-                      <span className="font-mono text-gray-200 font-medium">
+                      <span className="font-mono text-gray-800 dark:text-gray-200 font-medium">
                         {vifOutput.results.length}
                       </span>
                     </div>
@@ -5636,7 +5636,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                     </div>
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-gray-400">Low VIF (≤ 5):</span>
-                      <span className="font-mono text-gray-200 font-medium">
+                      <span className="font-mono text-gray-800 dark:text-gray-200 font-medium">
                         {vifOutput.results.filter((r) => r.vif <= 5).length}
                       </span>
                     </div>
@@ -5655,16 +5655,16 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   <h4 className="text-xs text-gray-500 uppercase font-bold mb-2">
                     Correlation Analysis Summary
                   </h4>
-                  <div className="bg-gray-900/50 rounded-lg p-3 space-y-2">
+                  <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-transparent rounded-lg p-3 space-y-2">
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-gray-400">Total Columns:</span>
-                      <span className="font-mono text-gray-200 font-medium">
+                      <span className="font-mono text-gray-800 dark:text-gray-200 font-medium">
                         {correlationOutput.columns.length}
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-gray-400">Numeric Columns:</span>
-                      <span className="font-mono text-gray-200 font-medium">
+                      <span className="font-mono text-gray-800 dark:text-gray-200 font-medium">
                         {correlationOutput.numericColumns.length}
                       </span>
                     </div>
@@ -5672,13 +5672,13 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                       <span className="text-gray-400">
                         Categorical Columns:
                       </span>
-                      <span className="font-mono text-gray-200 font-medium">
+                      <span className="font-mono text-gray-800 dark:text-gray-200 font-medium">
                         {correlationOutput.categoricalColumns.length}
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-gray-400">Methods:</span>
-                      <span className="font-mono text-gray-200 font-medium text-xs">
+                      <span className="font-mono text-gray-800 dark:text-gray-200 font-medium text-xs">
                         {correlationOutput.correlationMatrices
                           .map((m) => m.method)
                           .join(", ")}
@@ -5803,7 +5803,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                     <h4 className="text-xs text-gray-500 uppercase font-bold mb-2">
                       Model Equation
                     </h4>
-                    <div className="bg-gray-900/50 p-3 rounded-lg font-mono text-xs text-green-700 whitespace-normal break-words">
+                    <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-transparent p-3 rounded-lg font-mono text-xs text-green-700 dark:text-green-400 whitespace-normal break-words">
                       <span>{formulaParts[0]}</span>
                       {formulaParts.slice(1).map((part, i) => (
                         <span key={i}>{part}</span>
@@ -5897,7 +5897,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                     <h4 className="text-xs text-gray-500 uppercase font-bold mb-2">
                       Fitted Model Equation
                     </h4>
-                    <div className="bg-gray-900/50 p-3 rounded-lg font-mono text-xs text-green-700 whitespace-normal break-words">
+                    <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-transparent p-3 rounded-lg font-mono text-xs text-green-700 dark:text-green-400 whitespace-normal break-words">
                       <span>{formulaParts[0]}</span>
                       {formulaParts.slice(1).map((part, i) => (
                         <span key={i}>{part}</span>
@@ -5909,7 +5909,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   <h4 className="text-xs text-gray-500 uppercase font-bold mb-2">
                     Model Metrics
                   </h4>
-                  <div className="bg-gray-900/50 rounded-lg p-3 space-y-2">
+                  <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-transparent rounded-lg p-3 space-y-2">
                     {Object.entries(summary.metrics)
                       .slice(0, 6)
                       .map(([key, value]) => (
@@ -5918,7 +5918,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                           className="flex justify-between items-center text-sm"
                         >
                           <span className="text-gray-400">{key}:</span>
-                          <span className="font-mono text-gray-200 font-medium">
+                          <span className="font-mono text-gray-800 dark:text-gray-200 font-medium">
                             {typeof value === "number"
                               ? Number(value).toFixed(4)
                               : value}
@@ -5940,10 +5940,10 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   <h4 className="text-xs text-gray-500 uppercase font-bold mb-2">
                     Outlier Detection Summary
                   </h4>
-                  <div className="bg-gray-900/50 rounded-lg p-3 space-y-2">
+                  <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-transparent rounded-lg p-3 space-y-2">
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-gray-400">Columns Analyzed:</span>
-                      <span className="font-mono text-gray-200 font-medium">
+                      <span className="font-mono text-gray-800 dark:text-gray-200 font-medium">
                         {outlierOutput.columns.length}
                       </span>
                     </div>
@@ -5951,7 +5951,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                       <span className="text-gray-400">
                         Total Outliers (All Columns):
                       </span>
-                      <span className="font-mono text-gray-200 font-medium">
+                      <span className="font-mono text-gray-800 dark:text-gray-200 font-medium">
                         {outlierOutput.totalOutliers}
                       </span>
                     </div>
@@ -5959,13 +5959,13 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                       <span className="text-gray-400">
                         Unique Outlier Rows:
                       </span>
-                      <span className="font-mono text-gray-200 font-medium">
+                      <span className="font-mono text-gray-800 dark:text-gray-200 font-medium">
                         {outlierOutput.allOutlierIndices.length}
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-gray-400">Columns:</span>
-                      <span className="font-mono text-gray-200 font-medium text-xs">
+                      <span className="font-mono text-gray-800 dark:text-gray-200 font-medium text-xs">
                         {outlierOutput.columns.join(", ")}
                       </span>
                     </div>
@@ -5975,7 +5975,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   <h4 className="text-xs text-gray-500 uppercase font-bold mb-2">
                     Column Results
                   </h4>
-                  <div className="bg-gray-900/50 rounded-lg p-3 space-y-3 max-h-60 overflow-y-auto">
+                  <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-transparent rounded-lg p-3 space-y-3 max-h-60 overflow-y-auto">
                     {outlierOutput.columnResults.map((colResult) => (
                       <div
                         key={colResult.column}
@@ -5985,7 +5985,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                           <span className="text-gray-300 font-semibold">
                             {colResult.column}
                           </span>
-                          <span className="font-mono text-gray-200">
+                          <span className="font-mono text-gray-800 dark:text-gray-200">
                             {colResult.totalOutliers} outliers
                           </span>
                         </div>
@@ -6013,10 +6013,10 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   <h4 className="text-xs text-gray-500 uppercase font-bold mb-2">
                     Outlier Detection Summary
                   </h4>
-                  <div className="bg-gray-900/50 rounded-lg p-3 space-y-2">
+                  <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-transparent rounded-lg p-3 space-y-2">
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-gray-400">Columns Analyzed:</span>
-                      <span className="font-mono text-gray-200 font-medium">
+                      <span className="font-mono text-gray-800 dark:text-gray-200 font-medium">
                         {outlierOutput.columns.length}
                       </span>
                     </div>
@@ -6024,7 +6024,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                       <span className="text-gray-400">
                         Total Outliers (All Columns):
                       </span>
-                      <span className="font-mono text-gray-200 font-medium">
+                      <span className="font-mono text-gray-800 dark:text-gray-200 font-medium">
                         {outlierOutput.totalOutliers}
                       </span>
                     </div>
@@ -6032,7 +6032,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                       <span className="text-gray-400">
                         Output Rows (After Removal):
                       </span>
-                      <span className="font-mono text-gray-200 font-medium">
+                      <span className="font-mono text-gray-800 dark:text-gray-200 font-medium">
                         {outputData.totalRowCount}
                       </span>
                     </div>
@@ -6114,7 +6114,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 </thead>
                 <tbody>
                   {statsRows.map(r => (
-                    <tr key={r.col} className="border-b border-gray-800 hover:bg-gray-700/30">
+                    <tr key={r.col} className="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700/30">
                       <td className="py-1 pr-2 text-gray-300 truncate max-w-[80px]" title={r.col}>{r.col}</td>
                       <td className="py-1 px-1 text-right font-mono text-blue-300">{r.mean}</td>
                       <td className="py-1 px-1 text-right font-mono text-gray-400">{r.std}</td>
@@ -6250,19 +6250,18 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               >
                 미리보기
               </button>
-              <AdvancedOnly>
+              {/* 모듈별 파이썬 코드 탭 — 항상 표시(고급기능 게이트 해제).
+                  사용자 요청: 과거처럼 각 모듈의 코드를 누구나 보고 복사할 수 있게. */}
               <button
                 onClick={() => setActiveTab("code")}
-                className={`flex-1 flex items-center justify-center gap-1 p-3 text-xs font-semibold ${ADVANCED_BTN_DIM} ${
+                className={`flex-1 flex items-center justify-center gap-1 p-3 text-xs font-semibold ${
                   activeTab === "code"
                     ? "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
                     : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50"
                 }`}
               >
-                <AdvancedLockBadge />
                 코드
               </button>
-              </AdvancedOnly>
               <button
                 onClick={() => setActiveTab("terminal")}
                 className={`flex-1 flex items-center justify-center p-3 text-xs font-semibold ${
@@ -6336,13 +6335,13 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               )}
               {activeTab === "preview" && (
                 <div>
-                  <div className="flex mb-3 rounded-md bg-gray-700 p-1">
+                  <div className="flex mb-3 rounded-md bg-gray-200 dark:bg-gray-700 p-1">
                     <button
                       onClick={() => setActivePreviewTab("입력")}
                       className={`flex-1 text-center text-sm py-1 rounded-md transition-colors ${
                         activePreviewTab === "입력"
-                          ? "bg-gray-600 font-semibold"
-                          : "hover:bg-gray-600/50"
+                          ? "bg-white dark:bg-gray-600 font-semibold text-gray-900 dark:text-white shadow-sm"
+                          : "text-gray-600 dark:text-gray-300 hover:bg-gray-300/60 dark:hover:bg-gray-600/50"
                       }`}
                     >
                       입력
@@ -6351,14 +6350,14 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                       onClick={() => setActivePreviewTab("출력")}
                       className={`flex-1 text-center text-sm py-1 rounded-md transition-colors ${
                         activePreviewTab === "출력"
-                          ? "bg-gray-600 font-semibold"
-                          : "hover:bg-gray-600/50"
+                          ? "bg-white dark:bg-gray-600 font-semibold text-gray-900 dark:text-white shadow-sm"
+                          : "text-gray-600 dark:text-gray-300 hover:bg-gray-300/60 dark:hover:bg-gray-600/50"
                       }`}
                     >
                       출력
                     </button>
                   </div>
-                  <div className="bg-gray-900/50 p-3 rounded-lg">
+                  <div className="bg-gray-100 dark:bg-gray-900/50 p-3 rounded-lg">
                     {activePreviewTab === "입력"
                       ? renderInputPreview()
                       : renderOutputPreview()}
@@ -6366,7 +6365,6 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 </div>
               )}
               {activeTab === "code" && (
-                <AdvancedOnly>
                 <div>
                   <div className="relative bg-gray-100 dark:bg-gray-900 rounded-lg">
                     <button
@@ -6380,12 +6378,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                         <ClipboardIcon className="w-4 h-4" />
                       )}
                     </button>
-                    <pre className="p-4 text-xs text-gray-900 dark:text-gray-300 overflow-x-auto">
+                    <pre className="p-4 text-xs text-gray-900 dark:text-gray-300 overflow-x-auto select-text">
                       <code>{codeSnippet}</code>
                     </pre>
                   </div>
                 </div>
-                </AdvancedOnly>
               )}
               {activeTab === "terminal" && (
                 <div
