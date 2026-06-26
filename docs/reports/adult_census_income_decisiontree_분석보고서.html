@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Adult Census Income · 의사결정나무 분류 분석 보고서</title>
+<style>
+  :root {
+    --ink: #1e293b; --muted: #64748b; --line: #e2e8f0; --accent: #0891b2;
+    --accent-soft: #ecfeff; --th: #f8fafc; --good: #16a34a; --warn: #d97706; --bad: #dc2626;
+    --code-bg: #f1f5f9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #f1f5f9; color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic",
+      "Apple SD Gothic Neo", "Noto Sans KR", Roboto, sans-serif;
+    line-height: 1.65; font-size: 15px;
+  }
+  .report { max-width: 880px; margin: 32px auto; background: #fff;
+    border: 1px solid var(--line); border-radius: 12px; padding: 56px 64px;
+    box-shadow: 0 1px 3px rgba(15,23,42,.06); }
+  .cover { border-bottom: 2px solid var(--ink); padding-bottom: 22px; margin-bottom: 32px; }
+  .cover h1 { font-size: 30px; line-height: 1.25; margin: 0 0 10px; letter-spacing: -.01em; }
+  .cover .sub { color: var(--muted); font-size: 15px; margin: 0; }
+  .cover .meta { color: var(--muted); font-size: 13px; margin-top: 14px; }
+  .badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px;
+    border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+  h2 { font-size: 21px; margin: 38px 0 14px; padding-left: 12px;
+    border-left: 4px solid var(--accent); }
+  h3 { font-size: 16px; margin: 24px 0 8px; color: #334155; }
+  p { margin: 10px 0; }
+  ul { margin: 10px 0; padding-left: 22px; }
+  li { margin: 5px 0; }
+  code { font-family: "JetBrains Mono", "Consolas", "D2Coding", monospace;
+    background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-size: .88em; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14px; }
+  th, td { border: 1px solid var(--line); padding: 8px 11px; text-align: left; vertical-align: top; }
+  thead th { background: var(--th); font-weight: 600; color: #334155; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tbody tr:nth-child(even) { background: #fcfdfe; }
+  .callout { border: 1px solid var(--line); border-left: 4px solid var(--accent);
+    background: var(--accent-soft); border-radius: 8px; padding: 12px 16px; margin: 16px 0; }
+  .callout.warn { border-left-color: var(--warn); background: #fffbeb; }
+  .callout .label { font-weight: 700; color: #155e75; }
+  .callout.warn .label { color: #92400e; }
+  pre { background: #0f172a; color: #e2e8f0; border-radius: 8px; padding: 14px 16px;
+    overflow-x: auto; font-size: 13px; line-height: 1.5; }
+  pre code { background: none; color: inherit; padding: 0; }
+  .src { color: var(--muted); font-size: 12.5px; font-style: italic; margin-top: 6px; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
+  .kpi { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; background: #fff; }
+  .kpi .k { font-size: 12px; color: var(--muted); }
+  .kpi .v { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .pos { color: var(--good); } .neg { color: var(--bad); }
+  footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line);
+    color: var(--muted); font-size: 12.5px; }
+  @media print { body { background: #fff; } .report { border: none; box-shadow: none; margin: 0; max-width: none; padding: 0; } }
+</style>
+</head>
+<body>
+<article class="report">
+
+  <header class="cover">
+    <div class="badge">모델 분석보고서</div>
+    <h1>Adult Census Income · 의사결정나무(Decision Tree) 분류 분석 보고서</h1>
+    <p class="sub">Book-Ch3 예제 — 데이터셋 구조·내용과 모델 개발 과정 문서화</p>
+    <p class="meta">생성: 2026-06-26 · 작성: ML Auto Flow · 모델 유형: 이진 분류(Binary Classification)</p>
+  </header>
+
+  <div class="callout">
+    <span class="label">목적</span> — 본 문서는 ML Auto Flow의 큐레이션 예제
+    <code>Book_AdultIncome_DecisionTree</code>(미국 인구조사 소득 분류)의
+    <b>① 데이터셋 구조·내용</b>과 <b>② 모델 개발 과정</b>을 단계별로 기록하여,
+    이 모델이 무엇을 어떻게 학습·평가하는지 파악할 수 있도록 작성되었습니다.
+    모든 수치는 동일 파이프라인을 실제 실행해 얻은 결과이며, 내보낸 standalone Python으로
+    결정적으로(재현 가능) 동일하게 재현됩니다.
+  </div>
+
+  <h2>1. 요약 (Executive Summary)</h2>
+  <ul>
+    <li><b>과제 유형:</b> 이진 분류 — 한 개인의 연 소득이 <b>$50,000 초과(<code>&gt;50K</code>)인지 이하(<code>&lt;=50K</code>)인지</b> 예측.</li>
+    <li><b>데이터:</b> UCI Adult(Census Income) 데이터셋. <b>32,561행 × 15열</b>(특성 14 + 타깃 1).</li>
+    <li><b>클래스 불균형:</b> <code>&lt;=50K</code> 24,720건(75.9%) vs <code>&gt;50K</code> 7,841건(24.1%) — 약 3:1 불균형. 평가지표 해석의 핵심.</li>
+    <li><b>모델:</b> 의사결정나무, <code>criterion=gini</code>, <code>max_depth=8</code>. 입력은 수치형 6개 특성.</li>
+    <li><b>분석 흐름:</b> <code>LoadData → SplitData(80/20) → DecisionTree → TrainModel → ScoreModel → EvaluateModel</code>.</li>
+  </ul>
+
+  <div class="kpi-grid">
+    <div class="kpi"><div class="k">정확도 (Accuracy)</div><div class="v">0.8320</div></div>
+    <div class="kpi"><div class="k">정밀도 (Precision)</div><div class="v">0.8126</div></div>
+    <div class="kpi"><div class="k">재현율 (Recall)</div><div class="v neg">0.3947</div></div>
+    <div class="kpi"><div class="k">F1-Score</div><div class="v">0.5313</div></div>
+    <div class="kpi"><div class="k">ROC-AUC</div><div class="v pos">0.8548</div></div>
+    <div class="kpi"><div class="k">Avg Precision</div><div class="v">0.5364</div></div>
+  </div>
+
+  <div class="callout warn">
+    <span class="label">핵심 메시지</span> — "정확도 83%"는 다수 클래스(<code>&lt;=50K</code>) 비중이 커서 생기는 착시를 포함한다.
+    소수 클래스(<code>&gt;50K</code>) <b>재현율이 0.39로 낮으나</b>, 임계값을 낮추면(0.20에서 재현율 0.81) 크게 끌어올릴 수 있다.
+    불균형 데이터는 <b>AUC·정밀도·재현율·임계값별 곡선</b>을 함께 봐야 한다.
+  </div>
+
+  <h2>2. 데이터셋 개요</h2>
+  <table>
+    <tbody>
+      <tr><th>데이터셋 이름</th><td>Adult (Census Income)</td></tr>
+      <tr><th>출처</th><td>UCI Machine Learning Repository (미국 인구조사 1994년 자료 기반)</td></tr>
+      <tr><th>파일</th><td><code>adult.csv</code> (앱 내 <code>Examples_in_Load/</code>, <code>verify/datasets/</code>)</td></tr>
+      <tr><th>행 수</th><td><b>32,561</b> (헤더 제외)</td></tr>
+      <tr><th>열 수</th><td><b>15</b> (입력 특성 14 + 타깃 1)</td></tr>
+      <tr><th>과제</th><td>이진 분류 — 연 소득 <code>&gt;50K</code> 여부 예측</td></tr>
+      <tr><th>타깃 변수</th><td><code>income</code> (<code>&lt;=50K</code> / <code>&gt;50K</code>)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>원본 데이터 표본 (처음 5행)</h3>
+  <table>
+    <thead><tr><th class="num">age</th><th>workclass</th><th>education</th><th class="num">edu-num</th><th>marital-status</th><th>occupation</th><th class="num">hrs/wk</th><th>income</th></tr></thead>
+    <tbody>
+      <tr><td class="num">39</td><td>State-gov</td><td>Bachelors</td><td class="num">13</td><td>Never-married</td><td>Adm-clerical</td><td class="num">40</td><td>&lt;=50K</td></tr>
+      <tr><td class="num">50</td><td>Self-emp-not-inc</td><td>Bachelors</td><td class="num">13</td><td>Married-civ-spouse</td><td>Exec-managerial</td><td class="num">13</td><td>&lt;=50K</td></tr>
+      <tr><td class="num">38</td><td>Private</td><td>HS-grad</td><td class="num">9</td><td>Divorced</td><td>Handlers-cleaners</td><td class="num">40</td><td>&lt;=50K</td></tr>
+      <tr><td class="num">53</td><td>Private</td><td>11th</td><td class="num">7</td><td>Married-civ-spouse</td><td>Handlers-cleaners</td><td class="num">40</td><td>&lt;=50K</td></tr>
+      <tr><td class="num">28</td><td>Private</td><td>Bachelors</td><td class="num">13</td><td>Married-civ-spouse</td><td>Prof-specialty</td><td class="num">40</td><td>&lt;=50K</td></tr>
+    </tbody>
+  </table>
+  <p class="src">출처: verify/datasets/adult.csv (헤더 + 1~5행)</p>
+
+  <h2>3. 변수(컬럼) 사전</h2>
+  <p>15개 컬럼을 유형·의미·예시와 함께 정리한다. <b>연속(수치형) 6개</b>, <b>범주(문자형) 8개</b>, <b>타깃 1개</b>로 구성된다.</p>
+  <table>
+    <thead><tr><th class="num">#</th><th>컬럼명</th><th>유형</th><th>의미</th><th>예시</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td><code>age</code></td><td>연속</td><td>나이(세)</td><td>39, 50</td></tr>
+      <tr><td class="num">2</td><td><code>workclass</code></td><td>범주</td><td>고용 형태</td><td>Private, State-gov</td></tr>
+      <tr><td class="num">3</td><td><code>fnlwgt</code></td><td>연속</td><td>인구조사 표본 가중치(final weight)</td><td>77516</td></tr>
+      <tr><td class="num">4</td><td><code>education</code></td><td>범주</td><td>최종 학력(명목)</td><td>Bachelors, HS-grad</td></tr>
+      <tr><td class="num">5</td><td><code>education-num</code></td><td>연속</td><td>학력 연수(education의 순서형 수치)</td><td>13, 9</td></tr>
+      <tr><td class="num">6</td><td><code>marital-status</code></td><td>범주</td><td>혼인 상태</td><td>Married-civ-spouse</td></tr>
+      <tr><td class="num">7</td><td><code>occupation</code></td><td>범주</td><td>직업군</td><td>Exec-managerial</td></tr>
+      <tr><td class="num">8</td><td><code>relationship</code></td><td>범주</td><td>가구 내 관계</td><td>Husband, Wife</td></tr>
+      <tr><td class="num">9</td><td><code>race</code></td><td>범주</td><td>인종</td><td>White, Black</td></tr>
+      <tr><td class="num">10</td><td><code>sex</code></td><td>범주</td><td>성별</td><td>Male, Female</td></tr>
+      <tr><td class="num">11</td><td><code>capital-gain</code></td><td>연속</td><td>자본 이득(달러)</td><td>2174, 0</td></tr>
+      <tr><td class="num">12</td><td><code>capital-loss</code></td><td>연속</td><td>자본 손실(달러)</td><td>0</td></tr>
+      <tr><td class="num">13</td><td><code>hours-per-week</code></td><td>연속</td><td>주당 근로시간</td><td>40, 13</td></tr>
+      <tr><td class="num">14</td><td><code>native-country</code></td><td>범주</td><td>출신 국가</td><td>United-States</td></tr>
+      <tr><td class="num">15</td><td><code>income</code></td><td><b>타깃</b></td><td>연 소득 구간</td><td>&lt;=50K, &gt;50K</td></tr>
+    </tbody>
+  </table>
+  <div class="callout warn">
+    <span class="label">분석상 중요 포인트</span> — 이 예제 모델은 14개 특성 중 <b>수치형 6개만</b>
+    (age, fnlwgt, education-num, capital-gain, capital-loss, hours-per-week) 사용한다.
+    <code>occupation</code>·<code>education</code>·<code>marital-status</code> 같은 범주형 정보는 사용하지 않는다(범주형은 별도 인코딩 필요).
+    따라서 본 모델은 "수치 정보만으로 소득을 추정"하는 단순화된 기준선(baseline)이다.
+  </div>
+
+  <h2>4. 타깃 분포와 클래스 불균형</h2>
+  <table>
+    <thead><tr><th>클래스</th><th>의미</th><th class="num">건수</th><th class="num">비율</th></tr></thead>
+    <tbody>
+      <tr><td><code>&lt;=50K</code></td><td>연 소득 5만 달러 이하</td><td class="num">24,720</td><td class="num"><b>75.9%</b></td></tr>
+      <tr><td><code>&gt;50K</code></td><td>연 소득 5만 달러 초과</td><td class="num">7,841</td><td class="num"><b>24.1%</b></td></tr>
+      <tr><td>합계</td><td></td><td class="num">32,561</td><td class="num">100%</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li>다수 클래스가 약 76%를 차지하는 <b>불균형 데이터</b>다.</li>
+    <li>"무조건 <code>&lt;=50K</code>로 찍는" 무의미한 모델조차 정확도 약 76%를 얻으므로, <b>정확도만으로는 모델 실력을 판단할 수 없다.</b></li>
+    <li>소수 클래스(<code>&gt;50K</code>)를 얼마나 잡아내는지(<b>재현율</b>)와 임계값 전반의 분리 성능(<b>AUC</b>)이 더 중요한 지표가 된다.</li>
+  </ul>
+
+  <h2>5. 모델 개발 과정 (파이프라인)</h2>
+  <p>본 예제는 6개 모듈이 순서대로 연결된 파이프라인이다.</p>
+<pre><code>[1] LoadData ─→ [2] SplitData ─┬─(train)→ [4] TrainModel ─→ [5] ScoreModel ─→ [6] EvaluateModel
+                               │              ↑
+                [3] DecisionTree ─(모델 정의)─┘
+                               └─(test)──────────────────────→ (Score/Evaluate에 사용)</code></pre>
+
+  <h3>[1] LoadData — 데이터 적재</h3>
+  <ul><li><b>역할:</b> <code>adult.csv</code>(32,561행)를 표(DataFrame)로 읽는다.</li>
+  <li><b>파라미터:</b> <code>source = "adult.csv"</code>. <b>출력:</b> 15개 컬럼 전체.</li></ul>
+
+  <h3>[2] SplitData — 학습/평가 분할</h3>
+  <ul><li><b>역할:</b> 데이터를 학습용(train)/평가용(test)으로 나눈다. 모델은 학습 데이터로만 배우고, 보지 않은 평가 데이터로 일반화 성능을 측정한다.</li>
+  <li><b>파라미터:</b> <code>train_size=0.8</code>, <code>random_state=42</code>(난수 고정 → 재현성), <code>shuffle=True</code>, <code>stratify=False</code>.</li>
+  <li><b>결과 규모:</b> 학습 약 <b>26,048행</b>, 평가 약 <b>6,513행</b>.</li></ul>
+
+  <h3>[3] DecisionTree — 모델 정의</h3>
+  <ul><li><b>역할:</b> 의사결정나무 분류기의 구조(하이퍼파라미터)를 정의한다(아직 학습 안 함).</li>
+  <li><b>파라미터:</b> <code>model_purpose=classification</code>, <code>criterion=gini</code>(지니 불순도), <code>max_depth=8</code>(과적합 방지·해석성), <code>min_samples_split=2</code>, <code>min_samples_leaf=1</code>.</li></ul>
+  <div class="callout"><span class="label">의사결정나무란?</span> 데이터를 "예/아니오" 질문(예: <code>capital-gain &gt; 5000?</code>)으로 반복 분할하여 각 말단(leaf)에서 다수 클래스로 예측한다. 규칙을 사람이 읽을 수 있어 해석성이 높고, 수치 특성의 비선형 관계도 잡는다.</div>
+
+  <h3>[4] TrainModel — 학습</h3>
+  <ul><li><b>역할:</b> 학습 데이터로 의사결정나무를 실제로 적합(fit)한다.</li>
+  <li><b>파라미터:</b> <code>feature_columns=[age, fnlwgt, education-num, capital-gain, capital-loss, hours-per-week]</code>, <code>label_column=income</code>.</li></ul>
+
+  <h3>[5] ScoreModel — 예측(채점)</h3>
+  <ul><li><b>출력 컬럼:</b> <code>Predict</code>(예측 클래스), <code>income_Predict_Proba_0/1</code>(클래스별 예측 확률). 양성 클래스 확률(<code>..._Proba_1</code>)이 임계값 조정·ROC 곡선의 근거가 된다.</li></ul>
+
+  <h3>[6] EvaluateModel — 평가</h3>
+  <ul><li><b>역할:</b> 실제값(<code>income</code>)과 예측을 비교해 성능을 계산한다.</li>
+  <li><b>산출물:</b> 정확도/정밀도/재현율/F1, 혼동행렬, 임계값 스윕 표, ROC 곡선·AUC, PR 곡선·평균정밀도.</li></ul>
+
+  <h2>6. 분석 결과와 해석</h2>
+  <p>아래 수치는 평가용 테스트셋(<b>n ≈ 6,513</b>, 학습에 쓰이지 않은 데이터)에서 측정했다.</p>
+
+  <h3>6.1 혼동행렬 (임계값 0.50)</h3>
+  <table>
+    <thead><tr><th></th><th class="num">예측 &lt;=50K</th><th class="num">예측 &gt;50K</th></tr></thead>
+    <tbody>
+      <tr><th>실제 &lt;=50K</th><td class="num">TN = 4,799</td><td class="num">FP = 143</td></tr>
+      <tr><th>실제 &gt;50K</th><td class="num">FN = 951</td><td class="num">TP = 620</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li>실제 <code>&gt;50K</code> 1,571명 중 620명만 포착(951명 놓침) → <b>재현율 0.39</b>.</li>
+    <li><code>&gt;50K</code>로 예측한 763명 중 620명이 실제 고소득 → <b>정밀도 0.81</b>. 모델이 보수적으로 판정함을 의미.</li>
+  </ul>
+
+  <h3>6.2 임계값(Threshold) 조정의 효과</h3>
+  <p>EvaluateModel은 양성 클래스 확률을 기준으로 0~1 임계값을 슬라이더로 조절하며 지표 변화를 보여준다. 임계값을 낮추면 적극적으로 <code>&gt;50K</code> 판정 → 재현율↑·정밀도↓.</p>
+  <table>
+    <thead><tr><th class="num">임계값</th><th class="num">Accuracy</th><th class="num">Precision</th><th class="num">Recall</th><th>해석</th></tr></thead>
+    <tbody>
+      <tr><td class="num">0.20</td><td class="num">0.7305</td><td class="num">0.4663</td><td class="num"><b>0.8103</b></td><td>고소득자를 폭넓게 포착(재현율↑), 오탐↑</td></tr>
+      <tr><td class="num">0.50</td><td class="num"><b>0.8320</b></td><td class="num">0.8126</td><td class="num">0.3947</td><td>기본값(정확도 최대 부근)</td></tr>
+      <tr><td class="num">0.80</td><td class="num">0.8277</td><td class="num"><b>0.9517</b></td><td class="num">0.3011</td><td>매우 확실할 때만 판정(정밀도↑)</td></tr>
+    </tbody>
+  </table>
+  <div class="callout"><span class="label">핵심 해석</span> — "올바른 임계값"은 하나가 아니다. 고소득자를 놓치면 안 되는 목적이면 임계값을 낮춰 재현율을 택하고, 잘못된 고소득 판정 비용이 크면 임계값을 높여 정밀도를 우선한다.</div>
+
+  <h3>6.3 ROC 곡선과 AUC</h3>
+  <p><b>AUC = 0.8548</b> — 무작위 분류기(0.5)보다 크게 우수하며, 임의의 고소득자가 임의의 비고소득자보다 높은 점수를 받을 확률이 약 <b>85%</b>(=0.85)임을 의미한다. 정확도(0.83)보다 AUC가 모델의 본질적 분리력을 더 잘 대변한다.</p>
+
+  <h3>6.4 정밀도-재현율(PR) 곡선</h3>
+  <p><b>Average Precision(PR-AUC) = 0.5364.</b> 불균형 데이터(양성 24%)에서 ROC보다 보수적·현실적인 평가를 제공한다.</p>
+
+  <h2>7. 재현성 (Reproducibility)</h2>
+  <ul>
+    <li>캔버스 모듈은 브라우저 Python(Pyodide)으로 실행되고, "전체 코드 보기"는 외부에서 그대로 실행되는 standalone Python을 내보낸다.</li>
+    <li>모든 난수는 고정(<code>random_state=42</code>)되어 2회 실행 결과가 byte 단위로 동일하며, 회귀 검증(<code>npm run verify:pipelines</code>, 픽스처 <code>13_book_adult_clf</code>)이 강제한다.</li>
+    <li>내보낸 EvaluateModel Python에는 임계값 스윕 표(21행)·ROC 곡선(21점)·AUC가 포함되어 동일 결과를 사용자 환경에서 재현할 수 있다.</li>
+    <li>실측: 사다리꼴 적분 <b>AUC = 0.854369</b>가 sklearn <code>roc_auc_score</code>와 일치, 2회 실행 동일.</li>
+  </ul>
+
+  <h2>8. 결론 및 한계</h2>
+  <h3>결론</h3>
+  <ul>
+    <li>의사결정나무(깊이 8)는 수치형 6개 특성만으로 <b>AUC 0.85</b>의 양호한 분리력을 보인다.</li>
+    <li>기본 임계값(0.5)에서는 정확도·정밀도는 높지만 <b>재현율(0.39)이 낮아</b> 고소득자를 절반 이상 놓친다.</li>
+    <li>임계값을 목적에 맞게 조정하면 재현율을 0.81까지 끌어올릴 수 있어, 분류 의사결정은 곡선 전체와 목적을 보고 정해야 한다.</li>
+  </ul>
+  <h3>한계 및 개선 방향</h3>
+  <ul>
+    <li>범주형 특성(직업·학력·혼인상태 등)을 사용하지 않는다. 인코딩해 추가하면 성능 향상 여지가 크다.</li>
+    <li><code>fnlwgt</code>(표본 가중치)는 개인 소득과 인과적 관련이 약해 제외를 검토할 수 있다.</li>
+    <li>불균형 보정(<code>class_weight</code>), 임계값 최적화, 앙상블(RandomForest/Gradient Boosting) 적용을 고려할 수 있다.</li>
+  </ul>
+
+  <footer>
+    본 보고서는 ML Auto Flow <code>Book_AdultIncome_DecisionTree</code> 예제의 실제 실행 결과를 기반으로 작성되었습니다.
+    데이터 출처: UCI Adult (Census Income). 수치는 테스트셋(n≈6,513, random_state=42) 기준입니다.
+    · 모듈: <b>모델 분석보고서</b> · 생성 도구: ML Auto Flow
+  </footer>
+
+</article>
+</body>
+</html>
