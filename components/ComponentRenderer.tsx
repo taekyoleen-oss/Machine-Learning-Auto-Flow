@@ -487,50 +487,6 @@ export const ComponentRenderer: React.FC<ModuleNodeProps> = ({
     index: number,
     total: number
   ): React.CSSProperties => {
-    // Special cases for specific modules
-    if (module.type === (ModuleType as any).XolCalculator) {
-      // XoL Calculator: data_in on left (center), contract_in on top (center)
-      if (port.name === "data_in") {
-        return {
-          position: "absolute",
-          left: "-9px",
-          top: "50%",
-          transform: "translateY(-50%)",
-        };
-      } else if (port.name === "contract_in") {
-        // contract_in on top at 1/4 position
-        return {
-          position: "absolute",
-          top: "-9px",
-          left: "25%",
-          transform: "translateX(-50%)",
-        };
-      }
-    }
-
-    if (
-      module.type === (ModuleType as any).SplitByThreshold ||
-      module.type === (ModuleType as any).ApplyThreshold
-    ) {
-      // Split By Threshold, Apply Threshold: data_in on left (center), threshold_in on top (center)
-      if (port.name === "data_in") {
-        return {
-          position: "absolute",
-          left: "-9px",
-          top: "50%",
-          transform: "translateY(-50%)",
-        };
-      } else if (port.name === "threshold_in") {
-        // threshold_in on top at 1/4 position
-        return {
-          position: "absolute",
-          top: "-9px",
-          left: "25%",
-          transform: "translateX(-50%)",
-        };
-      }
-    }
-
     // Default: all input ports on left side, vertically distributed
     return {
       position: "absolute",

@@ -2021,7 +2021,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
   // 데이터 로더로 취급할 모듈 타입 판정.
   const isLoaderModuleType = useCallback(
     (t: ModuleType) =>
-      t === ModuleType.LoadData || t === (ModuleType as any).XolLoading,
+      t === ModuleType.LoadData,
     []
   );
 

@@ -138,40 +138,7 @@ export const Canvas: React.FC<CanvasProps> = ({
         const moduleWidth = 256; // Updated to match component width
         const moduleHeight = 110; // Approximate module height
         
-        // Special cases for specific modules
         if (isInput) {
-          if (module.type === (ModuleType as any).XolCalculator) {
-            // XoL Calculator: data_in on left (center), contract_in on top (center)
-            if (portName === 'data_in') {
-        return { 
-                x: module.position.x - 9,
-                y: module.position.y + moduleHeight / 2
-              };
-            } else if (portName === 'contract_in') {
-              // contract_in on top at 1/4 position
-              return {
-                x: module.position.x + moduleWidth / 4,
-                y: module.position.y - 9
-              };
-            }
-          }
-          
-          if (module.type === (ModuleType as any).SplitByThreshold || module.type === (ModuleType as any).ApplyThreshold) {
-            // Split By Threshold, Apply Threshold: data_in on left (center), threshold_in on top (center)
-            if (portName === 'data_in') {
-              return {
-                x: module.position.x - 9,
-                y: module.position.y + moduleHeight / 2
-              };
-            } else if (portName === 'threshold_in') {
-              // threshold_in on top at 1/4 position
-              return {
-                x: module.position.x + moduleWidth / 4,
-                y: module.position.y - 9
-              };
-            }
-          }
-          
           // Default: input ports on left side
           return {
             x: module.position.x - 9,

@@ -554,8 +554,7 @@ const renderParameters = (
 
   switch (module.type) {
     // ... [Previous cases remain unchanged: LoadData, SelectData, HandleMissingValues, TransformData, EncodeCategorical, NormalizeData, TransitionData, ResampleData, SplitData] ...
-    case ModuleType.LoadData:
-    case (ModuleType as any).XolLoading: {
+    case ModuleType.LoadData: {
       // 현재 데이터를 Example로 저장하는 함수
       const handleSaveAsExample = () => {
         if (
@@ -5144,10 +5143,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   // Examples_in_Load 디렉토리에서 예제 데이터 로드
   useEffect(() => {
     const loadExamples = async () => {
-      if (
-        module?.type !== ModuleType.LoadData &&
-        module?.type !== (ModuleType as any).XolLoading
-      ) {
+      if (module?.type !== ModuleType.LoadData) {
         return;
       }
 
@@ -5261,8 +5257,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       const fileName = file.name.toLowerCase();
 
       if (
-        (module.type === ModuleType.LoadData ||
-          module.type === (ModuleType as any).XolLoading) &&
+        module.type === ModuleType.LoadData &&
         (fileName.endsWith(".xlsx") || fileName.endsWith(".xls"))
       ) {
         // 엑셀 파일 처리
@@ -5417,10 +5412,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       | NormalizerOutput
       | undefined;
 
-    if (
-      module.type === ModuleType.LoadData ||
-      module.type === (ModuleType as any).XolLoading
-    ) {
+    if (module.type === ModuleType.LoadData) {
       return (
         <StatRow label="File Name" value={module.parameters.source || "N/A"} />
       );
