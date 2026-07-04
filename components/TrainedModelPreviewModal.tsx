@@ -299,7 +299,7 @@ const complexModels = [
     ModuleType.SVM,
     ModuleType.KNN,
     ModuleType.NaiveBayes,
-    (ModuleType as any).LinearDiscriminantAnalysis
+    ModuleType.LDA
 ];
 
 export const TrainedModelPreviewModal: React.FC<TrainedModelPreviewModalProps> = ({ module, projectName, onClose }) => {

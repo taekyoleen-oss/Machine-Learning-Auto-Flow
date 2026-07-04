@@ -2198,7 +2198,7 @@ try:
     p_C = ${C}
     ${typeof gamma === "string" ? `p_gamma = '${gamma}'` : `p_gamma = ${gamma}`}
     p_degree = ${degree}
-    p_probability = ${probability}
+    p_probability = ${probability ? "True" : "False"}
     
     if p_model_purpose == 'classification':
         model = SVC(

@@ -342,7 +342,7 @@ const noRunButtonTypes = [
   ModuleType.GradientBoosting,
   ModuleType.NeuralNetwork,
   ModuleType.SVM,
-  (ModuleType as any).LinearDiscriminantAnalysis,
+  ModuleType.LDA,
   ModuleType.NaiveBayes,
   ModuleType.KNN,
   ModuleType.KMeans,

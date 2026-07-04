@@ -4393,7 +4393,7 @@ const renderParameters = (
                 // modelType으로 분류 모델인지 확인 (간단한 체크)
                 const classificationTypes = [
                   ModuleType.LogisticRegression,
-                  (ModuleType as any).LinearDiscriminantAnalysis,
+                  ModuleType.LDA,
                   ModuleType.NaiveBayes,
                 ];
                 detectedModelType = classificationTypes.includes(
@@ -5888,7 +5888,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               ModuleType.SVM,
               ModuleType.KNN,
               ModuleType.NaiveBayes,
-              (ModuleType as any).LinearDiscriminantAnalysis,
+              ModuleType.LDA,
             ];
 
             let formulaParts: string[] = [];
@@ -6313,7 +6313,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   ModuleType.GradientBoosting,
                   ModuleType.NeuralNetwork,
                   ModuleType.SVM,
-                  (ModuleType as any).LinearDiscriminantAnalysis,
+                  ModuleType.LDA,
                   ModuleType.NaiveBayes,
                   ModuleType.KNN,
                   // 비지도학습

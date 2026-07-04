@@ -790,13 +790,6 @@ export const DEFAULT_MODULES: Omit<CanvasModule, "id" | "position" | "name">[] =
       outputs: [{ name: "model_out", type: "model" }],
     },
     {
-      type: (ModuleType as any).LinearDiscriminantAnalysis,
-      status: ModuleStatus.Pending,
-      parameters: { solver: "svd", shrinkage: null },
-      inputs: [],
-      outputs: [{ name: "model_out", type: "model" }],
-    },
-    {
       type: ModuleType.NaiveBayes,
       status: ModuleStatus.Pending,
       parameters: {

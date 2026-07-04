@@ -6773,13 +6773,9 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                   C,
                   gammaValue,
                   degree,
-                  // 주의(기존 동작 보존): 이 인자는 fitSVMPython의 8번째 매개변수
-                  // (probability: boolean) 위치에 그대로 전달된다. 런타임 동작을 바꾸지 않기
-                  // 위해 값·위치를 유지하고 타입만 캐스팅한다.
-                  ordered_feature_columns as unknown as boolean,
-                  // 기존 동작 보존: 이 값은 fitSVMPython의 featureColumns 위치로 전달되고
-                  // timeoutMs는 기본값을 사용한다(값·위치 불변, 타입만 캐스팅).
-                  60000 as unknown as string[]
+                  false, // probability는 SVC(분류) 전용 옵션 — SVR(회귀)에서는 미사용
+                  ordered_feature_columns,
+                  60000 // 타임아웃: 60초
                 );
 
                 // SVM은 coefficients와 intercept가 없으므로 메트릭만 사용
@@ -7501,7 +7497,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 throw new Error(`모델 훈련 실패: ${errorMessage}`);
               }
             } else if (
-              modelSourceModule.type === (ModuleType as any).LinearDiscriminantAnalysis
+              (modelSourceModule.type as ModuleType) === ModuleType.LDA
             ) {
               // Pyodide를 사용하여 Python으로 LDA 훈련
               const solver = modelSourceModule.parameters.solver || "svd";
@@ -7898,7 +7894,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 throw new Error(`모델 훈련 실패: ${errorMessage}`);
               }
             } else if (
-              modelSourceModule.type === (ModuleType as any).LinearDiscriminantAnalysis
+              (modelSourceModule.type as ModuleType) === ModuleType.LDA
             ) {
               // Pyodide를 사용하여 Python으로 LDA 훈련
               const solver = modelSourceModule.parameters.solver || "svd";
@@ -8380,7 +8376,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             trainedModel.modelType === ModuleType.DecisionTree ||
             trainedModel.modelType === ModuleType.NeuralNetwork ||
             trainedModel.modelType === ModuleType.SVM ||
-            trainedModel.modelType === (ModuleType as any).LinearDiscriminantAnalysis ||
+            trainedModel.modelType === ModuleType.LDA ||
             trainedModel.modelType === ModuleType.NaiveBayes ||
             trainedModel.modelType === ModuleType.RandomForest ||
             trainedModel.modelType === ModuleType.GradientBoosting
@@ -8608,7 +8604,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
 
                 addLog("SUCCESS", "Python으로 SVM 모델 예측 완료");
               } else if (
-                trainedModel.modelType === (ModuleType as any).LinearDiscriminantAnalysis
+                trainedModel.modelType === ModuleType.LDA
               ) {
                 addLog(
                   "INFO",
