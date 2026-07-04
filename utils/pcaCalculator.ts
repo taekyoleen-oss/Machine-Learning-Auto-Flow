@@ -58,7 +58,7 @@ export function calculatePCA(
   }
   
   // PCA 계산
-  const pca = new PCA(matrixData, { nComponents });
+  const pca = new PCA(matrixData, { nComponents } as any);
   
   // 투영된 좌표 (2D 또는 3D) - Matrix 객체를 2D 배열로 변환
   const projected = pca.predict(matrixData);

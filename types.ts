@@ -213,14 +213,17 @@ export interface TrainedModelOutput {
 export type StatsModelFamily =
   | "OLS"
   | "Logistic"
+  | "Logit"
   | "Poisson"
+  | "QuasiPoisson"
   | "NegativeBinomial"
   | "Gamma"
   | "Tweedie";
 
 export interface ModelDefinitionOutput {
   type: "ModelDefinitionOutput";
-  modelFamily: "statsmodels";
+  // "sklearn": 클러스터링/차원축소(K-Means·PCA·DBSCAN·계층형) 모델 정의도 이 타입으로 표현된다.
+  modelFamily: "statsmodels" | "sklearn";
   modelType: StatsModelFamily;
   parameters: Record<string, any>;
 }
@@ -418,7 +421,9 @@ export interface HypothesisTestingOutput {
   results: HypothesisTestResult[]; // 각 검정별 결과
 }
 
-export interface CorrelationMatrix {
+// 상관분석(Correlation) 모듈의 방법별 결과. 위의 index-signature형 CorrelationMatrix와
+// 별개 타입이다(이전에는 같은 이름으로 선언 병합되어 타입 오류를 유발했다).
+export interface CorrelationMethodResult {
   method: "pearson" | "spearman" | "kendall" | "cramers_v";
   matrix: Record<string, Record<string, number>>; // 상관계수 행렬
   columns: string[]; // 분석된 열 목록
@@ -429,7 +434,7 @@ export interface CorrelationOutput {
   columns: string[]; // 분석된 열 목록
   numericColumns: string[]; // 숫자형 열
   categoricalColumns: string[]; // 범주형 열
-  correlationMatrices: CorrelationMatrix[]; // 각 방법별 상관계수 행렬
+  correlationMatrices: CorrelationMethodResult[]; // 각 방법별 상관계수 행렬
   heatmapImage?: string; // Heatmap 이미지 (base64)
   pairplotImage?: string; // Pairplot 이미지 (base64)
   summary?: Record<string, any>; // 요약 통계
@@ -569,6 +574,46 @@ export interface ModelReportOutput {
   context: ReportContext;
 }
 
+// --- JMDC 계열(재보험/XoL·분포적합·통계평가) 모듈 출력 ---
+// 이들 모듈은 파이프라인에서 discriminated union(`type`)으로만 취급되고 미리보기 모달은
+// 필드를 동적으로 읽는다. 각 필드 스키마가 Python 산출물(snake_case 원본 포함)에 따라
+// 유동적이라 인덱스 시그니처로 허용한다. `type` 판별자는 문자열 리터럴로 고정되어 있어
+// discriminated-union 좁히기는 정상 동작한다. (값·런타임 영향 없는 타입 선언 전용.)
+export interface FittedDistributionOutput {
+  type: "FittedDistributionOutput";
+  [key: string]: any;
+}
+
+export interface ExposureCurveOutput {
+  type: "ExposureCurveOutput";
+  [key: string]: any;
+}
+
+export interface XoLPriceOutput {
+  type: "XoLPriceOutput";
+  [key: string]: any;
+}
+
+export interface XolContractOutput {
+  type: "XolContractOutput";
+  [key: string]: any;
+}
+
+export interface FinalXolPriceOutput {
+  type: "FinalXolPriceOutput";
+  [key: string]: any;
+}
+
+export interface DiversionCheckerOutput {
+  type: "DiversionCheckerOutput";
+  [key: string]: any;
+}
+
+export interface EvaluateStatOutput {
+  type: "EvaluateStatOutput";
+  [key: string]: any;
+}
+
 export interface CanvasModule {
   id: string;
   name: string;
@@ -603,13 +648,24 @@ export interface CanvasModule {
     | VIFCheckerOutput
     | MortalityModelOutput
     | MortalityResultOutput
-    | ModelReportOutput;
+    | ModelReportOutput
+    | FittedDistributionOutput
+    | ExposureCurveOutput
+    | XoLPriceOutput
+    | XolContractOutput
+    | FinalXolPriceOutput
+    | DiversionCheckerOutput
+    | EvaluateStatOutput;
   executionTime?: number; // milliseconds, set after successful run
   notes?: string; // user-written memo shown on the module card
   // Shape-specific properties
   shapeData?: {
     // For TextBox
     text?: string;
+    // TextBox 크기·글자 크기(런타임에서 사용)
+    width?: number;
+    height?: number;
+    fontSize?: number;
     // For GroupBox
     moduleIds?: string[]; // IDs of modules in this group
     bounds?: { x: number; y: number; width: number; height: number }; // Bounding box of the group

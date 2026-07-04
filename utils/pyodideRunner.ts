@@ -30,7 +30,7 @@ function notifyStatus(status: string, progress: number): void {
 /**
  * 타임아웃을 가진 Promise 래퍼
  */
-function withTimeout<T>(
+function withTimeout<T = any>(
   promise: Promise<T>,
   timeoutMs: number,
   errorMessage: string

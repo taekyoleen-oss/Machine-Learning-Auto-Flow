@@ -333,7 +333,7 @@ export const OutlierDetectorPreviewModal: React.FC<OutlierDetectorPreviewModalPr
                                             <div>Select</div>
                                             <div>Action</div>
                                         </div>
-                                        {Array.from(selectedIndices).sort((a, b) => a - b).map((idx) => {
+                                        {(Array.from(selectedIndices) as number[]).sort((a, b) => a - b).map((idx) => {
                                             const methodResult = currentColumnResult.results.find(r => r.outlierIndices.includes(idx));
                                             return (
                                                 <div key={idx} className="grid grid-cols-5 gap-2 text-xs py-1 border-b border-gray-100">

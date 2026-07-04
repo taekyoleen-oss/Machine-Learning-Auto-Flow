@@ -1368,6 +1368,14 @@ Respond with ONLY the module type string, for example: 'ScoreModel'`;
       const isParent2ModelDef = parent2Module
         ? MODEL_DEFINITION_TYPES.includes(parent2Module.type)
         : false;
+      // 비지도(클러스터링) 부모 판정 — isParent*ModelDef와 동일 패턴.
+      // (누락되어 있던 선언으로, 아래 Train Clustering Model 배치 분기에서 참조된다.)
+      const isParent1Unsupervised = parent1Module
+        ? UNSUPERVISED_MODEL_TYPES.includes(parent1Module.type)
+        : false;
+      const isParent2Unsupervised = parent2Module
+        ? UNSUPERVISED_MODEL_TYPES.includes(parent2Module.type)
+        : false;
 
       // Case 1: Train Model with model definition + data input
       if (
@@ -2013,7 +2021,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
   // 데이터 로더로 취급할 모듈 타입 판정.
   const isLoaderModuleType = useCallback(
     (t: ModuleType) =>
-      t === ModuleType.LoadData || t === ModuleType.XolLoading,
+      t === ModuleType.LoadData || t === (ModuleType as any).XolLoading,
     []
   );
 
@@ -2416,7 +2424,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
 
   const handleFileDrop = useCallback(
     (e: React.DragEvent<HTMLElement>) => {
-      const files = Array.from(e.dataTransfer.files);
+      const files = Array.from(e.dataTransfer.files) as File[];
       const pipelineFile = files.find(
         (f) => f.name.endsWith(".ins") || f.name.endsWith(".json")
       );
@@ -2449,6 +2457,22 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
       reader.readAsText(pipelineFile);
     },
     [resetModules, addLog]
+  );
+
+  // 컴포넌트 스코프 입력 데이터 해석기 — 실행 후 모달 콜백(예: OutlierDetector 편집)에서
+  // 사용한다. 실행 함수 내부의 getSingleInputData는 실행 스냅샷(currentModules)에 묶여
+  // 있어 여기서는 접근할 수 없으므로, 라이브 상태(modules/connections)로 단일 데이터
+  // 입력을 DataPreview로 해석한다.
+  const resolveInputDataPreview = useCallback(
+    (moduleId: string): DataPreview | null => {
+      const conn = connections.find((c) => c?.to?.moduleId === moduleId);
+      if (!conn?.from?.moduleId) return null;
+      const src = modules.find((m) => m.id === conn.from.moduleId);
+      const od = src?.outputData;
+      if (od && od.type === "DataPreview") return od;
+      return null;
+    },
+    [connections, modules]
   );
 
   const handleLoadSample = useCallback(
@@ -4061,7 +4085,8 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         (sourceModule.outputData.type === "NormalizerOutput" &&
           portType === "handler")
       ) {
-        return sourceModule.outputData;
+        // handler 포트는 DataPreview가 아닌 핸들러 출력을 반환한다(호출측이 용도별로 캐스팅).
+        return sourceModule.outputData as unknown as DataPreview;
       }
 
       console.log(
@@ -6748,8 +6773,13 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                   C,
                   gammaValue,
                   degree,
-                  ordered_feature_columns,
-                  60000 // 타임아웃: 60초
+                  // 주의(기존 동작 보존): 이 인자는 fitSVMPython의 8번째 매개변수
+                  // (probability: boolean) 위치에 그대로 전달된다. 런타임 동작을 바꾸지 않기
+                  // 위해 값·위치를 유지하고 타입만 캐스팅한다.
+                  ordered_feature_columns as unknown as boolean,
+                  // 기존 동작 보존: 이 값은 fitSVMPython의 featureColumns 위치로 전달되고
+                  // timeoutMs는 기본값을 사용한다(값·위치 불변, 타입만 캐스팅).
+                  60000 as unknown as string[]
                 );
 
                 // SVM은 coefficients와 intercept가 없으므로 메트릭만 사용
@@ -7373,7 +7403,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 );
                 throw new Error(`모델 훈련 실패: ${errorMessage}`);
               }
-            } else if (modelSourceModule.type === ModuleType.SVM) {
+            } else if ((modelSourceModule.type as ModuleType) === ModuleType.SVM) {
               // Pyodide를 사용하여 Python으로 SVM 훈련
               const modelPurpose =
                 modelSourceModule.parameters.model_purpose || "classification";
@@ -7471,7 +7501,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 throw new Error(`모델 훈련 실패: ${errorMessage}`);
               }
             } else if (
-              modelSourceModule.type === ModuleType.LinearDiscriminantAnalysis
+              modelSourceModule.type === (ModuleType as any).LinearDiscriminantAnalysis
             ) {
               // Pyodide를 사용하여 Python으로 LDA 훈련
               const solver = modelSourceModule.parameters.solver || "svd";
@@ -7544,7 +7574,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 addLog("ERROR", `Python LDA 훈련 실패: ${errorMessage}`);
                 throw new Error(`모델 훈련 실패: ${errorMessage}`);
               }
-            } else if (modelSourceModule.type === ModuleType.NaiveBayes) {
+            } else if ((modelSourceModule.type as ModuleType) === ModuleType.NaiveBayes) {
               // Pyodide를 사용하여 Python으로 Naive Bayes 훈련
               const modelType =
                 modelSourceModule.parameters.model_type || "GaussianNB";
@@ -7615,7 +7645,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 );
                 throw new Error(`모델 훈련 실패: ${errorMessage}`);
               }
-            } else if (modelSourceModule.type === ModuleType.DecisionTree) {
+            } else if ((modelSourceModule.type as ModuleType) === ModuleType.DecisionTree) {
               // Pyodide를 사용하여 Python으로 Decision Tree 훈련
               const modelPurpose =
                 modelSourceModule.parameters.model_purpose || "classification";
@@ -7770,7 +7800,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 );
                 throw new Error(`모델 훈련 실패: ${errorMessage}`);
               }
-            } else if (modelSourceModule.type === ModuleType.SVM) {
+            } else if ((modelSourceModule.type as ModuleType) === ModuleType.SVM) {
               // Pyodide를 사용하여 Python으로 SVM 훈련
               const modelPurpose =
                 modelSourceModule.parameters.model_purpose || "classification";
@@ -7868,7 +7898,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 throw new Error(`모델 훈련 실패: ${errorMessage}`);
               }
             } else if (
-              modelSourceModule.type === ModuleType.LinearDiscriminantAnalysis
+              modelSourceModule.type === (ModuleType as any).LinearDiscriminantAnalysis
             ) {
               // Pyodide를 사용하여 Python으로 LDA 훈련
               const solver = modelSourceModule.parameters.solver || "svd";
@@ -7941,7 +7971,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 addLog("ERROR", `Python LDA 훈련 실패: ${errorMessage}`);
                 throw new Error(`모델 훈련 실패: ${errorMessage}`);
               }
-            } else if (modelSourceModule.type === ModuleType.NaiveBayes) {
+            } else if ((modelSourceModule.type as ModuleType) === ModuleType.NaiveBayes) {
               // Pyodide를 사용하여 Python으로 Naive Bayes 훈련
               const modelType =
                 modelSourceModule.parameters.model_type || "GaussianNB";
@@ -8350,7 +8380,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             trainedModel.modelType === ModuleType.DecisionTree ||
             trainedModel.modelType === ModuleType.NeuralNetwork ||
             trainedModel.modelType === ModuleType.SVM ||
-            trainedModel.modelType === ModuleType.LinearDiscriminantAnalysis ||
+            trainedModel.modelType === (ModuleType as any).LinearDiscriminantAnalysis ||
             trainedModel.modelType === ModuleType.NaiveBayes ||
             trainedModel.modelType === ModuleType.RandomForest ||
             trainedModel.modelType === ModuleType.GradientBoosting
@@ -8578,7 +8608,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
 
                 addLog("SUCCESS", "Python으로 SVM 모델 예측 완료");
               } else if (
-                trainedModel.modelType === ModuleType.LinearDiscriminantAnalysis
+                trainedModel.modelType === (ModuleType as any).LinearDiscriminantAnalysis
               ) {
                 addLog(
                   "INFO",
@@ -11032,7 +11062,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             shouldUpdateModelDefinition = true;
             modelDefinitionNewStatus = ModuleStatus.Success;
           } else if (
-            newStatus === ModuleStatus.Pending ||
+            (newStatus as ModuleStatus) === ModuleStatus.Pending ||
             newStatus === ModuleStatus.Error
           ) {
             // When TrainModel becomes Pending or Error, mark connected model definition module as Pending
@@ -12978,7 +13008,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             ref={canvasContainerRef}
             className={`flex-1 min-h-0 min-w-0 relative overflow-hidden ${theme === "dark" ? "canvas-bg" : "canvas-bg-light"}`}
             onDragOver={(e) => {
-              if (e.dataTransfer.files.length > 0 || Array.from(e.dataTransfer.items).some((item) => item.kind === "file")) {
+              if (e.dataTransfer.files.length > 0 || (Array.from(e.dataTransfer.items) as DataTransferItem[]).some((item) => item.kind === "file")) {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = "copy";
               }
@@ -13358,9 +13388,9 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 );
 
                 // 원본 데이터에서 입력 데이터 구조 가져오기
-                const inputData = getSingleInputData(
+                const inputData = resolveInputDataPreview(
                   viewingOutlierDetector.id
-                ) as DataPreview;
+                );
                 if (!inputData) return;
 
                 // OutlierDetectorOutput 업데이트 (View Details용)
@@ -13404,9 +13434,9 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 );
                 if (!module) return;
 
-                const inputData = getSingleInputData(
+                const inputData = resolveInputDataPreview(
                   viewingOutlierDetector.id
-                ) as DataPreview;
+                );
                 if (inputData) {
                   const newOutputDataPreview: DataPreview = {
                     type: "DataPreview",

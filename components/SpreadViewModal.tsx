@@ -63,7 +63,7 @@ export const SpreadViewModal: React.FC<SpreadViewModalProps> = ({
   // 첫 번째 선택된 셀 가져오기
   const getFirstSelectedCell = (): { row: number; col: number } | null => {
     if (selectedCells.size === 0) return null;
-    const firstKey = Array.from(selectedCells)[0];
+    const firstKey = Array.from(selectedCells)[0] as string;
     const [row, col] = firstKey.split(',').map(Number);
     return { row, col };
   };
@@ -129,7 +129,7 @@ export const SpreadViewModal: React.FC<SpreadViewModalProps> = ({
       setSelectedCells(new Set([cellKey]));
     }
 
-    const selected = Array.from(selectedCells);
+    const selected = Array.from(selectedCells) as string[];
     const cellPositions = selected.map(key => {
       const [row, col] = key.split(',').map(Number);
       return { row, col };

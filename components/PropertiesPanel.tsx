@@ -22,6 +22,7 @@ import {
   NormalizerOutput,
   OutlierDetectorOutput,
   VIFCheckerOutput,
+  CorrelationOutput,
 } from "../types";
 import {
   PlayIcon,
@@ -554,7 +555,7 @@ const renderParameters = (
   switch (module.type) {
     // ... [Previous cases remain unchanged: LoadData, SelectData, HandleMissingValues, TransformData, EncodeCategorical, NormalizeData, TransitionData, ResampleData, SplitData] ...
     case ModuleType.LoadData:
-    case ModuleType.XolLoading: {
+    case (ModuleType as any).XolLoading: {
       // 현재 데이터를 Example로 저장하는 함수
       const handleSaveAsExample = () => {
         if (
@@ -4392,7 +4393,7 @@ const renderParameters = (
                 // modelType으로 분류 모델인지 확인 (간단한 체크)
                 const classificationTypes = [
                   ModuleType.LogisticRegression,
-                  ModuleType.LinearDiscriminantAnalysis,
+                  (ModuleType as any).LinearDiscriminantAnalysis,
                   ModuleType.NaiveBayes,
                 ];
                 detectedModelType = classificationTypes.includes(
@@ -5145,7 +5146,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     const loadExamples = async () => {
       if (
         module?.type !== ModuleType.LoadData &&
-        module?.type !== ModuleType.XolLoading
+        module?.type !== (ModuleType as any).XolLoading
       ) {
         return;
       }
@@ -5261,7 +5262,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
       if (
         (module.type === ModuleType.LoadData ||
-          module.type === ModuleType.XolLoading) &&
+          module.type === (ModuleType as any).XolLoading) &&
         (fileName.endsWith(".xlsx") || fileName.endsWith(".xls"))
       ) {
         // 엑셀 파일 처리
@@ -5418,7 +5419,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
     if (
       module.type === ModuleType.LoadData ||
-      module.type === ModuleType.XolLoading
+      module.type === (ModuleType as any).XolLoading
     ) {
       return (
         <StatRow label="File Name" value={module.parameters.source || "N/A"} />
@@ -5887,7 +5888,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               ModuleType.SVM,
               ModuleType.KNN,
               ModuleType.NaiveBayes,
-              ModuleType.LinearDiscriminantAnalysis,
+              (ModuleType as any).LinearDiscriminantAnalysis,
             ];
 
             let formulaParts: string[] = [];
@@ -5988,7 +5989,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 // featureColumns가 없으면 coefficients에서 const를 제외한 모든 계수 사용
                 Object.entries(coefficients).forEach(([param, values]) => {
                   if (param !== "const") {
-                    const coeff = values.coef;
+                    const coeff = (values as any).coef;
                     if (coeff >= 0) {
                       formulaParts.push(` + ${coeff.toFixed(4)} * [${param}]`);
                     } else {
@@ -6312,7 +6313,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   ModuleType.GradientBoosting,
                   ModuleType.NeuralNetwork,
                   ModuleType.SVM,
-                  ModuleType.LinearDiscriminantAnalysis,
+                  (ModuleType as any).LinearDiscriminantAnalysis,
                   ModuleType.NaiveBayes,
                   ModuleType.KNN,
                   // 비지도학습

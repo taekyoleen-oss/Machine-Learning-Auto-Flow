@@ -792,6 +792,7 @@ const PrepMissingProcessingInfo: React.FC<{
       removedRows?: number;
       imputedCount?: number;
       imputedValue?: number | string;
+      n_neighbors?: number;
     }> = [];
 
     if (method === "remove_row") {
@@ -1985,8 +1986,9 @@ export const DataPreviewModal: React.FC<DataPreviewModalProps> = ({
   const isVIFCheckerModule = module.outputData?.type === "VIFCheckerOutput";
 
     const sortedRows = useMemo(() => {
-        try {
+      // catch 블록에서도 참조하므로 try 밖에서 선언(스코프 수정).
       let rowsToSort: any[] = [];
+        try {
       if (isJoinConcatModule) {
         rowsToSort = joinConcatCurrent.rows;
       } else if (isPrepModule && prepTab !== "processing") {

@@ -101,7 +101,7 @@ export const ExcelInputModal: React.FC<ExcelInputModalProps> = ({
   // 첫 번째 선택된 셀 가져오기 (키보드 네비게이션용)
   const getFirstSelectedCell = (): { row: number; col: number } | null => {
     if (selectedCells.size === 0) return null;
-    const firstKey = Array.from(selectedCells)[0];
+    const firstKey = Array.from(selectedCells)[0] as string;
     const [row, col] = firstKey.split(',').map(Number);
     return { row, col };
   };

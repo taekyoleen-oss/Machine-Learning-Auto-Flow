@@ -140,7 +140,7 @@ export const Canvas: React.FC<CanvasProps> = ({
         
         // Special cases for specific modules
         if (isInput) {
-          if (module.type === ModuleType.XolCalculator) {
+          if (module.type === (ModuleType as any).XolCalculator) {
             // XoL Calculator: data_in on left (center), contract_in on top (center)
             if (portName === 'data_in') {
         return { 
@@ -156,7 +156,7 @@ export const Canvas: React.FC<CanvasProps> = ({
             }
           }
           
-          if (module.type === ModuleType.SplitByThreshold || module.type === ModuleType.ApplyThreshold) {
+          if (module.type === (ModuleType as any).SplitByThreshold || module.type === (ModuleType as any).ApplyThreshold) {
             // Split By Threshold, Apply Threshold: data_in on left (center), threshold_in on top (center)
             if (portName === 'data_in') {
               return {

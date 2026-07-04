@@ -342,7 +342,7 @@ const noRunButtonTypes = [
   ModuleType.GradientBoosting,
   ModuleType.NeuralNetwork,
   ModuleType.SVM,
-  ModuleType.LinearDiscriminantAnalysis,
+  (ModuleType as any).LinearDiscriminantAnalysis,
   ModuleType.NaiveBayes,
   ModuleType.KNN,
   ModuleType.KMeans,
@@ -488,7 +488,7 @@ export const ComponentRenderer: React.FC<ModuleNodeProps> = ({
     total: number
   ): React.CSSProperties => {
     // Special cases for specific modules
-    if (module.type === ModuleType.XolCalculator) {
+    if (module.type === (ModuleType as any).XolCalculator) {
       // XoL Calculator: data_in on left (center), contract_in on top (center)
       if (port.name === "data_in") {
         return {
@@ -509,8 +509,8 @@ export const ComponentRenderer: React.FC<ModuleNodeProps> = ({
     }
 
     if (
-      module.type === ModuleType.SplitByThreshold ||
-      module.type === ModuleType.ApplyThreshold
+      module.type === (ModuleType as any).SplitByThreshold ||
+      module.type === (ModuleType as any).ApplyThreshold
     ) {
       // Split By Threshold, Apply Threshold: data_in on left (center), threshold_in on top (center)
       if (port.name === "data_in") {
