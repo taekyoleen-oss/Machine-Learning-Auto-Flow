@@ -586,7 +586,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (!tabContextMenu) return;
-    const close = (e: MouseEvent) => {
+    const close = (e: globalThis.MouseEvent) => {
       if (tabContextMenuRef.current?.contains(e.target as Node)) return;
       setTabContextMenu(null);
     };
@@ -9437,7 +9437,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 const val = row[col];
                 if (typeof val !== "number" || isNaN(val)) {
                   addLog(
-                    "WARNING",
+                    "WARN",
                     `컬럼 '${col}'의 값이 숫자가 아니거나 NaN입니다. 0으로 대체합니다.`
                   );
                   return 0;
@@ -9449,7 +9449,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
               const val = row[label_column];
               if (typeof val !== "number" || isNaN(val)) {
                 addLog(
-                  "WARNING",
+                  "WARN",
                   `레이블 컬럼 '${label_column}'의 값이 숫자가 아니거나 NaN입니다. 0으로 대체합니다.`
                 );
                 return 0;

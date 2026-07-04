@@ -11,13 +11,6 @@ interface State {
 }
 
 export class ErrorBoundary extends Component<Props, State> {
-  // 이 프로젝트에는 @types/react가 없어 클래스 컴포넌트 제네릭이 state/props/setState를
-  // 노출하지 못한다. 런타임에는 React.Component가 실제로 제공하므로, JS를 만들지 않는
-  // 타입 전용 declare로 시그니처만 보강한다(런타임 무영향).
-  declare state: State;
-  declare props: Props;
-  declare setState: (partialState: Partial<State>) => void;
-
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null };

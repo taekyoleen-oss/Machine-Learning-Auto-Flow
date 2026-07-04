@@ -57,7 +57,7 @@ export const SamplesManagementModal: React.FC<Props> = ({
             category: s.category ?? "머신러닝",
             created_at: s.created_at,
             updated_at: s.updated_at,
-          }))
+          })) as unknown as ManagementSample[]
         );
         return;
       }

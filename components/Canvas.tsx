@@ -989,7 +989,7 @@ export const Canvas: React.FC<CanvasProps> = ({
                             strokeWidth="20"
                             fill="none"
                             style={{ cursor: 'pointer', pointerEvents: 'stroke' }}
-                            title="Double-click to delete connection"
+                            {...({ title: "Double-click to delete connection" } as any)}
                         />
                         {/* 연결선 중간 사각형 마커 */}
                         {hasData && (

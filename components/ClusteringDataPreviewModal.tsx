@@ -766,7 +766,7 @@ const PCAClusteringView: React.FC<{
                     })}
                     
                     {/* 데이터 포인트 */}
-                    {clusteredData.rows.slice(0, 5000).forEach((row, idx) => {
+                    {clusteredData.rows.slice(0, 5000).map((row, idx) => {
                         const pc1 = typeof row['PC1'] === 'number' ? row['PC1'] : parseFloat(String(row['PC1'])) || 0;
                         const pc2 = typeof row['PC2'] === 'number' ? row['PC2'] : parseFloat(String(row['PC2'])) || 0;
                         const x = scaleX(pc1);

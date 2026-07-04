@@ -41,7 +41,7 @@ export const CorrelationPreviewModal: React.FC<CorrelationPreviewModalProps> = (
         if (activeTab === "pairplot" && pairplotImage) return;
         
         // 그 외의 경우 사용 가능한 메서드로 설정
-        if (!activeTab || (!availableMethods.includes(activeTab) && activeTab !== "heatmap" && activeTab !== "pairplot")) {
+        if (!activeTab || (!(availableMethods as string[]).includes(activeTab) && activeTab !== "heatmap" && activeTab !== "pairplot")) {
             setActiveTab(defaultTab);
         }
     }, [availableMethods, defaultTab, activeTab, heatmapImage, pairplotImage]);
@@ -225,7 +225,7 @@ export const CorrelationPreviewModal: React.FC<CorrelationPreviewModalProps> = (
                     </div>
 
                     {/* 상관계수 행렬 표시 */}
-                    {activeTab !== "heatmap" && activeTab !== "pairplot" && availableMethods.includes(activeTab) && (() => {
+                    {activeTab !== "heatmap" && activeTab !== "pairplot" && (availableMethods as string[]).includes(activeTab) && (() => {
                         const currentMatrix = correlationMatrices?.find(m => m.method === activeTab);
                         if (!currentMatrix) return null;
 
