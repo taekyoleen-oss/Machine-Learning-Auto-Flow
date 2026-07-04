@@ -2477,11 +2477,16 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
 
   const handleLoadSample = useCallback(
     async (
-      sampleName: string,
+      sampleName: string | Record<string, any>,
       source: "samples" | "mywork" | "folder" = "samples",
       filename?: string,
       sampleId?: number | string // DB ID 또는 Supabase UUID
     ) => {
+      // 표시용 이름: 샘플 객체를 직접 받은 경우 name 필드 사용
+      const displayName =
+        typeof sampleName === "string"
+          ? sampleName
+          : sampleName?.name || "불러온 모델";
       console.log(
         "handleLoadSample called with:",
         sampleName,
@@ -2497,7 +2502,10 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
       try {
         let sampleModel: any = null;
 
-        if (source === "folder") {
+        // 샘플 객체를 직접 받은 경우(파일에서 불러오기 등) 이름 검색을 건너뛴다.
+        if (typeof sampleName === "object" && sampleName !== null) {
+          sampleModel = sampleName;
+        } else if (source === "folder") {
           if (sampleId && typeof sampleId === "string" && isSupabaseConfigured()) {
             const supabaseSample = await fetchAutoflowSampleById(sampleId);
             if (supabaseSample) sampleModel = supabaseSample.file_content;
@@ -2743,9 +2751,9 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         _setConnections(newConnections);
         setSelectedModuleIds([]);
         setIsDirty(false);
-        setProjectName(sampleName);
+        setProjectName(displayName);
         setIsSampleMenuOpen(false);
-        addLog("SUCCESS", `Sample model "${sampleName}" loaded successfully.`);
+        addLog("SUCCESS", `Sample model "${displayName}" loaded successfully.`);
         setTimeout(() => handleFitToView(), 100);
       } catch (error: any) {
         console.error("Error loading sample:", error);
@@ -2763,6 +2771,44 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
       }
     },
     [resetModules, addLog, handleFitToView]
+  );
+
+  // '파일에서 불러오기' 공통 처리: 저장 포맷(모듈 id + from/to 연결)은 그대로
+  // 복원하고, 샘플 포맷(fromModuleIndex 또는 id 없는 모듈)은 handleLoadSample의
+  // 변환 경로를 재사용한다. 알 수 없는 형식은 크래시 대신 경고 로그로 처리.
+  const loadWorkFromFileContent = useCallback(
+    async (content: string, fileName: string) => {
+      try {
+        const savedState = JSON.parse(content);
+        const modulesArr = Array.isArray(savedState?.modules)
+          ? savedState.modules
+          : null;
+        const connsArr = Array.isArray(savedState?.connections)
+          ? savedState.connections
+          : null;
+        const isRuntimeFormat =
+          !!modulesArr &&
+          !!connsArr &&
+          modulesArr.every((m: any) => m && typeof m.id === "string") &&
+          connsArr.every((c: any) => c?.from?.moduleId && c?.to?.moduleId);
+        if (isRuntimeFormat) {
+          resetModules(savedState.modules);
+          _setConnections(savedState.connections);
+          if (savedState.projectName) setProjectName(savedState.projectName);
+          setSelectedModuleIds([]);
+          setIsDirty(false);
+          addLog("SUCCESS", `파일 '${fileName}'을 불러왔습니다.`);
+        } else if (modulesArr) {
+          await handleLoadSample(savedState, "mywork");
+        } else {
+          addLog("WARN", "올바르지 않은 파일 형식입니다.");
+        }
+      } catch (error) {
+        console.error("Failed to load file:", error);
+        addLog("ERROR", "파일을 불러오는데 실패했습니다.");
+      }
+    },
+    [resetModules, addLog, handleLoadSample]
   );
 
   // Samples 목록: Supabase 전용 (app_section=ML)
@@ -12236,8 +12282,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
               </button>
               {isMyWorkMenuOpen && (
                 <div
-                  className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-xl min-w-[220px]"
-                  style={{ zIndex: 9999 }}
+                  className="absolute top-full left-0 z-50 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-xl min-w-[220px]"
                 >
                   {/* 마지막 작업 불러오기 (localStorage 영구 저장 — 브라우저를 닫아도 복원) */}
                   <button
@@ -12314,37 +12359,13 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
 
                         const reader = new FileReader();
                         reader.onload = (e: ProgressEvent<FileReader>) => {
-                          try {
-                            const content = e.target?.result as string;
-                            if (!content) {
-                              addLog("ERROR", "파일이 비어있습니다.");
-                              return;
-                            }
-                            const savedState = JSON.parse(content);
-                            if (savedState.modules && savedState.connections) {
-                              resetModules(savedState.modules);
-                              _setConnections(savedState.connections);
-                              if (savedState.projectName) {
-                                setProjectName(savedState.projectName);
-                              }
-                              setSelectedModuleIds([]);
-                              setIsDirty(false);
-                              addLog(
-                                "SUCCESS",
-                                `파일 '${file.name}'을 불러왔습니다.`
-                              );
-                              setIsMyWorkMenuOpen(false);
-                            } else if (savedState.name && savedState.modules) {
-                              // Sample 형식인 경우
-                              handleLoadSample(savedState.name, "mywork");
-                              setIsMyWorkMenuOpen(false);
-                            } else {
-                              addLog("WARN", "올바르지 않은 파일 형식입니다.");
-                            }
-                          } catch (error) {
-                            console.error("Failed to load file:", error);
-                            addLog("ERROR", "파일을 불러오는데 실패했습니다.");
+                          const content = e.target?.result as string;
+                          if (!content) {
+                            addLog("ERROR", "파일이 비어있습니다.");
+                            return;
                           }
+                          loadWorkFromFileContent(content, file.name);
+                          setIsMyWorkMenuOpen(false);
                         };
                         reader.readAsText(file);
                       };
@@ -12676,26 +12697,9 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                   if (!file) return;
                   const reader = new FileReader();
                   reader.onload = (e: ProgressEvent<FileReader>) => {
-                    try {
-                      const content = e.target?.result as string;
-                      if (!content) { addLog("ERROR", "파일이 비어있습니다."); return; }
-                      const savedState = JSON.parse(content);
-                      if (savedState.modules && savedState.connections) {
-                        resetModules(savedState.modules);
-                        _setConnections(savedState.connections);
-                        if (savedState.projectName) setProjectName(savedState.projectName);
-                        setSelectedModuleIds([]);
-                        setIsDirty(false);
-                        addLog("SUCCESS", `파일 '${file.name}'을 불러왔습니다.`);
-                      } else if (savedState.name && savedState.modules) {
-                        handleLoadSample(savedState.name, "mywork");
-                      } else {
-                        addLog("WARN", "올바르지 않은 파일 형식입니다.");
-                      }
-                    } catch (error) {
-                      console.error("Failed to load file:", error);
-                      addLog("ERROR", "파일을 불러오는데 실패했습니다.");
-                    }
+                    const content = e.target?.result as string;
+                    if (!content) { addLog("ERROR", "파일이 비어있습니다."); return; }
+                    loadWorkFromFileContent(content, file.name);
                   };
                   reader.readAsText(file);
                 };
