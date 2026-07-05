@@ -4160,6 +4160,22 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         return sourceModule.outputData as unknown as DataPreview;
       }
 
+      // Join/Concat 출력은 DataPreview 동형(columns+rows)이므로 언랩해
+      // 하류 모듈 연결을 지원한다(기존엔 폴스루로 null → 실행 실패).
+      if (
+        (sourceModule.outputData.type === "JoinOutput" ||
+          sourceModule.outputData.type === "ConcatOutput") &&
+        portType === "data"
+      ) {
+        const od = sourceModule.outputData as any;
+        return {
+          type: "DataPreview",
+          columns: od.columns || [],
+          rows: od.rows || [],
+          totalRowCount: (od.rows || []).length,
+        } as DataPreview;
+      }
+
       console.log(
         `getSingleInputData: No matching output data type. outputData.type: ${sourceModule.outputData.type}, portType: ${portType}, fromPortName: ${fromPortName}`
       );
@@ -12117,7 +12133,11 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           (viewingDataForModule.outputData?.type === "DataPreview" ||
             viewingDataForModule.outputData?.type === "KMeansOutput" ||
             viewingDataForModule.outputData?.type === "PCAOutput" ||
-            viewingDataForModule.outputData?.type === "VIFCheckerOutput");
+            viewingDataForModule.outputData?.type === "VIFCheckerOutput" ||
+            // Join/Concat 결과 보기: DataPreviewModal이 JoinOutput/ConcatOutput을
+            // 자체 변환 렌더하므로(모달 내 isJoinConcatModule 경로) 타입만 허용하면 됨.
+            viewingDataForModule.outputData?.type === "JoinOutput" ||
+            viewingDataForModule.outputData?.type === "ConcatOutput");
 
         if (shouldShowModal) {
           console.log(
