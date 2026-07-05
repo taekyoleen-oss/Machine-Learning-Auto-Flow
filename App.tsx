@@ -75,6 +75,12 @@ import {
   executeDBSCAN,
   executeHierarchicalClustering,
   executeFeatureImportance,
+  executeOLSModel,
+  executeLogisticModel,
+  executePoissonModel,
+  executeQuasiPoissonModel,
+  executeNegativeBinomialModel,
+  executeStatModels,
 } from "./utils/simulationExecutors";
 import { DEFAULT_MODULES, TOOLBOX_MODULES, SAMPLE_MODELS } from "./constants";
 import { SAVED_SAMPLES } from "./savedSamples";
@@ -8152,77 +8158,40 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             throw new Error(`모델 평가 실패: ${errorMessage}`);
           }
         } else if (module.type === ModuleType.OLSModel) {
-          newOutputData = {
-            type: "ModelDefinitionOutput",
-            modelFamily: "statsmodels",
-            modelType: "OLS",
-            parameters: {},
-          };
-          addLog(
-            "INFO",
-            `모델 정의 모듈 '${module.name}' (OLS)이 생성되었습니다.`
+          newOutputData = await executeOLSModel(
+            module,
+            getSingleInputData,
+            addLog
           );
         } else if (module.type === ModuleType.LogisticModel) {
-          newOutputData = {
-            type: "ModelDefinitionOutput",
-            modelFamily: "statsmodels",
-            modelType: "Logit",
-            parameters: {},
-          };
-          addLog(
-            "INFO",
-            `모델 정의 모듈 '${module.name}' (Logistic)이 생성되었습니다.`
+          newOutputData = await executeLogisticModel(
+            module,
+            getSingleInputData,
+            addLog
           );
         } else if (module.type === ModuleType.PoissonModel) {
-          newOutputData = {
-            type: "ModelDefinitionOutput",
-            modelFamily: "statsmodels",
-            modelType: "Poisson",
-            parameters: {
-              max_iter: module.parameters.max_iter || 100,
-            },
-          };
-          addLog(
-            "INFO",
-            `모델 정의 모듈 '${module.name}' (Poisson)이 생성되었습니다.`
+          newOutputData = await executePoissonModel(
+            module,
+            getSingleInputData,
+            addLog
           );
         } else if (module.type === ModuleType.QuasiPoissonModel) {
-          newOutputData = {
-            type: "ModelDefinitionOutput",
-            modelFamily: "statsmodels",
-            modelType: "QuasiPoisson",
-            parameters: {
-              max_iter: module.parameters.max_iter || 100,
-            },
-          };
-          addLog(
-            "INFO",
-            `모델 정의 모듈 '${module.name}' (Quasi-Poisson)이 생성되었습니다.`
+          newOutputData = await executeQuasiPoissonModel(
+            module,
+            getSingleInputData,
+            addLog
           );
         } else if (module.type === ModuleType.NegativeBinomialModel) {
-          newOutputData = {
-            type: "ModelDefinitionOutput",
-            modelFamily: "statsmodels",
-            modelType: "NegativeBinomial",
-            parameters: {
-              max_iter: module.parameters.max_iter || 100,
-              disp: module.parameters.disp || 1.0,
-            },
-          };
-          addLog(
-            "INFO",
-            `모델 정의 모듈 '${module.name}' (Negative Binomial)이 생성되었습니다.`
+          newOutputData = await executeNegativeBinomialModel(
+            module,
+            getSingleInputData,
+            addLog
           );
         } else if (module.type === ModuleType.StatModels) {
-          newOutputData = {
-            type: "ModelDefinitionOutput",
-            modelFamily: "statsmodels",
-            modelType: module.parameters.model,
-            parameters: {},
-          };
-          addLog(
-            "INFO",
-            `모델 정의 모듈 '${module.name}' (${module.parameters.model})이 생성되었습니다.`
+          newOutputData = await executeStatModels(
+            module,
+            getSingleInputData,
+            addLog
           );
         } else if (module.type === ModuleType.ResultModel) {
           const modelInputConnection = connections.find(

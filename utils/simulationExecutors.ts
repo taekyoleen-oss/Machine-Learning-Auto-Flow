@@ -1706,3 +1706,148 @@ export async function executeFeatureImportance(
           );
   return newOutputData;
 }
+
+/**
+ * OLSModel 모듈 실행기 — App.tsx runSimulation의 해당 분기 본문을 문자 그대로 이동.
+ * 동작 불변: 에러는 그대로 throw되어 호출부(runSimulation)의 catch가 처리한다.
+ */
+export async function executeOLSModel(
+  module: CanvasModule,
+  getSingleInputData: GetSingleInputData,
+  addLog: AddLog
+): Promise<CanvasModule["outputData"]> {
+  let newOutputData: CanvasModule["outputData"] | undefined = undefined;
+          newOutputData = {
+            type: "ModelDefinitionOutput",
+            modelFamily: "statsmodels",
+            modelType: "OLS",
+            parameters: {},
+          };
+          addLog(
+            "INFO",
+            `모델 정의 모듈 '${module.name}' (OLS)이 생성되었습니다.`
+          );
+  return newOutputData;
+}
+
+/**
+ * LogisticModel 모듈 실행기 — App.tsx runSimulation의 해당 분기 본문을 문자 그대로 이동.
+ * 동작 불변: 에러는 그대로 throw되어 호출부(runSimulation)의 catch가 처리한다.
+ */
+export async function executeLogisticModel(
+  module: CanvasModule,
+  getSingleInputData: GetSingleInputData,
+  addLog: AddLog
+): Promise<CanvasModule["outputData"]> {
+  let newOutputData: CanvasModule["outputData"] | undefined = undefined;
+          newOutputData = {
+            type: "ModelDefinitionOutput",
+            modelFamily: "statsmodels",
+            modelType: "Logit",
+            parameters: {},
+          };
+          addLog(
+            "INFO",
+            `모델 정의 모듈 '${module.name}' (Logistic)이 생성되었습니다.`
+          );
+  return newOutputData;
+}
+
+/**
+ * PoissonModel 모듈 실행기 — App.tsx runSimulation의 해당 분기 본문을 문자 그대로 이동.
+ * 동작 불변: 에러는 그대로 throw되어 호출부(runSimulation)의 catch가 처리한다.
+ */
+export async function executePoissonModel(
+  module: CanvasModule,
+  getSingleInputData: GetSingleInputData,
+  addLog: AddLog
+): Promise<CanvasModule["outputData"]> {
+  let newOutputData: CanvasModule["outputData"] | undefined = undefined;
+          newOutputData = {
+            type: "ModelDefinitionOutput",
+            modelFamily: "statsmodels",
+            modelType: "Poisson",
+            parameters: {
+              max_iter: module.parameters.max_iter || 100,
+            },
+          };
+          addLog(
+            "INFO",
+            `모델 정의 모듈 '${module.name}' (Poisson)이 생성되었습니다.`
+          );
+  return newOutputData;
+}
+
+/**
+ * QuasiPoissonModel 모듈 실행기 — App.tsx runSimulation의 해당 분기 본문을 문자 그대로 이동.
+ * 동작 불변: 에러는 그대로 throw되어 호출부(runSimulation)의 catch가 처리한다.
+ */
+export async function executeQuasiPoissonModel(
+  module: CanvasModule,
+  getSingleInputData: GetSingleInputData,
+  addLog: AddLog
+): Promise<CanvasModule["outputData"]> {
+  let newOutputData: CanvasModule["outputData"] | undefined = undefined;
+          newOutputData = {
+            type: "ModelDefinitionOutput",
+            modelFamily: "statsmodels",
+            modelType: "QuasiPoisson",
+            parameters: {
+              max_iter: module.parameters.max_iter || 100,
+            },
+          };
+          addLog(
+            "INFO",
+            `모델 정의 모듈 '${module.name}' (Quasi-Poisson)이 생성되었습니다.`
+          );
+  return newOutputData;
+}
+
+/**
+ * NegativeBinomialModel 모듈 실행기 — App.tsx runSimulation의 해당 분기 본문을 문자 그대로 이동.
+ * 동작 불변: 에러는 그대로 throw되어 호출부(runSimulation)의 catch가 처리한다.
+ */
+export async function executeNegativeBinomialModel(
+  module: CanvasModule,
+  getSingleInputData: GetSingleInputData,
+  addLog: AddLog
+): Promise<CanvasModule["outputData"]> {
+  let newOutputData: CanvasModule["outputData"] | undefined = undefined;
+          newOutputData = {
+            type: "ModelDefinitionOutput",
+            modelFamily: "statsmodels",
+            modelType: "NegativeBinomial",
+            parameters: {
+              max_iter: module.parameters.max_iter || 100,
+              disp: module.parameters.disp || 1.0,
+            },
+          };
+          addLog(
+            "INFO",
+            `모델 정의 모듈 '${module.name}' (Negative Binomial)이 생성되었습니다.`
+          );
+  return newOutputData;
+}
+
+/**
+ * StatModels 모듈 실행기 — App.tsx runSimulation의 해당 분기 본문을 문자 그대로 이동.
+ * 동작 불변: 에러는 그대로 throw되어 호출부(runSimulation)의 catch가 처리한다.
+ */
+export async function executeStatModels(
+  module: CanvasModule,
+  getSingleInputData: GetSingleInputData,
+  addLog: AddLog
+): Promise<CanvasModule["outputData"]> {
+  let newOutputData: CanvasModule["outputData"] | undefined = undefined;
+          newOutputData = {
+            type: "ModelDefinitionOutput",
+            modelFamily: "statsmodels",
+            modelType: module.parameters.model,
+            parameters: {},
+          };
+          addLog(
+            "INFO",
+            `모델 정의 모듈 '${module.name}' (${module.parameters.model})이 생성되었습니다.`
+          );
+  return newOutputData;
+}
