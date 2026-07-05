@@ -70,6 +70,11 @@ import {
   executeTransitionData,
   executeJoin,
   executeConcat,
+  executeKMeans,
+  executePrincipalComponentAnalysis,
+  executeDBSCAN,
+  executeHierarchicalClustering,
+  executeFeatureImportance,
 } from "./utils/simulationExecutors";
 import { DEFAULT_MODULES, TOOLBOX_MODULES, SAMPLE_MODELS } from "./constants";
 import { SAVED_SAMPLES } from "./savedSamples";
@@ -7861,24 +7866,10 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             }
           }
         } else if (module.type === ModuleType.FeatureImportance) {
-          // 순열 특징중요도는 학습된 모델 객체가 필요하지만, 인앱 실행기는 (지도학습의 경우)
-          // 선형 계수만 보관하므로 트리 등 일반 모델을 인앱에서 재예측할 수 없다.
-          // 따라서 인앱에서는 안내만 제공하고, 실제 계산은 '전체 코드 보기'로 내보낸
-          // 결정적 Python(permutation_importance, random_state=42)에서 수행한다(정직한 한계).
-          newOutputData = {
-            type: "DataPreview",
-            columns: [{ name: "info", type: "string" }],
-            totalRowCount: 1,
-            rows: [
-              {
-                info:
-                  "순열 특징중요도는 '전체 코드 보기'로 내보낸 Python에서 결정적으로 계산됩니다(random_state=42).",
-              },
-            ],
-          };
-          addLog(
-            "INFO",
-            "FeatureImportance: 인앱은 안내만 제공 — 전체코드 내보내기에서 순열 중요도를 계산합니다(정직한 한계)."
+          newOutputData = await executeFeatureImportance(
+            module,
+            getSingleInputData,
+            addLog
           );
         } else if (module.type === ModuleType.EvaluateModel) {
           const inputData = getSingleInputData(
@@ -9246,67 +9237,28 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             throw new Error(`Mortality Result 실행 실패: ${errorMessage}`);
           }
         } else if (module.type === ModuleType.KMeans) {
-          // K-Means 모델 정의만 생성 (LinearRegression처럼)
-          newOutputData = {
-            type: "ModelDefinitionOutput",
-            modelFamily: "sklearn",
-            modelType: "KMeans" as any,
-            parameters: {
-              n_clusters: module.parameters.n_clusters || 3,
-              init: module.parameters.init || "k-means++",
-              n_init: module.parameters.n_init || 10,
-              max_iter: module.parameters.max_iter || 300,
-              random_state: module.parameters.random_state || 42,
-            },
-          } as ModelDefinitionOutput;
-          addLog(
-            "INFO",
-            `K-Means 모델 정의 모듈 '${module.name}'이 생성되었습니다.`
+          newOutputData = await executeKMeans(
+            module,
+            getSingleInputData,
+            addLog
           );
         } else if (module.type === ModuleType.PrincipalComponentAnalysis) {
-          // PCA 모델 정의만 생성
-          newOutputData = {
-            type: "ModelDefinitionOutput",
-            modelFamily: "sklearn",
-            modelType: "PCA" as any,
-            parameters: {
-              n_components: module.parameters.n_components || 2,
-            },
-          } as ModelDefinitionOutput;
-          addLog(
-            "INFO",
-            `PCA 모델 정의 모듈 '${module.name}'이 생성되었습니다.`
+          newOutputData = await executePrincipalComponentAnalysis(
+            module,
+            getSingleInputData,
+            addLog
           );
         } else if (module.type === ModuleType.DBSCAN) {
-          // DBSCAN 모델 정의만 생성
-          newOutputData = {
-            type: "ModelDefinitionOutput",
-            modelFamily: "sklearn",
-            modelType: "DBSCAN" as any,
-            parameters: {
-              eps: module.parameters.eps ?? 0.5,
-              min_samples: module.parameters.min_samples ?? 5,
-            },
-          } as ModelDefinitionOutput;
-          addLog(
-            "INFO",
-            `DBSCAN 모델 정의 모듈 '${module.name}'이 생성되었습니다.`
+          newOutputData = await executeDBSCAN(
+            module,
+            getSingleInputData,
+            addLog
           );
         } else if (module.type === ModuleType.HierarchicalClustering) {
-          // 계층적(Agglomerative) 모델 정의만 생성
-          newOutputData = {
-            type: "ModelDefinitionOutput",
-            modelFamily: "sklearn",
-            modelType: "HierarchicalClustering" as any,
-            parameters: {
-              n_clusters: module.parameters.n_clusters ?? 3,
-              linkage: module.parameters.linkage || "ward",
-              metric: module.parameters.metric || "euclidean",
-            },
-          } as ModelDefinitionOutput;
-          addLog(
-            "INFO",
-            `계층적 클러스터링 모델 정의 모듈 '${module.name}'이 생성되었습니다.`
+          newOutputData = await executeHierarchicalClustering(
+            module,
+            getSingleInputData,
+            addLog
           );
         } else if (module.type === ModuleType.TrainClusteringModel) {
           // TrainClusteringModel: 모델 + 데이터로 학습
