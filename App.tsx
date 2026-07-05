@@ -6192,8 +6192,40 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           // 분류 모델은 범주형(문자열) 라벨을 정수 코드로 인코딩한다.
           // (이전 버그: 라벨이 숫자가 아니면 모든 행을 버려 'No valid data rows' 발생 —
           //  Adult Income의 income(>50K/<=50K) 같은 문자열 라벨에서 분류 학습 불가했음.)
+          // 클래스 코드는 사전 스캔 후 정렬 순서로 부여한다(결정적·sklearn LabelEncoder 정합,
+          // 수치 라벨은 수치 정렬). 이전에는 등장 순서로 부여해 훈련 데이터 첫 행의 클래스에
+          // 따라 이진 라벨 0/1이 뒤집힐 수 있었고(예: 첫 행 라벨=1 → {1:0, 0:1}), 그 코드로
+          // 학습된 모델의 ScoreModel 확률(Proba_1)·EvaluateModel 혼동행렬이 반전되었다.
           const labelClassMap: Record<string, number> = {};
-          let nextLabelCode = 0;
+          if (modelIsClassification) {
+            const uniqueLabelKeys = Array.from(
+              new Set(
+                rows
+                  .filter((r: any) => r)
+                  .map((r: any) => r[label_column])
+                  .filter(
+                    (v: any) =>
+                      v !== null && v !== undefined && String(v).trim() !== ""
+                  )
+                  .map((v: any) => String(v))
+              )
+            );
+            const allNumericLabels = uniqueLabelKeys.every(
+              (k) => !isNaN(Number(k))
+            );
+            uniqueLabelKeys.sort((a, b) =>
+              allNumericLabels
+                ? Number(a) - Number(b)
+                : a < b
+                  ? -1
+                  : a > b
+                    ? 1
+                    : 0
+            );
+            uniqueLabelKeys.forEach((k, i) => {
+              labelClassMap[k] = i;
+            });
+          }
 
           for (let rowIdx = 0; rowIdx < rows.length; rowIdx++) {
             const row = rows[rowIdx];
@@ -6245,7 +6277,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 String(labelValue).trim() !== ""
               ) {
                 const key = String(labelValue);
-                if (!(key in labelClassMap)) labelClassMap[key] = nextLabelCode++;
+                if (!(key in labelClassMap)) continue; // 사전 스캔에 없던 값(방어)
                 X.push(featureRow);
                 y.push(labelClassMap[key]);
               }
