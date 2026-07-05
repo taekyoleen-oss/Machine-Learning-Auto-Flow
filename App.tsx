@@ -3493,13 +3493,23 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
   );
 
   const updateModuleParameters = useCallback(
-    (id: string, newParams: Record<string, any>) => {
+    (
+      id: string,
+      newParams: Record<string, any>,
+      options?: { preserveStatus?: boolean }
+    ) => {
+      // preserveStatus: 기본값 자동 채움(빈 columnSelections를 "전체 선택"으로 구체화 등)처럼
+      // 실행 결과가 달라지지 않는 갱신에 사용 — 상태/출력/다운스트림/보고서를 무효화하지 않는다.
+      // (모듈을 선택만 해도 Success가 Pending으로 리셋되던 잠복 버그 방지.)
+      const preserveStatus = options?.preserveStatus === true;
       setModules((prev) => {
         const updated = prev.map((m) =>
           m.id === id
             ? { ...m, parameters: { ...m.parameters, ...newParams } }
             : m
         );
+
+        if (preserveStatus) return updated;
 
         // Find all downstream modules
         const downstreamIds = getDownstreamModules(id, updated, connections);
@@ -3543,10 +3553,12 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
       });
       setIsDirty(true);
       // 비-보고서 모듈 파라미터가 바뀌면 모델이 달라진 것 → 기존 보고서 리셋.
-      // (보고서 자신의 파라미터 편집(제목/추가정보 등)은 제외.)
-      const editedModule = modules.find((m) => m.id === id);
-      if (editedModule && editedModule.type !== ModuleType.ModelAnalysisReport) {
-        resetModelReportsOnChange();
+      // (보고서 자신의 파라미터 편집(제목/추가정보 등)은 제외. preserveStatus 갱신도 제외.)
+      if (!preserveStatus) {
+        const editedModule = modules.find((m) => m.id === id);
+        if (editedModule && editedModule.type !== ModuleType.ModelAnalysisReport) {
+          resetModelReportsOnChange();
+        }
       }
     },
     [setModules, connections, getDownstreamModules, modules, resetModelReportsOnChange]

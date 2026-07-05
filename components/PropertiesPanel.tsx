@@ -86,7 +86,7 @@ const ModelReportLockedHint: React.FC = () => {
 interface PropertiesPanelProps {
   module: CanvasModule | null;
   projectName: string;
-  updateModuleParameters: (id: string, newParams: Record<string, any>) => void;
+  updateModuleParameters: (id: string, newParams: Record<string, any>, options?: { preserveStatus?: boolean }) => void;
   updateModuleName: (id: string, newName: string) => void;
   onUpdateNotes: (id: string, notes: string) => void;
   logs: TerminalLog[];
@@ -309,7 +309,7 @@ const AIParameterRecommender: React.FC<{
   module: CanvasModule;
   inputColumns: string[];
   projectName: string;
-  updateModuleParameters: (id: string, newParams: Record<string, any>) => void;
+  updateModuleParameters: (id: string, newParams: Record<string, any>, options?: { preserveStatus?: boolean }) => void;
 }> = ({ module, inputColumns, projectName, updateModuleParameters }) => {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -537,7 +537,7 @@ const renderParameters = (
   allModules: CanvasModule[],
   allConnections: Connection[],
   projectName: string,
-  updateModuleParameters: (id: string, newParams: Record<string, any>) => void,
+  updateModuleParameters: (id: string, newParams: Record<string, any>, options?: { preserveStatus?: boolean }) => void,
   onSampleLoad: (sample: { name: string; content: string }) => void,
   folderHandle: FileSystemDirectoryHandle | null,
   onOpenExcelModal?: () => void,
@@ -4973,9 +4973,12 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               type: getPandasDtype(col.type),
             };
           });
-          updateModuleParameters(module.id, {
-            columnSelections: newSelections,
-          });
+          // 기본값 구체화(전체 선택 = 빈 값일 때 실행기 기본 동작과 동일) → 상태 보존
+          updateModuleParameters(
+            module.id,
+            { columnSelections: newSelections },
+            { preserveStatus: true }
+          );
         }
       }
     }
@@ -5026,9 +5029,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             type: getPandasDtype(col.type), // 원본 pandas dtype 사용
           };
         });
-        updateModuleParameters(module.id, {
-          columnSelections: newSelections,
-        });
+        updateModuleParameters(
+          module.id,
+          { columnSelections: newSelections },
+          { preserveStatus: true }
+        );
       }
     }
   }, [
@@ -5065,10 +5070,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
         currentFeatureColumns.length === 0)
     ) {
       const allNumericColumnNames = numericColumns.map((col) => col.name);
-      updateModuleParameters(module.id, {
-        ...module.parameters,
-        feature_columns: allNumericColumnNames,
-      });
+      updateModuleParameters(
+        module.id,
+        { ...module.parameters, feature_columns: allNumericColumnNames },
+        { preserveStatus: true }
+      );
     }
   }, [
     module?.id,
@@ -5128,9 +5134,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           }
         });
         if (Object.keys(newSelections).length > 0) {
-          updateModuleParameters(module.id, {
-            columnSelections: newSelections,
-          });
+          updateModuleParameters(
+            module.id,
+            { columnSelections: newSelections },
+            { preserveStatus: true }
+          );
         }
       }
     }
