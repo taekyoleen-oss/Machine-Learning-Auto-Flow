@@ -197,6 +197,9 @@ export interface TrainedModelOutput {
   metrics: Record<string, number>;
   featureColumns: string[];
   labelColumn: string;
+  // 분류 학습 시 클래스 목록(코드 순서 = 정렬 순서). ScoreModel이 코드 예측을
+  // 원 라벨로 복원하는 데 사용(문자열/비{0,1} 수치 라벨 정합).
+  classLabels?: string[];
   tuningSummary?: TuningSummary;
   statsModelsResult?: StatsModelsResultOutput; // statsmodels 결과 (포아송/음이항 회귀용)
   trainingData?: Record<string, any>[]; // Decision Tree plot 생성을 위한 훈련 데이터

@@ -2140,7 +2140,12 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
           })
           .filter((c) => c !== null);
 
-        const savedModel = { name, modules: moduleOut, connections: connOut };
+        const savedModel = {
+          name,
+          modules: moduleOut,
+          connections: connOut,
+          savedAt: Date.now(), // 저장 시각(목록 표기·최신순 정렬용)
+        };
 
         if (mode === "mywork") {
           const existingStr = localStorage.getItem("myWorkModels");
@@ -8386,6 +8391,16 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
               metrics,
               featureColumns: ordered_feature_columns,
               labelColumn: label_column,
+              // 분류: 클래스 목록(코드 순서=정렬 순서) 저장 — ScoreModel이
+              // 코드 예측(0..k-1)을 원 라벨로 복원할 수 있게 한다.
+              ...(modelIsClassification &&
+              Object.keys(labelClassMap).length >= 2
+                ? {
+                    classLabels: Object.keys(labelClassMap).sort(
+                      (a, b) => labelClassMap[a] - labelClassMap[b]
+                    ),
+                  }
+                : {}),
               tuningSummary,
             };
           }
@@ -8858,6 +8873,43 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                 modelIsClassification ? "classification" : "regression",
                 60000 // 타임아웃: 60초
               );
+
+              // 분류: Predict는 학습 시 클래스 코드(0..k-1)이므로 저장된
+              // classLabels로 원 라벨 복원(문자열은 문자열로, 수치는 수치로).
+              // 이전엔 코드가 그대로 노출되어 문자열/비{0,1} 라벨에서
+              // EvaluateModel 비교가 어긋났다(예: y_true '>50K' vs Predict 1).
+              const storedClassLabels = trainedModel.classLabels;
+              if (
+                modelIsClassification &&
+                storedClassLabels &&
+                storedClassLabels.length >= 2
+              ) {
+                const allNumericClasses = storedClassLabels.every(
+                  (k) => !isNaN(Number(k))
+                );
+                result.rows = result.rows.map((r: any) => {
+                  const code = r["Predict"];
+                  if (
+                    typeof code === "number" &&
+                    Number.isInteger(code) &&
+                    code >= 0 &&
+                    code < storedClassLabels.length
+                  ) {
+                    return {
+                      ...r,
+                      Predict: allNumericClasses
+                        ? Number(storedClassLabels[code])
+                        : storedClassLabels[code],
+                    };
+                  }
+                  return r;
+                });
+                if (!allNumericClasses) {
+                  result.columns = result.columns.map((c: any) =>
+                    c.name === "Predict" ? { ...c, type: "string" } : c
+                  );
+                }
+              }
 
               newOutputData = {
                 type: "DataPreview",
@@ -12488,7 +12540,11 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
 
                   {/* 저장된 모델 목록 */}
                   {myWorkModels && myWorkModels.length > 0 ? (
-                    myWorkModels.map((saved: any) => (
+                    [...myWorkModels]
+                      .sort(
+                        (a: any, b: any) => (b.savedAt || 0) - (a.savedAt || 0)
+                      )
+                      .map((saved: any) => (
                       <div key={saved.name} className="flex items-center group last:rounded-b-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                         <button
                           onClick={(e) => {
@@ -12503,6 +12559,9 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                           {saved.modules && (
                             <span className="text-[10px] text-gray-400 dark:text-gray-500">
                               {saved.modules.length}개 모듈
+                              {saved.savedAt
+                                ? ` · ${formatSavedAt(saved.savedAt)}`
+                                : ""}
                             </span>
                           )}
                         </button>
@@ -12770,7 +12829,9 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
             </button>
             {myWorkModels && myWorkModels.length > 0 && (
               <div className="max-h-40 overflow-y-auto border-y border-gray-200 dark:border-gray-700 my-1">
-                {myWorkModels.map((saved: any) => (
+                {[...myWorkModels]
+                  .sort((a: any, b: any) => (b.savedAt || 0) - (a.savedAt || 0))
+                  .map((saved: any) => (
                   <div key={saved.name} className="flex items-center group hover:bg-gray-100 dark:hover:bg-gray-800">
                     <button
                       onClick={() => { handleLoadSample(saved.name, "mywork"); setIsMobileMenuOpen(false); }}
@@ -12778,7 +12839,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
                     >
                       <span className="truncate block">{saved.name}</span>
                       {saved.modules && (
-                        <span className="text-[10px] text-gray-400 dark:text-gray-500">{saved.modules.length}개 모듈</span>
+                        <span className="text-[10px] text-gray-400 dark:text-gray-500">{saved.modules.length}개 모듈{saved.savedAt ? ` · ${formatSavedAt(saved.savedAt)}` : ""}</span>
                       )}
                     </button>
                     <button

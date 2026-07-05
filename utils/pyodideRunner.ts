@@ -5627,13 +5627,28 @@ if is_classification:
     # 예측값이 확률 범위(0~1)에 있는지 확인
     is_probability = np.all((y_pred_raw >= 0) & (y_pred_raw <= 1)) and np.any((y_pred_raw > 0) & (y_pred_raw < 1))
     
+    # 이진 라벨 집합이 {0,1}이 아닐 때({1,2}, {-1,1} 등) 확률 파생 y_pred(0/1)와
+    # 비교가 어긋나므로, 정렬상 두 번째 클래스=1 기준으로 0/1 정규화한다(결정적).
+    _true_classes = np.unique(y_true)
+    _need_binary_norm = (
+        len(_true_classes) == 2
+        and not (float(_true_classes[0]) == 0.0 and float(_true_classes[1]) == 1.0)
+    )
+
     if is_probability:
         # 확률값인 경우 threshold로 이진 분류로 변환
         y_pred = (y_pred_raw >= threshold).astype(int)
         y_pred_proba = y_pred_raw
+        if _need_binary_norm:
+            y_true = (y_true == _true_classes[1]).astype(int)
     else:
-        # 이미 예측값인 경우 그대로 사용
-        y_pred = y_pred_raw.astype(int)
+        # 이미 예측값인 경우 그대로 사용 — 이진 비{0,1} 클래스는 y_true/y_pred를
+        # 동일 기준으로 0/1 정규화(threshold 스윕·ROC와 정합)
+        if _need_binary_norm:
+            y_pred = (np.asarray(y_pred_raw) == _true_classes[1]).astype(int)
+            y_true = (y_true == _true_classes[1]).astype(int)
+        else:
+            y_pred = y_pred_raw.astype(int)
         y_pred_proba = None
 
     # prediction_column이 하드 라벨(예: 'Predict')이라 y_pred_proba가 없을 때,
