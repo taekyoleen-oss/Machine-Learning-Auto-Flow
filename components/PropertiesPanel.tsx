@@ -2825,7 +2825,7 @@ const renderParameters = (
     case ModuleType.TransitionData: {
       const sourceData = getConnectedDataSource(module.id);
       const numericColumns = (sourceData?.columns || []).filter(
-        (c) => c.type === "number"
+        (c) => c.type.startsWith("int") || c.type.startsWith("float")
       );
       const transformations = module.parameters.transformations || {};
 
@@ -3729,7 +3729,7 @@ const renderParameters = (
     case ModuleType.TrainClusteringModel: {
       const sourceData = getConnectedDataSource(module.id);
       const inputColumns = (sourceData?.columns || [])
-        .filter((c) => c.type === "number")
+        .filter((c) => c.type.startsWith("int") || c.type.startsWith("float"))
         .map((c) => c.name);
 
       if (inputColumns.length === 0) {

@@ -90,12 +90,23 @@ export async function executeTrainClusteringModel(
             module.parameters.feature_columns = numericColumns;
           }
 
-          const ordered_feature_columns = inputData.columns
+          let ordered_feature_columns = inputData.columns
             .map((c) => c.name)
             .filter((name) => feature_columns.includes(name));
 
+          // 저장된 feature_columns가 현재 데이터 컬럼과 하나도 안 맞으면(다른 데이터셋의
+          // stale 설정 등) 하드 실패 대신 수치형 컬럼으로 자동 복구한다.
           if (ordered_feature_columns.length === 0) {
-            throw new Error("No valid feature columns found in the data.");
+            const numericColumns = inputData.columns
+              .filter(
+                (c) => c.type.startsWith("int") || c.type.startsWith("float")
+              )
+              .map((c) => c.name);
+            if (numericColumns.length === 0) {
+              throw new Error("No numeric columns found in the data.");
+            }
+            ordered_feature_columns = numericColumns;
+            module.parameters.feature_columns = numericColumns;
           }
 
           // 모델 타입 확인
