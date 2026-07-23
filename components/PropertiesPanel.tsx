@@ -3740,12 +3740,19 @@ const renderParameters = (
         );
       }
 
-      const { feature_columns = [] } = module.parameters;
+      // 기본값(미설정)은 전체 선택 — 변수를 바로 불러온다.
+      // undefined(한 번도 설정 안 함) = 전체, 명시적 [](전체 해제) = 없음 으로 구분.
+      const rawFeatures: string[] | undefined =
+        module.parameters.feature_columns;
+      const selectedFeatures =
+        rawFeatures === undefined ? inputColumns : rawFeatures;
 
       const handleFeatureChange = (colName: string, isChecked: boolean) => {
         const newFeatures = isChecked
-          ? [...feature_columns, colName]
-          : feature_columns.filter((c: string) => c !== colName);
+          ? [...selectedFeatures, colName].filter(
+              (c, i, a) => a.indexOf(c) === i
+            )
+          : selectedFeatures.filter((c: string) => c !== colName);
         onParamChange("feature_columns", newFeatures);
       };
 
@@ -3776,8 +3783,8 @@ const renderParameters = (
               </div>
             </div>
             <p className="text-xs text-gray-500 mb-2">
-              Select feature columns for clustering. If none are selected, all
-              numeric columns will be used.
+              기본값은 모든 수치형 컬럼(전체 선택)입니다. 특정 변수만 사용하려면
+              체크를 조정하세요. 전체 해제 시 실행 때 모든 수치형 컬럼이 사용됩니다.
             </p>
             <div className="space-y-2 pr-2 max-h-40 overflow-y-auto panel-scrollbar">
               {inputColumns.map((col) => (
@@ -3788,7 +3795,7 @@ const renderParameters = (
                 >
                   <input
                     type="checkbox"
-                    checked={feature_columns.includes(col)}
+                    checked={selectedFeatures.includes(col)}
                     onChange={(e) => handleFeatureChange(col, e.target.checked)}
                     className="h-4 w-4 rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-500"
                   />
