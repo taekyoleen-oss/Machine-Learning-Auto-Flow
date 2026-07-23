@@ -25,6 +25,10 @@ export interface ModuleDescription {
   /** 흔한 오류 — 자주 막히는 지점과 해결법 (경고 톤으로 표시) */
   commonErrors?: string;
   notes?: string;
+  /** 포트별 연결 안내 — { 포트이름: "이 포트에 무엇을 연결/무엇이 나오는지" }.
+   *  캔버스에서 모듈에 마우스를 올려 기다리면 뜨는 연결 안내 툴팁에 사용된다.
+   *  지정하지 않은 포트는 포트 타입(data/model/evaluation) 기반 기본 문구로 표시된다. */
+  portHints?: Record<string, string>;
 }
 
 export const MODULE_DESCRIPTIONS: Partial<
@@ -220,12 +224,18 @@ export const MODULE_DESCRIPTIONS: Partial<
     analysisMethod:
       "MinMax는 최솟값~최댓값을 0~1로 늘리고, StandardScaler는 (값−평균)/표준편차로 평균0·분산1로 표준화하며, RobustScaler는 중앙값과 IQR을 써서 이상치에 덜 민감하게 변환합니다. 학습 데이터로 계산한 변환 기준(스케일러)을 저장해 테스트·신규 데이터에 동일하게 적용해야 합니다.",
     role: "수치형 변수를 MinMax / StandardScaler / RobustScaler로 변환합니다.",
-    input: "DataFrame 1개.",
-    output: "스케일링된 DataFrame + 스케일러 객체.",
+    input: "data_in(필수) + data_in2(선택, 같은 스케일러로 함께 변환할 2번째 데이터).",
+    output: "data_out(변환된 데이터) + data_out2(2번째 데이터 변환 결과).",
     parameters: "method: MinMax(0~1) / StandardScaler(평균0,분산1) / RobustScaler(중앙값,IQR)",
     whenToUse: "거리/경사 기반 알고리즘(KMeans, KNN, SVM, 신경망, PCA) 전에는 거의 필수.",
     connections: "EncodeCategorical → ScalingTransform → KMeans/PCA/SVM/NeuralNetwork 등.",
-    commonErrors: "트리 계열(DecisionTree, RandomForest)에는 효과가 없습니다. 이상치가 많으면 MinMax가 왜곡되니 RobustScaler를 고려.",
+    commonErrors: "트리 계열(DecisionTree, RandomForest)에는 효과가 없습니다. 이상치가 많으면 MinMax가 왜곡되니 RobustScaler를 고려. data_in만 연결해도 동작합니다(data_in2는 훈련셋 기준으로 테스트셋을 같이 변환할 때만 사용).",
+    portHints: {
+      data_in: "스케일링할 데이터를 연결하세요 (필수).",
+      data_in2: "같은 기준으로 함께 변환할 2번째 데이터(선택, 예: 테스트셋). 비워도 됩니다.",
+      data_out: "변환된 데이터가 나옵니다 → 다음 모델/분석 모듈로 연결.",
+      data_out2: "2번째 데이터(data_in2)의 변환 결과가 나옵니다.",
+    },
   },
   [ModuleType.TransformData]: {
     title: "Transform Data",
@@ -256,6 +266,11 @@ export const MODULE_DESCRIPTIONS: Partial<
     whenToUse: "지도학습에서 과적합을 막고 일반화 성능을 정직하게 평가하려 할 때.",
     connections: "전처리 완료 DataFrame → SplitData → (train_data_out)TrainModel · (test_data_out)ScoreModel/EvaluateModel.",
     commonErrors: "train·test 포트를 바꿔 연결하면 평가가 왜곡됩니다. 분류 불균형 시 stratify=True 권장. random_state를 비우면 매 실행 결과가 달라집니다(기본 42 유지 권장).",
+    portHints: {
+      data_in: "분할할 전처리 완료 데이터를 연결하세요.",
+      train_data_out: "학습셋이 나옵니다 → TrainModel의 data_in으로 연결.",
+      test_data_out: "테스트셋이 나옵니다 → ScoreModel/EvaluateModel로 연결.",
+    },
   },
   [ModuleType.Concat]: {
     title: "Concat",
@@ -271,6 +286,11 @@ export const MODULE_DESCRIPTIONS: Partial<
     whenToUse: "분할 저장된 같은 형식의 데이터를 합치거나(행), 별도로 만든 피처를 붙일 때(열).",
     connections: "두 데이터 소스 → Concat → 후속 분석/모델링.",
     commonErrors: "행 결합은 컬럼명이, 열 결합은 행 수가 일치해야 합니다. 두 번째 데이터 포트(data_in2) 연결을 빠뜨리기 쉽습니다.",
+    portHints: {
+      data_in: "첫 번째 데이터를 연결하세요.",
+      data_in2: "두 번째 데이터를 연결하세요 (빠뜨리기 쉬움!).",
+      data_out: "결합된 데이터가 나옵니다.",
+    },
   },
   [ModuleType.Join]: {
     title: "Join",
@@ -286,6 +306,11 @@ export const MODULE_DESCRIPTIONS: Partial<
     whenToUse: "공통 키(회원ID 등)로 서로 다른 테이블의 정보를 한 행에 합칠 때.",
     connections: "두 데이터 소스 → Join → 후속 분석/모델링.",
     commonErrors: "키 컬럼명이 양쪽에서 다르거나 자료형이 다르면 매칭 실패. inner 조인은 매칭 안 된 행이 사라지니 결과 행 수를 확인하세요.",
+    portHints: {
+      data_in: "왼쪽(기준) 데이터를 연결하세요.",
+      data_in2: "오른쪽(합칠) 데이터를 연결하세요 (빠뜨리기 쉬움!).",
+      data_out: "조인된 데이터가 나옵니다.",
+    },
   },
   [ModuleType.TransitionData]: {
     title: "Transition Data",
@@ -507,6 +532,11 @@ export const MODULE_DESCRIPTIONS: Partial<
     whenToUse: "지도학습 모델 정의(LinearRegression/DecisionTree 등)를 실제로 적합시킬 때.",
     connections: "(model_in)모델정의 · (data_in)SplitData.train → TrainModel → ScoreModel/EvaluateModel.",
     commonErrors: "model_in·data_in 둘 다 연결해야 합니다. label_column 미지정 시 학습 실패. 피처에 결측·문자열이 남아 있으면 fit 오류.",
+    portHints: {
+      model_in: "모델 '정의'를 연결하세요 (LinearRegression/DecisionTree 등).",
+      data_in: "학습 데이터를 연결하세요 (보통 SplitData의 train_data_out).",
+      trained_model_out: "학습된 모델이 나옵니다 → ScoreModel/EvaluateModel의 model_in으로.",
+    },
   },
   [ModuleType.SweepParameters]: {
     title: "Sweep Parameters",
@@ -536,6 +566,11 @@ export const MODULE_DESCRIPTIONS: Partial<
     whenToUse: "학습된 모델로 테스트셋/실데이터를 예측해 결과를 산출할 때.",
     connections: "TrainModel → ScoreModel ←(data) SplitData.test → EvaluateModel.",
     commonErrors: "학습에 쓰인 피처 컬럼과 추론 데이터의 컬럼이 일치해야 합니다. 인코딩/스케일링 기준도 동일해야 합니다.",
+    portHints: {
+      model_in: "학습된 모델을 연결하세요 (TrainModel의 trained_model_out).",
+      data_in: "예측할 데이터를 연결하세요 (보통 SplitData의 test_data_out).",
+      scored_data_out: "예측(Predict 컬럼 포함) 결과가 나옵니다 → EvaluateModel로.",
+    },
   },
   [ModuleType.EvaluateModel]: {
     title: "Evaluate Model",
@@ -551,6 +586,10 @@ export const MODULE_DESCRIPTIONS: Partial<
     whenToUse: "모델 성능을 정량 지표로 확인하고 모델 간 비교를 할 때.",
     connections: "ScoreModel → EvaluateModel. 또는 TrainModel→(model_in) + SplitData.test→(data_in).",
     commonErrors: "model_type(분류/회귀)을 실제 타깃과 맞춰야 지표가 맞습니다. 라벨/예측 컬럼명을 정확히 지정하세요.",
+    portHints: {
+      data_in: "예측 결과(ScoreModel의 scored_data_out)를 연결하세요.",
+      evaluation_out: "성능 지표·혼동행렬 등 평가 결과가 나옵니다.",
+    },
   },
 
   // ===== Unsupervised: Clustering / Dimensionality Reduction =====

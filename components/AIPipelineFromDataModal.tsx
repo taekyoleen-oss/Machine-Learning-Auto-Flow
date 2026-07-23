@@ -1,5 +1,6 @@
 import React, { useState, useRef, DragEvent } from 'react';
 import { XCircleIcon, SparklesIcon, FolderOpenIcon } from './icons';
+import { readTextFileSmart } from '../utils/fileEncoding';
 
 interface AIPipelineFromDataModalProps {
     isOpen: boolean;
@@ -23,11 +24,10 @@ export const AIPipelineFromDataModal: React.FC<AIPipelineFromDataModalProps> = (
             }
             setError(null);
             setFile(selectedFile);
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                setFileContent(event.target?.result as string);
-            };
-            reader.readAsText(selectedFile);
+            // 인코딩 자동 감지: EUC-KR/CP949 한글 깨짐 방지
+            readTextFileSmart(selectedFile).then((content) => {
+                setFileContent(content);
+            });
         }
     };
 

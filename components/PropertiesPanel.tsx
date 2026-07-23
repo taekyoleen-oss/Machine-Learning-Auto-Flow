@@ -46,6 +46,7 @@ import { DataAnalysisRAGModal } from "./DataAnalysisRAGModal";
 import { ModuleDescriptionModal } from "./ModuleDescriptionModal";
 import { useTheme } from "../contexts/ThemeContext";
 import { cacheFileContent, listCachedFiles, getCachedFileContent } from "../utils/fileContentCache";
+import { readTextFileSmart } from "../utils/fileEncoding";
 
 /** Claude 응답에서 코드펜스(```json …``` 또는 ``` …```)를 제거하고 JSON 본문만 남긴다. */
 function stripJsonFence(text: string): string {
@@ -703,18 +704,15 @@ const renderParameters = (
                 sourceType: "file",
               });
             } else {
-              // CSV 파일 처리
-              const reader = new FileReader();
-              reader.onload = (e) => {
-                const content = e.target?.result as string;
+              // CSV 파일 처리 (인코딩 자동 감지: EUC-KR/CP949 한글 깨짐 방지)
+              readTextFileSmart(file).then((content) => {
                 updateModuleParameters(module.id, {
                   source: file.name,
                   fileContent: content,
                   fileType: "csv",
                   sourceType: "file",
                 });
-              };
-              reader.readAsText(file);
+              });
             }
           } catch (error: any) {
             if (error.name !== "AbortError") {
@@ -5324,10 +5322,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           alert("엑셀 파일 처리 중 오류가 발생했습니다.");
         }
       } else {
-        // CSV 파일 처리
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const content = e.target?.result as string;
+        // CSV 파일 처리 (인코딩 자동 감지: EUC-KR/CP949 한글 깨짐 방지)
+        readTextFileSmart(file).then((content) => {
           cacheFileContent(file.name, content);
           updateModuleParameters(module.id, {
             source: file.name,
@@ -5335,8 +5331,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             fileType: "csv",
             sourceType: "file",
           });
-        };
-        reader.readAsText(file);
+        });
       }
     }
   };

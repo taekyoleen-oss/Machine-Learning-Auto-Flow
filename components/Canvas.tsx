@@ -4,6 +4,30 @@ import { ComponentRenderer as ModuleNode } from './ComponentRenderer';
 import { ShapeRenderer } from './ShapeRenderer';
 import { SpreadViewModal } from './SpreadViewModal';
 import { useTheme } from '../contexts/ThemeContext';
+import { MODULE_DESCRIPTIONS } from '../moduleDescriptions';
+
+// 포트별 연결 안내 문구 해석: moduleDescriptions의 portHints 우선,
+// 없으면 포트 타입(data/model/evaluation) 기반 기본 문구로 폴백.
+const genericPortHint = (portType: string, isInput: boolean): string => {
+  const map: Record<string, [string, string]> = {
+    // [입력 문구, 출력 문구]
+    data: ['데이터를 연결하세요', '데이터가 나옵니다'],
+    model: ['모델을 연결하세요', '모델이 나옵니다'],
+    evaluation: ['평가 대상을 연결하세요', '평가 결과가 나옵니다'],
+  };
+  const pair = map[portType];
+  if (pair) return isInput ? pair[0] : pair[1];
+  return isInput ? '여기에 연결하세요' : '여기서 결과가 나갑니다';
+};
+
+const resolvePortHint = (
+  moduleType: ModuleType,
+  port: { name: string; type: string },
+  isInput: boolean
+): string => {
+  const hints = MODULE_DESCRIPTIONS[moduleType]?.portHints;
+  return hints?.[port.name] ?? genericPortHint(port.type, isInput);
+};
 
 interface CanvasProps {
   modules: CanvasModule[];
@@ -62,6 +86,14 @@ export const Canvas: React.FC<CanvasProps> = ({
     toName: string;
     rowCount: number;
     columns: Array<{ name: string; type?: string }>;
+  } | null>(null);
+  // 모듈에 마우스를 올려 기다리면 뜨는 "연결 안내" 툴팁 상태(화면 좌표).
+  const [hoverGuide, setHoverGuide] = useState<{
+    moduleId: string;
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
   } | null>(null);
   
   // Refs for optimized dragging
@@ -474,6 +506,7 @@ export const Canvas: React.FC<CanvasProps> = ({
   }, [pan, scale, modules, setSelectedModuleIds, handleSelectionMouseMove]);
 
   const handleCanvasMouseDown = (e: MouseEvent) => {
+    setHoverGuide(null); // 캔버스 조작 시작 시 안내 툴팁 숨김
     // Panning with middle mouse button
     if (e.button === 1) {
         e.preventDefault();
@@ -563,6 +596,7 @@ export const Canvas: React.FC<CanvasProps> = ({
         if (connectionDataView) {
             return;
         }
+        setHoverGuide(null); // 확대/축소/스크롤 시 안내 툴팁 숨김
         
         // Ctrl + Wheel: Natural zoom
         if (e.ctrlKey || e.metaKey) {
@@ -615,12 +649,13 @@ export const Canvas: React.FC<CanvasProps> = ({
 
   const handleStartConnection = useCallback((moduleId: string, portName: string, clientX: number, clientY: number, isInput: boolean) => {
     if (!canvasContainerRef.current) return;
+    setHoverGuide(null); // 연결 드래그 시작 시 안내 툴팁 숨김
     const canvasRect = canvasContainerRef.current.getBoundingClientRect();
-    const to = { 
-        x: (clientX - canvasRect.left - pan.x) / scale, 
+    const to = {
+        x: (clientX - canvasRect.left - pan.x) / scale,
         y: (clientY - canvasRect.top - pan.y) / scale
     };
-    
+
     setDragConnection({ from: { moduleId, portName, isInput }, to });
   }, [scale, pan, canvasContainerRef]);
 
@@ -676,6 +711,67 @@ export const Canvas: React.FC<CanvasProps> = ({
     setDragConnection(null);
     setIsSuggestionDrag(false);
   }, [dragConnection, isSuggestionDrag, modules, setConnections, onAcceptSuggestion]);
+
+  // 모듈 몸통 아무 곳에 드롭 → 가장 가까운 "호환" 포트를 골라 연결(스냅).
+  // 정확히 포트 위에 놓지 않아도 연결되도록 해 마우스 연결을 쉽게 한다.
+  const handleEndConnectionOnModule = useCallback((moduleId: string, clientX: number, clientY: number) => {
+    if (isSuggestionDrag) {
+      onAcceptSuggestion();
+      setDragConnection(null);
+      setIsSuggestionDrag(false);
+      return;
+    }
+    if (!dragConnection) return;
+    const fromModule = modules.find(m => m.id === dragConnection.from.moduleId);
+    const toModule = modules.find(m => m.id === moduleId);
+    if (!fromModule || !toModule || fromModule.id === toModule.id) {
+      setDragConnection(null);
+      return;
+    }
+    const dragFromIsInput = dragConnection.from.isInput;
+    const dropOnIsInput = !dragFromIsInput; // 출력에서 시작→입력에 드롭, 그 반대도
+    const sourcePort = (dragFromIsInput ? fromModule.inputs : fromModule.outputs)
+      .find(p => p.name === dragConnection.from.portName);
+    if (!sourcePort) {
+      setDragConnection(null);
+      return;
+    }
+    // 타입이 일치하는 후보 포트만
+    const candidates = (dropOnIsInput ? toModule.inputs : toModule.outputs)
+      .filter(p => p.type === sourcePort.type);
+    if (candidates.length === 0) {
+      setDragConnection(null);
+      return;
+    }
+    // 드롭 지점과 가장 가까운 포트 선택
+    if (!canvasContainerRef.current) {
+      setDragConnection(null);
+      return;
+    }
+    const canvasRect = canvasContainerRef.current.getBoundingClientRect();
+    const dropWorld = {
+      x: (clientX - canvasRect.left - pan.x) / scale,
+      y: (clientY - canvasRect.top - pan.y) / scale,
+    };
+    let best = candidates[0];
+    let bestDist = Infinity;
+    for (const p of candidates) {
+      const pos = getPortPosition(toModule, p.name, dropOnIsInput);
+      const d = (pos.x - dropWorld.x) ** 2 + (pos.y - dropWorld.y) ** 2;
+      if (d < bestDist) { bestDist = d; best = p; }
+    }
+    // 기존 연결 생성 로직 재사용
+    handleEndConnection(moduleId, best.name, dropOnIsInput);
+  }, [dragConnection, isSuggestionDrag, modules, pan, scale, canvasContainerRef, getPortPosition, handleEndConnection, onAcceptSuggestion]);
+
+  // 모듈 위 hover 안내: ComponentRenderer가 대기시간 경과 후 호출.
+  const handleShowGuide = useCallback((moduleId: string, rect: { left: number; top: number; right: number; bottom: number }) => {
+    setHoverGuide({ moduleId, ...rect });
+  }, []);
+
+  const handleHideGuide = useCallback((moduleId: string) => {
+    setHoverGuide(prev => (prev && prev.moduleId === moduleId ? null : prev));
+  }, []);
 
   const handleTapPort = useCallback((moduleId: string, portName: string, isInput: boolean) => {
     cancelDragConnection(); 
@@ -911,6 +1007,9 @@ export const Canvas: React.FC<CanvasProps> = ({
               portRefs={portRefs}
               onStartConnection={handleStartConnection}
               onEndConnection={handleEndConnection}
+              onEndConnectionOnModule={handleEndConnectionOnModule}
+              onShowGuide={handleShowGuide}
+              onHideGuide={handleHideGuide}
               onViewDetails={onViewDetails}
               scale={scale}
               onRunModule={onRunModule}
@@ -1105,6 +1204,63 @@ export const Canvas: React.FC<CanvasProps> = ({
           <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-gray-600" />
         </div>
       )}
+
+      {/* 모듈 hover 연결 안내 툴팁 (마우스를 모듈에 올려 기다리면 표시) */}
+      {hoverGuide && (() => {
+        const gm = allModules.find(m => m.id === hoverGuide.moduleId);
+        if (!gm) return null;
+        const desc = MODULE_DESCRIPTIONS[gm.type];
+        const role = desc?.role || desc?.beginner || '';
+        const placeLeft =
+          typeof window !== 'undefined' &&
+          hoverGuide.right + 312 > window.innerWidth;
+        return (
+          <div
+            className="absolute z-50 pointer-events-none"
+            style={{
+              left: placeLeft ? hoverGuide.left - 12 : hoverGuide.right + 12,
+              top: hoverGuide.top,
+              transform: placeLeft ? 'translateX(-100%)' : 'none',
+            }}
+          >
+            <div className="bg-gray-900 border border-gray-600 rounded-lg shadow-2xl px-3 py-2.5 text-white w-[280px] max-h-[70vh] overflow-auto">
+              <div className="font-bold text-sm text-blue-300 mb-0.5">{gm.name}</div>
+              {role && (
+                <div className="text-[11px] text-gray-300 leading-snug mb-2">{role}</div>
+              )}
+              {gm.inputs && gm.inputs.length > 0 && (
+                <div className="mb-1.5">
+                  <div className="text-[10px] font-semibold text-emerald-300 mb-0.5">■ 입력 (연결 받는 곳)</div>
+                  <ul className="space-y-0.5">
+                    {gm.inputs.map(p => (
+                      <li key={p.name} className="text-[11px] text-gray-200 leading-snug flex gap-1.5">
+                        <span className="text-emerald-400 font-mono flex-shrink-0">●</span>
+                        <span><span className="font-mono text-emerald-200">{p.name}</span> — {resolvePortHint(gm.type, p, true)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {gm.outputs && gm.outputs.length > 0 && (
+                <div className="mb-1.5">
+                  <div className="text-[10px] font-semibold text-sky-300 mb-0.5">■ 출력 (내보내는 곳)</div>
+                  <ul className="space-y-0.5">
+                    {gm.outputs.map(p => (
+                      <li key={p.name} className="text-[11px] text-gray-200 leading-snug flex gap-1.5">
+                        <span className="text-sky-400 font-mono flex-shrink-0">●</span>
+                        <span><span className="font-mono text-sky-200">{p.name}</span> — {resolvePortHint(gm.type, p, false)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div className="mt-2 pt-1.5 border-t border-gray-700 text-[10px] text-amber-200 leading-snug">
+                💡 포트(●)에서 다른 모듈로 <b>드래그</b>하거나, 출력 포트를 <b>클릭</b> 후 입력 포트를 <b>클릭</b>해 연결하세요. 모듈 몸통 아무 곳에 놓아도 가장 가까운 포트로 연결됩니다.
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Connection Data View Modal */}
       {connectionDataView && (

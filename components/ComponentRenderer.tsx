@@ -5,6 +5,7 @@ import React, {
   useState,
   useEffect,
   useCallback,
+  useMemo,
 } from "react";
 import {
   CanvasModule,
@@ -54,6 +55,8 @@ interface PortComponentProps {
     from: { moduleId: string; portName: string; isInput: boolean };
     to: { x: number; y: number };
   } | null;
+  /** 드래그 중 이 포트가 호환되는 드롭 대상이면 true → 초록 강조 */
+  isDropTarget?: boolean;
 }
 
 interface ModuleNodeProps {
@@ -82,6 +85,18 @@ interface ModuleNodeProps {
     portName: string,
     isInput: boolean
   ) => void;
+  /** 모듈 몸통 아무 곳에 드롭 시 가장 가까운 호환 포트로 스냅 연결 */
+  onEndConnectionOnModule: (
+    moduleId: string,
+    clientX: number,
+    clientY: number
+  ) => void;
+  /** 모듈에 마우스를 올려 일정 시간 대기하면 연결 안내 표시 */
+  onShowGuide: (
+    moduleId: string,
+    rect: { left: number; top: number; right: number; bottom: number }
+  ) => void;
+  onHideGuide: (moduleId: string) => void;
   onViewDetails: (moduleId: string) => void;
   scale: number;
   onRunModule: (moduleId: string) => void;
@@ -143,6 +158,7 @@ const PortComponent: React.FC<PortComponentProps> = ({
   cancelDragConnection,
   style,
   dragConnection,
+  isDropTarget,
 }) => {
   const touchStartRef = useRef<{
     x: number;
@@ -286,11 +302,15 @@ const PortComponent: React.FC<PortComponentProps> = ({
     onEndConnection(moduleId, port.name, isInput);
   };
 
-  const portDotClasses = `w-4 h-4 rounded-full border-2 cursor-crosshair z-10 
+  // 포트를 조금 더 크고 뚜렷하게(w-[18px]) + 호버/드롭대상 시 확대·강조로
+  // 마우스 연결을 쉽게. 드래그 중 호환 포트는 초록으로 펄스 강조된다.
+  const portDotClasses = `w-[18px] h-[18px] rounded-full border-2 cursor-crosshair z-10 transition-all shadow-sm
                            ${
                              isTappedSource
-                               ? "bg-red-500 border-red-400 ring-2 ring-red-300"
-                               : "bg-gray-600 border-gray-400 hover:bg-blue-500"
+                               ? "bg-red-500 border-red-400 ring-2 ring-red-300 scale-110"
+                               : isDropTarget
+                               ? "bg-green-500 border-green-200 ring-2 ring-green-300 scale-125 animate-pulse"
+                               : "bg-gray-600 border-gray-300 hover:bg-blue-500 hover:scale-125"
                            }`;
 
   const portRefCallback = (el: HTMLDivElement | null) => {
@@ -364,6 +384,9 @@ export const ComponentRenderer: React.FC<ModuleNodeProps> = ({
   onStartConnection,
   onStartSuggestion,
   onEndConnection,
+  onEndConnectionOnModule,
+  onShowGuide,
+  onHideGuide,
   onViewDetails,
   scale,
   onRunModule,
@@ -382,6 +405,68 @@ export const ComponentRenderer: React.FC<ModuleNodeProps> = ({
   const { theme } = useTheme();
   const isDraggingRef = useRef(false);
   const lastTapRef = useRef(0);
+  const guideTimerRef = useRef<number | null>(null);
+
+  // 드래그 중: 이 모듈이 호환 드롭 대상인지, 어느 방향(입력/출력) 포트가
+  // 대상인지 계산 → 몸통 초록 링 + 해당 포트 강조에 사용.
+  const dropInfo = useMemo(() => {
+    if (
+      isSuggestion ||
+      !dragConnection ||
+      dragConnection.from.moduleId === module.id
+    )
+      return null;
+    const srcMod = allModules.find(
+      (m) => m.id === dragConnection.from.moduleId
+    );
+    if (!srcMod) return null;
+    const srcPort = (
+      dragConnection.from.isInput ? srcMod.inputs : srcMod.outputs
+    ).find((p) => p.name === dragConnection.from.portName);
+    if (!srcPort) return null;
+    // 출력에서 시작 → 입력에 드롭, 입력에서 시작 → 출력에 드롭
+    const dropOnIsInput = !dragConnection.from.isInput;
+    const candidates = dropOnIsInput ? module.inputs : module.outputs;
+    const hasCompat = candidates.some((p) => p.type === srcPort.type);
+    return { dropOnIsInput, srcType: srcPort.type, hasCompat };
+  }, [isSuggestion, dragConnection, module, allModules]);
+
+  const clearGuideTimer = () => {
+    if (guideTimerRef.current !== null) {
+      clearTimeout(guideTimerRef.current);
+      guideTimerRef.current = null;
+    }
+  };
+
+  // 마우스를 모듈 위에 올리고 움직이지 않고 기다리면(약 550ms) 연결 안내 표시.
+  const handleModuleMouseEnter = (e: MouseEvent) => {
+    if (isSuggestion || dragConnection) return;
+    const el = e.currentTarget as HTMLElement;
+    clearGuideTimer();
+    guideTimerRef.current = window.setTimeout(() => {
+      const r = el.getBoundingClientRect();
+      onShowGuide(module.id, {
+        left: r.left,
+        top: r.top,
+        right: r.right,
+        bottom: r.bottom,
+      });
+    }, 550);
+  };
+
+  const handleModuleMouseLeave = () => {
+    clearGuideTimer();
+    onHideGuide(module.id);
+  };
+
+  // 모듈 몸통 아무 곳에 드롭 → Canvas가 가장 가까운 호환 포트로 스냅 연결.
+  // (포트 위 드롭은 PortComponent가 stopPropagation으로 먼저 처리)
+  const handleModuleMouseUp = (e: MouseEvent) => {
+    if (isSuggestion) return;
+    onEndConnectionOnModule(module.id, e.clientX, e.clientY);
+  };
+
+  useEffect(() => () => clearGuideTimer(), []);
 
   const handleDelete = (e: MouseEvent | TouchEvent) => {
     e.stopPropagation();
@@ -389,6 +474,9 @@ export const ComponentRenderer: React.FC<ModuleNodeProps> = ({
   };
 
   const handleMouseDown = (e: MouseEvent) => {
+    // 드래그(이동) 시작 시 대기 중이던 안내 타이머·표시 제거
+    clearGuideTimer();
+    onHideGuide(module.id);
     if (isSuggestion) {
       e.stopPropagation();
       onAcceptSuggestion();
@@ -470,11 +558,16 @@ export const ComponentRenderer: React.FC<ModuleNodeProps> = ({
     : "";
   const ringOffset =
     theme === "light" ? "ring-offset-white" : "ring-offset-gray-900";
+  // 드래그 중 호환 드롭 대상이면 초록 링을 우선 표시(선택 링보다 우선).
+  const selectionRing = isSelected
+    ? `ring-2 ring-offset-2 ${ringOffset} ring-blue-500`
+    : "";
+  const dropRing = dropInfo?.hasCompat
+    ? `ring-2 ring-offset-2 ${ringOffset} ring-green-400`
+    : "";
   const wrapperClasses = `absolute w-48 ${getBackgroundColor()} ${getBorderColor()} border-2 rounded-lg shadow-lg flex flex-col ${
     isSuggestion ? "cursor-pointer" : "cursor-move"
-  } ${
-    isSelected ? `ring-2 ring-offset-2 ${ringOffset} ring-blue-500` : ""
-  } ${suggestionClasses}`;
+  } ${dropRing || selectionRing} ${suggestionClasses}`;
 
   const componentStyle: React.CSSProperties = {
     transform: `translate(${position.x}px, ${position.y}px)`,
@@ -515,6 +608,9 @@ export const ComponentRenderer: React.FC<ModuleNodeProps> = ({
       style={componentStyle}
       className={wrapperClasses}
       onMouseDown={handleMouseDown}
+      onMouseUp={handleModuleMouseUp}
+      onMouseEnter={handleModuleMouseEnter}
+      onMouseLeave={handleModuleMouseLeave}
       onDoubleClick={handleDoubleClick}
       onTouchStart={handleTouchStart}
     >
@@ -540,6 +636,11 @@ export const ComponentRenderer: React.FC<ModuleNodeProps> = ({
             style={style}
             onStartSuggestion={onStartSuggestion}
             dragConnection={dragConnection}
+            isDropTarget={
+              !!dropInfo &&
+              dropInfo.dropOnIsInput &&
+              port.type === dropInfo.srcType
+            }
           />
         );
       })}
@@ -748,6 +849,11 @@ export const ComponentRenderer: React.FC<ModuleNodeProps> = ({
             style={style}
             onStartSuggestion={onStartSuggestion}
             dragConnection={dragConnection}
+            isDropTarget={
+              !!dropInfo &&
+              !dropInfo.dropOnIsInput &&
+              port.type === dropInfo.srcType
+            }
           />
         );
       })}
