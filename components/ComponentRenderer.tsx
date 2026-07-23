@@ -451,7 +451,7 @@ export const ComponentRenderer: React.FC<ModuleNodeProps> = ({
         right: r.right,
         bottom: r.bottom,
       });
-    }, 550);
+    }, 1200);
   };
 
   const handleModuleMouseLeave = () => {

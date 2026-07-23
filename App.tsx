@@ -7156,7 +7156,7 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         </div>
       )}
 
-      <header className="flex flex-col px-4 py-1.5 bg-white dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700 flex-shrink-0 z-20 relative overflow-visible">
+      <header className="flex flex-col px-4 py-1.5 bg-white dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700 flex-shrink-0 z-40 relative overflow-visible">
         {/* 첫 번째 줄: 제목 및 모델 이름 */}
         <div className="flex items-center w-full">
           <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
