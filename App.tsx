@@ -356,6 +356,16 @@ const App: React.FC = () => {
     message: string;
     details?: string;
   } | null>(null);
+  // 입력값 미선택 등으로 실행을 막을 때 보여주는 비차단 안내 배너(에러 아님).
+  const [inputNotice, setInputNotice] = useState<{ message: string; key: number } | null>(null);
+  const inputNoticeTimerRef = useRef<number | null>(null);
+  const showInputNotice = useCallback((message: string) => {
+    setInputNotice({ message, key: Date.now() });
+    if (inputNoticeTimerRef.current !== null) {
+      clearTimeout(inputNoticeTimerRef.current);
+    }
+    inputNoticeTimerRef.current = window.setTimeout(() => setInputNotice(null), 4500);
+  }, []);
   const [activePropertiesTab, setActivePropertiesTab] =
     useState<PropertiesTab>("properties");
   const [rightPanelWidth, setRightPanelWidth] = useState(384); // w-96 in Tailwind is 384px
@@ -3070,15 +3080,24 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // 초기 마운트 시에만 실행
 
-  // 모듈 배열에 따라 자동으로 Fit to View 실행
+  // 자동 Fit to View: 파이프라인을 "처음 채우거나(빈 캔버스→모듈) 통째로 교체 로드"할
+  // 때만 실행한다. 단순 모듈 이동·편집·한 개 추가/삭제에는 화면을 자동으로
+  // 축소/이동시키지 않는다(사용자 요청: 자동 fit은 명시적 동작에서만).
+  const prevModuleIdsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
-    if (modules.length > 0) {
-      // 약간의 지연을 두어 DOM이 완전히 렌더링된 후 실행
-      const timer = setTimeout(() => {
-        handleFitToView();
-      }, 100);
-      return () => clearTimeout(timer);
-    }
+    const currentIds = new Set(modules.map((m) => m.id));
+    const prevIds = prevModuleIdsRef.current;
+    prevModuleIdsRef.current = currentIds;
+    if (currentIds.size === 0) return;
+    // 이전이 비었거나(초기/세션 복원), 겹치는 모듈이 하나도 없을 때(파이프라인 교체 로드)만 fit.
+    const isInitialOrReplace =
+      prevIds.size === 0 ||
+      ![...currentIds].some((id) => prevIds.has(id));
+    if (!isInitialOrReplace) return;
+    const timer = setTimeout(() => {
+      handleFitToView();
+    }, 100);
+    return () => clearTimeout(timer);
   }, [modules, handleFitToView]);
 
   // Close sample menu and my work menu when clicking outside
@@ -4226,28 +4245,72 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
       }
 
       // #8: 입력 포트 연결 검사 (개별 실행 시)
+      // 입력이 준비되지 않았으면 "에러를 내지 말고" 실행을 막고 안내만 표시한다.
+      // (상태는 그대로 유지 → 빨간 Error 없이, 사용자가 안내를 보고 입력을 선택)
       if (!runAll) {
         const connError = validateModuleConnections(module, connections);
         if (connError) {
-          addLog("ERROR", `[${moduleName}] 연결 오류: ${connError}`);
-          setModules((prev) =>
-            prev.map((m) =>
-              m.id === moduleId ? { ...m, status: ModuleStatus.Error } : m
-            )
-          );
+          showInputNotice(`[${moduleName}] ${connError}`);
+          addLog("WARN", `[${moduleName}] 실행 보류: ${connError}`);
           continue;
         }
       }
 
-      // #3: 파라미터 유효성 사전 검사
+      // 기술통계 모듈(Correlation/OutlierDetector/NormalityChecker): 변수 미선택 시
+      // 입력 데이터의 수치형 변수를 자동 선택한다(내보낸 Python의 "빈 선택=전체 수치형"과 동일).
+      // → 별도 선택 없이도 바로 분석되며(사용자 요청), 실행 결과·내보낸 코드와 정합.
+      if (
+        module.type === ModuleType.Correlation ||
+        module.type === ModuleType.OutlierDetector ||
+        module.type === ModuleType.NormalityChecker
+      ) {
+        const srcData = getSingleInputData(module.id) as any;
+        const numericCols: string[] = (srcData?.columns || [])
+          .filter(
+            (c: any) =>
+              c && (String(c.type).startsWith("int") || String(c.type).startsWith("float"))
+          )
+          .map((c: any) => c.name);
+        if (numericCols.length > 0) {
+          if (
+            module.type === ModuleType.Correlation ||
+            module.type === ModuleType.OutlierDetector
+          ) {
+            const cur = module.parameters.columns;
+            if (!Array.isArray(cur) || cur.length === 0) {
+              // OutlierDetector는 실행기 제한상 최대 5개
+              const picked =
+                module.type === ModuleType.OutlierDetector
+                  ? numericCols.slice(0, 5)
+                  : numericCols;
+              module.parameters = { ...module.parameters, columns: picked };
+            }
+          } else {
+            // NormalityChecker: 단일 변수 + 검정 방법 기본값
+            const patch: Record<string, any> = {};
+            if (!module.parameters.column || module.parameters.column === "")
+              patch.column = numericCols[0];
+            if (
+              !Array.isArray(module.parameters.tests) ||
+              module.parameters.tests.length === 0
+            )
+              patch.tests = [
+                "shapiro_wilk",
+                "kolmogorov_smirnov",
+                "anderson_darling",
+                "dagostino_k2",
+              ];
+            if (Object.keys(patch).length > 0)
+              module.parameters = { ...module.parameters, ...patch };
+          }
+        }
+      }
+
+      // #3: 파라미터/입력값 사전 검사 — 미선택 시 실행하지 않고 안내(에러 아님)
       const paramError = validateModuleParameters(module);
       if (paramError) {
-        addLog("ERROR", `[${moduleName}] 파라미터 오류: ${paramError}`);
-        setModules((prev) =>
-          prev.map((m) =>
-            m.id === moduleId ? { ...m, status: ModuleStatus.Error } : m
-          )
-        );
+        showInputNotice(`[${moduleName}] ${paramError}`);
+        addLog("WARN", `[${moduleName}] 실행 보류: ${paramError}`);
         continue;
       }
 
@@ -8332,6 +8395,29 @@ Please analyze this dataset comprehensively and design an optimal pipeline.
         isLoading={isAiGenerating}
       />
       <ErrorModal error={errorModal} onClose={() => setErrorModal(null)} />
+
+      {/* 입력값 미선택 안내 배너 (비차단·자동 사라짐, 에러 아님) */}
+      {inputNotice && (
+        <div
+          key={inputNotice.key}
+          className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] pointer-events-none"
+        >
+          <div className="pointer-events-auto flex items-center gap-2.5 max-w-[90vw] rounded-lg border border-amber-400 bg-amber-50 dark:bg-amber-900/90 dark:border-amber-600 px-4 py-2.5 shadow-xl">
+            <span className="text-lg leading-none">✋</span>
+            <span className="text-sm font-medium text-amber-900 dark:text-amber-100">
+              {inputNotice.message}
+            </span>
+            <button
+              onClick={() => setInputNotice(null)}
+              className="ml-1 text-amber-500 hover:text-amber-700 dark:text-amber-300 dark:hover:text-amber-100"
+              aria-label="닫기"
+              type="button"
+            >
+              <XMarkIcon className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* -- Modals -- */}
       {(() => {

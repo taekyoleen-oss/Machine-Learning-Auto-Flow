@@ -95,6 +95,9 @@ export const Canvas: React.FC<CanvasProps> = ({
     right: number;
     bottom: number;
   } | null>(null);
+  // 안내 툴팁을 화면 안·모듈 근처에 배치하기 위한 측정/클램프 위치(화면 좌표, position:fixed 기준).
+  const guideRef = useRef<HTMLDivElement>(null);
+  const [guidePos, setGuidePos] = useState<{ left: number; top: number } | null>(null);
   
   // Refs for optimized dragging
   const dragInfoRef = useRef<{
@@ -212,6 +215,27 @@ export const Canvas: React.FC<CanvasProps> = ({
   useLayoutEffect(() => {
     bumpConnectionLayout(t => t + 1);
   }, [moduleStructureKey]);
+
+  // 안내 툴팁 위치를 측정 후 뷰포트 안으로 클램프(항상 화면 안·모듈 근처에 표시).
+  // position:fixed 기준이라 hoverGuide의 getBoundingClientRect 화면좌표를 그대로 쓴다.
+  useLayoutEffect(() => {
+    if (!hoverGuide) { setGuidePos(null); return; }
+    const el = guideRef.current;
+    if (!el) return;
+    const w = el.offsetWidth;
+    const h = el.offsetHeight;
+    const M = 8; // 화면 가장자리 여백
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    // 우선 모듈 오른쪽에 배치, 공간이 부족하면 왼쪽에 배치
+    let left = hoverGuide.right + 12;
+    if (left + w + M > vw) left = hoverGuide.left - 12 - w;
+    // 그래도 넘치면 화면 안으로 클램프
+    left = Math.max(M, Math.min(left, vw - w - M));
+    // 세로: 모듈 상단에 맞추되 화면 안으로 클램프
+    let top = Math.max(M, Math.min(hoverGuide.top, vh - h - M));
+    setGuidePos({ left, top });
+  }, [hoverGuide]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -1205,22 +1229,20 @@ export const Canvas: React.FC<CanvasProps> = ({
         </div>
       )}
 
-      {/* 모듈 hover 연결 안내 툴팁 (마우스를 모듈에 올려 기다리면 표시) */}
+      {/* 모듈 hover 연결 안내 툴팁 (마우스를 모듈에 올려 기다리면 표시).
+          position:fixed(화면 좌표) + 측정 후 클램프로 항상 화면 안·모듈 근처에 표시. */}
       {hoverGuide && (() => {
         const gm = allModules.find(m => m.id === hoverGuide.moduleId);
         if (!gm) return null;
         const desc = MODULE_DESCRIPTIONS[gm.type];
         const role = desc?.role || desc?.beginner || '';
-        const placeLeft =
-          typeof window !== 'undefined' &&
-          hoverGuide.right + 312 > window.innerWidth;
         return (
           <div
-            className="absolute z-50 pointer-events-none"
+            ref={guideRef}
+            className="fixed z-[60] pointer-events-none"
             style={{
-              left: placeLeft ? hoverGuide.left - 12 : hoverGuide.right + 12,
-              top: hoverGuide.top,
-              transform: placeLeft ? 'translateX(-100%)' : 'none',
+              left: guidePos ? guidePos.left : hoverGuide.right + 12,
+              top: guidePos ? guidePos.top : hoverGuide.top,
             }}
           >
             <div className="bg-gray-900 border border-gray-600 rounded-lg shadow-2xl px-3 py-2.5 text-white w-[280px] max-h-[70vh] overflow-auto">

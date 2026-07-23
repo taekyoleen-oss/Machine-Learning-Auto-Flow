@@ -184,8 +184,31 @@ export function validateModuleParameters(module: CanvasModule): string | null {
     }
 
     case 'Correlation': {
-      if (p.columns && Array.isArray(p.columns) && p.columns.length < 2)
-        return '상관관계 분석을 위해 컬럼을 2개 이상 선택해야 합니다.';
+      const cols = Array.isArray(p.columns) ? p.columns : [];
+      if (cols.length < 2)
+        return '상관분석할 변수를 2개 이상 선택해주세요. (데이터를 연결하면 수치형 변수가 자동 선택됩니다)';
+      break;
+    }
+
+    case 'OutlierDetector': {
+      const cols = Array.isArray(p.columns) ? p.columns : [];
+      if (cols.length === 0)
+        return '이상치를 탐지할 수치형 변수를 1개 이상 선택해주세요. (데이터를 연결하면 자동 선택됩니다)';
+      break;
+    }
+
+    case 'NormalityChecker': {
+      if (!p.column || p.column === '')
+        return '정규성을 검정할 수치형 변수를 선택해주세요. (데이터를 연결하면 자동 선택됩니다)';
+      if (!Array.isArray(p.tests) || p.tests.length === 0)
+        return '정규성 검정 방법을 1개 이상 선택해주세요.';
+      break;
+    }
+
+    case 'HypothesisTesting': {
+      const tests = p.tests;
+      if (!Array.isArray(tests) || tests.length === 0)
+        return '가설검정을 1개 이상 추가하고 변수를 선택해주세요.';
       break;
     }
   }
@@ -204,6 +227,14 @@ export function validateModuleConnections(
   const isConnected = (portName: string) =>
     connections.some((c) => c.to.moduleId === module.id && c.to.portName === portName);
 
+  // 선택적 입력 포트: 연결하지 않아도 실행 가능한 포트(두 번째 데이터 등).
+  // 예) ScalingTransform.data_in2(테스트셋 동시 스케일링용)는 없어도 동작한다.
+  const OPTIONAL_INPUTS: Record<string, string[]> = {
+    ScalingTransform: ['data_in2'],
+    TransitionData: ['data_in2'],
+  };
+  const optionalPorts = OPTIONAL_INPUTS[module.type as string] || [];
+
   // 모델 분석보고서: 입력 포트(report_in/report_in_eval/report_in_model) 중 '하나 이상'만 연결되면 됨.
   // gatherReportContext가 어느 포트로든 업스트림 파이프라인을 거슬러 수집하므로 전부 연결할 필요가 없다.
   if (module.type === 'ModelAnalysisReport') {
@@ -213,7 +244,9 @@ export function validateModuleConnections(
       : "보고서를 생성하려면 모델/평가/데이터 출력 중 하나 이상을 입력 포트에 연결해주세요.";
   }
 
-  const unconnected = module.inputs.filter((port) => !isConnected(port.name));
+  const unconnected = module.inputs.filter(
+    (port) => !optionalPorts.includes(port.name) && !isConnected(port.name)
+  );
 
   if (unconnected.length > 0) {
     const portNames = unconnected.map((p) => `'${p.name}'`).join(', ');

@@ -5149,6 +5149,82 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     updateModuleParameters,
   ]);
 
+  // Correlation 모듈: 기본값으로 모든 수치형 변수 선택(빈 선택 시).
+  // 기술통계 모듈은 별도 선택 없이도 바로 분석되도록 가능한 변수를 모두 기본 선택한다.
+  useEffect(() => {
+    if (!module || module.type !== ModuleType.Correlation) return;
+    const sourceData = getConnectedDataSourceHelper(module.id, modules, connections);
+    const inputColumns = sourceData?.columns || [];
+    if (inputColumns.length === 0) return;
+    const current = module.parameters.columns;
+    if (Array.isArray(current) && current.length > 0) return;
+    const numeric = inputColumns
+      .filter((col) => col && (col.type.startsWith("int") || col.type.startsWith("float")))
+      .map((col) => col.name);
+    if (numeric.length > 0) {
+      updateModuleParameters(
+        module.id,
+        { ...module.parameters, columns: numeric },
+        { preserveStatus: true }
+      );
+    }
+  }, [module?.id, module?.type, module?.parameters.columns, modules, connections]);
+
+  // OutlierDetector 모듈: 기본값으로 수치형 변수 선택(최대 5개, 실행기 제한).
+  useEffect(() => {
+    if (!module || module.type !== ModuleType.OutlierDetector) return;
+    const sourceData = getConnectedDataSourceHelper(module.id, modules, connections);
+    const inputColumns = sourceData?.columns || [];
+    if (inputColumns.length === 0) return;
+    const current = module.parameters.columns;
+    if (Array.isArray(current) && current.length > 0) return;
+    const numeric = inputColumns
+      .filter((col) => col && (col.type.startsWith("int") || col.type.startsWith("float")))
+      .map((col) => col.name)
+      .slice(0, 5);
+    if (numeric.length > 0) {
+      updateModuleParameters(
+        module.id,
+        { ...module.parameters, columns: numeric },
+        { preserveStatus: true }
+      );
+    }
+  }, [module?.id, module?.type, module?.parameters.columns, modules, connections]);
+
+  // NormalityChecker 모듈: 기본값으로 첫 수치형 변수 + 4개 검정 방법 선택.
+  useEffect(() => {
+    if (!module || module.type !== ModuleType.NormalityChecker) return;
+    const sourceData = getConnectedDataSourceHelper(module.id, modules, connections);
+    const inputColumns = sourceData?.columns || [];
+    if (inputColumns.length === 0) return;
+    const numeric = inputColumns.filter(
+      (col) => col && (col.type.startsWith("int") || col.type.startsWith("float"))
+    );
+    const currentColumn = module.parameters.column;
+    const currentTests = module.parameters.tests;
+    const needColumn = (!currentColumn || currentColumn === "") && numeric.length > 0;
+    const needTests = !Array.isArray(currentTests) || currentTests.length === 0;
+    if (needColumn || needTests) {
+      const patch: Record<string, any> = { ...module.parameters };
+      if (needColumn) patch.column = numeric[0].name;
+      if (needTests)
+        patch.tests = [
+          "shapiro_wilk",
+          "kolmogorov_smirnov",
+          "anderson_darling",
+          "dagostino_k2",
+        ];
+      updateModuleParameters(module.id, patch, { preserveStatus: true });
+    }
+  }, [
+    module?.id,
+    module?.type,
+    module?.parameters.column,
+    module?.parameters.tests,
+    modules,
+    connections,
+  ]);
+
   // Examples_in_Load 디렉토리에서 예제 데이터 로드
   useEffect(() => {
     const loadExamples = async () => {
