@@ -1304,7 +1304,11 @@ p_feature_columns = {feature_columns}
 if not p_feature_columns:
     feature_cols = dataframe.select_dtypes(include=['number']).columns.tolist()
 else:
-    feature_cols = list(p_feature_columns)
+    feature_cols = [c for c in p_feature_columns if c in dataframe.columns]
+    if not feature_cols:
+        # Saved feature_columns don't match any column in the current data
+        # (e.g. a stale pipeline) → fall back to numeric columns instead of failing.
+        feature_cols = dataframe.select_dtypes(include=['number']).columns.tolist()
 
 X = dataframe[feature_cols]
 
