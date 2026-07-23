@@ -5,6 +5,7 @@ import { ShapeRenderer } from './ShapeRenderer';
 import { SpreadViewModal } from './SpreadViewModal';
 import { useTheme } from '../contexts/ThemeContext';
 import { MODULE_DESCRIPTIONS } from '../moduleDescriptions';
+import { isConnectionAllowed } from '../utils/moduleConnectivity';
 
 // 포트별 연결 안내 문구 해석: moduleDescriptions의 portHints 우선,
 // 없으면 포트 타입(data/model/evaluation) 기반 기본 문구로 폴백.
@@ -705,7 +706,7 @@ export const Canvas: React.FC<CanvasProps> = ({
         if (dragFromIsInput && !dropOnIsInput) { // Drag from INPUT to OUTPUT
             const fromPort = toModule.outputs.find(p => p.name === portName);
             const toPort = fromModule.inputs.find(p => p.name === dragConnection.from.portName);
-            if (fromPort && toPort && fromPort.type === toPort.type) {
+            if (fromPort && toPort && isConnectionAllowed(toModule.type, fromPort.type, fromModule.type, toPort.type)) {
                 const newConnection: Connection = {
                     id: `conn-${Date.now()}`,
                     from: { moduleId: toModule.id, portName: fromPort.name },
@@ -719,7 +720,7 @@ export const Canvas: React.FC<CanvasProps> = ({
         } else if (!dragFromIsInput && dropOnIsInput) { // Drag from OUTPUT to INPUT
             const fromPort = fromModule.outputs.find(p => p.name === dragConnection.from.portName);
             const toPort = toModule.inputs.find(p => p.name === portName);
-            if (fromPort && toPort && fromPort.type === toPort.type) {
+            if (fromPort && toPort && isConnectionAllowed(fromModule.type, fromPort.type, toModule.type, toPort.type)) {
                 const newConnection: Connection = {
                     id: `conn-${Date.now()}`,
                     from: { moduleId: fromModule.id, portName: fromPort.name },
@@ -812,7 +813,7 @@ export const Canvas: React.FC<CanvasProps> = ({
             const sourcePort = sourceModule.outputs.find(p => p.name === tappedSourcePort.portName);
             const targetPort = targetModule.inputs.find(p => p.name === portName);
 
-            if (sourcePort && targetPort && sourcePort.type === targetPort.type) {
+            if (sourcePort && targetPort && isConnectionAllowed(sourceModule.type, sourcePort.type, targetModule.type, targetPort.type)) {
                 const newConnection: Connection = {
                     id: `conn-${Date.now()}`,
                     from: tappedSourcePort,

@@ -1,7 +1,19 @@
 import React from "react";
 import { ModuleType } from "../types";
 import { MODULE_DESCRIPTIONS } from "../moduleDescriptions";
+import { getConnectableModules } from "../utils/moduleConnectivity";
 import { XCircleIcon } from "./icons";
+
+// 포트 호환성으로 계산한 '연결 가능한 주요 모듈'(기초 분석 제외) 문자열. 없으면 null.
+function connectableBody(moduleType: ModuleType): string | null {
+  const { upstream, downstream } = getConnectableModules(moduleType);
+  const name = (t: ModuleType) => MODULE_DESCRIPTIONS[t]?.title ?? t;
+  const lines = [
+    upstream.length ? `⬅ 입력으로 받을 수 있는 모듈: ${upstream.map(name).join(" · ")}` : "",
+    downstream.length ? `➡ 출력을 연결할 수 있는 모듈: ${downstream.map(name).join(" · ")}` : "",
+  ].filter(Boolean);
+  return lines.length ? lines.join("\n") : null;
+}
 
 interface ModuleDescriptionModalProps {
   moduleType: ModuleType | null;
@@ -77,6 +89,13 @@ export const ModuleDescriptionModal: React.FC<ModuleDescriptionModalProps> = ({
               )}
               {desc.connections && (
                 <Section title="권장 연결" body={desc.connections} tone="link" />
+              )}
+              {connectableBody(moduleType) && (
+                <Section
+                  title="연결 가능한 주요 모듈"
+                  body={connectableBody(moduleType)!}
+                  tone="link"
+                />
               )}
               {desc.commonErrors && (
                 <Section title="흔한 오류" body={desc.commonErrors} tone="warn" />
