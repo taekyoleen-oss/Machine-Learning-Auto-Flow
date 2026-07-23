@@ -389,7 +389,7 @@ export const SpreadViewModal: React.FC<SpreadViewModalProps> = ({
                   .map((_, rowIndex) => (
                     <tr key={rowIndex}>
                       <td className="w-12 h-8 border border-gray-300 bg-gray-100 text-center text-xs font-semibold text-gray-600">
-                        {rowIndex === 0 ? '' : rowIndex}
+                        {rowIndex + 1}
                       </td>
                       {Array(displayColCount)
                         .fill(null)
