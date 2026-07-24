@@ -368,7 +368,7 @@ const App: React.FC = () => {
   }, []);
   const [activePropertiesTab, setActivePropertiesTab] =
     useState<PropertiesTab>("properties");
-  const [rightPanelWidth, setRightPanelWidth] = useState(384); // w-96 in Tailwind is 384px
+  const [rightPanelWidth, setRightPanelWidth] = useState(320); // w-80 in Tailwind is 320px (default panel size reduced)
 
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const folderHandleRef = useRef<FileSystemDirectoryHandle | null>(null);
@@ -851,6 +851,22 @@ Respond with ONLY the module type string, for example: 'ScoreModel'`;
     setScale(newScale);
     setPan({ x: newPanX, y: newPanY });
   }, [modules, isLeftPanelVisible, isRightPanelVisible, rightPanelWidth]);
+
+  // 속성 패널(오른쪽)이 열리면 캔버스를 왼쪽으로 이동시켜 패널에 가려지는 모듈을 보이게 하고,
+  // 닫히면 정확히 원래 위치로 되돌린다(적용한 이동량을 그대로 역적용).
+  const rightPanelPanShiftRef = useRef(0);
+  useEffect(() => {
+    if (isRightPanelVisible) {
+      const shift = rightPanelWidth / 2;
+      rightPanelPanShiftRef.current = shift;
+      setPan((p) => ({ ...p, x: p.x - shift }));
+    } else if (rightPanelPanShiftRef.current !== 0) {
+      const shift = rightPanelPanShiftRef.current;
+      rightPanelPanShiftRef.current = 0;
+      setPan((p) => ({ ...p, x: p.x + shift }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRightPanelVisible]);
 
   const handleRotateModules = useCallback(() => {
     if (modules.length === 0) return;
