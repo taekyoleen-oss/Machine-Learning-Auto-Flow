@@ -4,10 +4,12 @@
 
 ## 지원 파일 확장자
 
-- `.ins` - Save 버튼으로 저장한 파일 형식
-- `.json` - 표준 Samples 형식
+- `.ins` - 표준 확장자(권장). 앱의 "저장" 버튼도 `.ins`로 저장합니다. 모든 샘플 파일은 `.ins`로 통일합니다.
+- `.json` - 하위 호환용으로 계속 지원(기존 파일 로드용, 신규 파일은 `.ins` 사용).
 
-## 형식 1: .ins 파일 (Save 버튼으로 저장한 형식)
+빌드 스크립트(`scripts/build-samples.js`)는 **확장자가 아니라 파일 내용**(연결이 `from.moduleId` 형식인지)으로 아래 두 형식을 자동 판별하므로, 어떤 확장자를 쓰든 두 구조 중 하나만 맞으면 정상 동작합니다.
+
+## 형식 1: id 기반 연결 (.ins 파일 — Save 버튼으로 저장한 형식)
 
 ### 필수 구조
 
@@ -52,8 +54,9 @@
 - `Linear_Reg in Boston.ins`
 - `Linear Regression.ins`
 - `Decision Tree.ins`
+- `KMeans-Insurance.ins`
 
-## 형식 2: .json 파일 (표준 Samples 형식)
+## 형식 2: 인덱스 기반 연결 (모듈 배열 인덱스 사용)
 
 ### 필수 구조
 
@@ -90,8 +93,10 @@
 - 프로젝트 이름은 `name` 필드에서 가져옵니다
 
 ### 예시 파일
-- `Linear_Regression (1).json`
-- `Linear_Reg_in_Boston.json`
+- `Book_AdultIncome_DecisionTree.ins`
+- `Book_Wholesale_KMeans.ins`
+
+(과거엔 이 형식을 `.json` 확장자로 저장했으나, 이제 확장자는 `.ins`로 통일하고 내용 구조로만 판별합니다.)
 
 ## 모듈 필수 필드
 

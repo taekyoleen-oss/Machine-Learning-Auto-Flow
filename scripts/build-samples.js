@@ -63,11 +63,18 @@ if (fs.existsSync(SAMPLES_DIR)) {
 
         const data = JSON.parse(content);
 
-        // .ins 파일 형식 변환
-        if (file.endsWith(".ins") && data.modules && data.connections) {
-          const ext = ".ins";
+        // id 기반 연결(from.moduleId/to.moduleId) 형식인지 내용으로 판별.
+        // 확장자(.ins/.json)가 아니라 실제 구조로 판단해야 확장자만 바꿔도 안전하다.
+        const isIdBasedFormat =
+          Array.isArray(data.connections) &&
+          data.connections.length > 0 &&
+          data.connections[0] &&
+          typeof data.connections[0].from?.moduleId !== "undefined";
+
+        // id 기반 형식 변환 (원래 .ins 저장 형식)
+        if (isIdBasedFormat && data.modules && data.connections) {
           const projectName =
-            data.name || data.projectName || file.replace(ext, "");
+            data.name || data.projectName || file.replace(/\.(json|ins)$/, "");
 
           // 메타데이터 병합
           const fileMetadata = metadata[file] || {};

@@ -29,13 +29,20 @@
     "tags": ["군집", "비지도학습", "K-Means"],
     "modelOrTask": "K-Means (군집)"
   },
+  "KMeans-Insurance.ins": {
+    "inputData": "보험 고객 데이터 (연간보험료, 누적청구금액, 유지기간, 건강지수)",
+    "description": "보험 고객 데이터를 K-Means로 군집화하는 파이프라인 (상관분석·스케일링 포함)",
+    "tags": ["군집", "비지도학습", "K-Means", "보험"],
+    "category": "Cluster",
+    "modelOrTask": "K-Means (군집)"
+  },
   "Stat Model.ins": {
     "inputData": "데이터 소스",
     "description": "통계 모델을 사용한 분석",
     "tags": ["통계", "분석"],
     "modelOrTask": "통계 모델"
   },
-  "Book_Automobile_LinearRegression.json": {
+  "Book_Automobile_LinearRegression.ins": {
     "inputData": "verify/datasets/imports-85-hdrs.csv (UCI Automobile)",
     "description": "[Azure ML 책 Ch5] 자동차 특성으로 가격 예측 — 선형회귀. 수치형 10개 특성, train 0.75, seed 42.",
     "tags": ["회귀", "선형회귀", "Azure ML 책", "Ch5"],
@@ -43,7 +50,7 @@
     "expectedOutput": "R²≈0.7561, RMSE≈5129.9",
     "modelOrTask": "선형회귀 (회귀)"
   },
-  "Book_AdultIncome_DecisionTree.json": {
+  "Book_AdultIncome_DecisionTree.ins": {
     "inputData": "verify/datasets/adult.csv (UCI Adult Census Income)",
     "description": "[Azure ML 책 Ch3] 인구통계로 소득(>50K) 분류 — 의사결정나무(max_depth=8). 책의 Boosted Decision Tree 대체.",
     "tags": ["분류", "의사결정나무", "Azure ML 책", "Ch3"],
@@ -51,7 +58,7 @@
     "expectedOutput": "Accuracy≈0.8322",
     "modelOrTask": "의사결정나무 (분류, max_depth=8)"
   },
-  "Book_Wholesale_KMeans.json": {
+  "Book_Wholesale_KMeans.ins": {
     "inputData": "verify/datasets/wholesale_customers.csv (UCI Wholesale customers)",
     "description": "[Azure ML 책 Ch6] 도매고객 세분화 — K-Means(centroid 4). 책과 동일 군집 수.",
     "tags": ["군집", "K-Means", "Azure ML 책", "Ch6"],
@@ -59,7 +66,7 @@
     "expectedOutput": "4개 군집 (277 / 95 / 58 / 10)",
     "modelOrTask": "K-Means (군집, n_clusters=4)"
   },
-  "Book_BikeSharing_DemandForecast.json": {
+  "Book_BikeSharing_DemandForecast.ins": {
     "inputData": "Examples_in_Load/bike_sharing_hourly.csv (UCI Bike Sharing, 시간별 17,379행)",
     "description": "[Elston 책 / 제9부 28장] 자전거 대여 시간별 수요예측 — 랜덤 포레스트 회귀. 수치형 11개 특성(hr·temp 등), train 0.7, seed 42. 잔차진단·교차검증의 종합 사례.",
     "tags": ["회귀", "랜덤포레스트", "수요예측", "Elston 책", "시계열"],

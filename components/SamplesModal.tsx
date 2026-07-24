@@ -1,6 +1,6 @@
 /**
  * Samples 모달 - life matrix flow와 동일: 목록(카드) + 데이터 입력 탭
- * ML: app_section "ML", 모델 파일 .json/.mla
+ * ML: app_section "ML", 모델 파일 .json/.ins
  */
 import React from "react";
 import { XMarkIcon, PlusCircleIcon, PencilIcon } from "@heroicons/react/24/outline";
@@ -163,7 +163,7 @@ const SamplesModal: React.FC<SamplesModalProps> = ({
       return;
     }
     if (!registerForm.modelFile) {
-      setRegisterError("모델 파일(.json 또는 .mla)을 선택하세요.");
+      setRegisterError("모델 파일(.json 또는 .ins)을 선택하세요.");
       return;
     }
     setRegisterError(null);
@@ -319,10 +319,10 @@ const SamplesModal: React.FC<SamplesModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">모델 파일 (.json, .mla) *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">모델 파일 (.json, .ins) *</label>
                   <input
                     type="file"
-                    accept=".json,.mla"
+                    accept=".json,.ins"
                     onChange={(e) => setRegisterForm((f) => ({ ...f, modelFile: e.target.files?.[0] ?? null }))}
                     className="w-full text-sm text-gray-600 dark:text-gray-400 file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-purple-600 file:text-white"
                   />
