@@ -170,7 +170,7 @@
     }
   },
   {
-    "filename": "Linear_Regression (1).json",
+    "filename": "Linear_Regression (1).ins",
     "name": "Linear Regression",
     "inputData": "",
     "description": "",
@@ -1224,7 +1224,7 @@
     }
   },
   {
-    "filename": "Book_RestaurantRatings_Recommender.json",
+    "filename": "Book_RestaurantRatings_Recommender.ins",
     "name": "Book_RestaurantRatings_Recommender",
     "inputData": "",
     "description": "",
@@ -1331,7 +1331,7 @@
     }
   },
   {
-    "filename": "Book_AdultIncome_DecisionTree.json",
+    "filename": "Book_AdultIncome_DecisionTree.ins",
     "name": "book-Ch3 adult census income (DecisionTree classification)",
     "inputData": "verify/datasets/adult.csv (UCI Adult Census Income)",
     "description": "[Azure ML 책 Ch3] 인구통계로 소득(>50K) 분류 — 의사결정나무(max_depth=8). 책의 Boosted Decision Tree 대체.",
@@ -1604,7 +1604,7 @@
     }
   },
   {
-    "filename": "Book_Automobile_LinearRegression.json",
+    "filename": "Book_Automobile_LinearRegression.ins",
     "name": "book-Ch5 automobile price (LinearRegression)",
     "inputData": "verify/datasets/imports-85-hdrs.csv (UCI Automobile)",
     "description": "[Azure ML 책 Ch5] 자동차 특성으로 가격 예측 — 선형회귀. 수치형 10개 특성, train 0.75, seed 42.",
@@ -1897,7 +1897,7 @@
     }
   },
   {
-    "filename": "Book_Wholesale_KMeans.json",
+    "filename": "Book_Wholesale_KMeans.ins",
     "name": "book-Ch6 wholesale customers (KMeans, 4 centroids)",
     "inputData": "verify/datasets/wholesale_customers.csv (UCI Wholesale customers)",
     "description": "[Azure ML 책 Ch6] 도매고객 세분화 — K-Means(centroid 4). 책과 동일 군집 수.",
@@ -2076,7 +2076,7 @@
     }
   },
   {
-    "filename": "Book_BikeSharing_DemandForecast.json",
+    "filename": "Book_BikeSharing_DemandForecast.ins",
     "name": "elston bike sharing hourly demand (RandomForest)",
     "inputData": "Examples_in_Load/bike_sharing_hourly.csv (UCI Bike Sharing, 시간별 17,379행)",
     "description": "[Elston 책 / 제9부 28장] 자전거 대여 시간별 수요예측 — 랜덤 포레스트 회귀. 수치형 11개 특성(hr·temp 등), train 0.7, seed 42. 잔차진단·교차검증의 종합 사례.",
@@ -2361,6 +2361,150 @@
           "fromPort": "evaluation_out",
           "toModuleIndex": 6,
           "toPort": "report_in_eval"
+        }
+      ]
+    }
+  },
+  {
+    "filename": "KMeans-Insurance.ins",
+    "name": "KMeans-Insurance",
+    "inputData": "보험 고객 데이터 (연간보험료, 누적청구금액, 유지기간, 건강지수)",
+    "description": "보험 고객 데이터를 K-Means로 군집화하는 파이프라인 (상관분석·스케일링 포함)",
+    "category": "Cluster",
+    "data": {
+      "name": "KMeans-Insurance",
+      "modules": [
+        {
+          "type": "LoadData",
+          "position": {
+            "x": 32.64462809917356,
+            "y": 20.495867768595026
+          },
+          "name": "Load Data 1",
+          "parameters": {
+            "source": "K_means Data.csv",
+            "fileContent": "연간보험료_만원,누적청구금액_만원,유지기간_년,건강지수\r\n210,45,12,88\r\n70,210,7,74\r\n195,30,15,92\r\n90,180,6,76\r\n190,320,8,62\r\n215,280,10,65\r\n85,45,2,78\r\n60,20,3,75\r\n225,60,11,85\r\n180,350,7,58\r\n50,15,4,82\r\n55,250,8,69\r\n185,55,14,90\r\n205,400,9,60\r\n75,55,3,71\r\n85,190,9,78\r\n205,20,18,95\r\n220,270,12,68\r\n90,30,1,80\r\n65,230,7,72\r\n170,120,10,82\r\n195,310,6,61\r\n65,10,5,84\r\n110,130,6,80\r\n190,40,13,89\r\n140,250,11,55\r\n45,60,2,73\r\n45,260,8,68\r\n215,75,16,91\r\n210,290,8,64\r\n80,25,4,76\r\n80,175,7,75\r\n200,50,12,87\r\n185,360,10,57\r\n55,50,3,79\r\n60,220,9,71\r\n220,35,17,94\r\n200,330,7,63\r\n70,35,2,81\r\n75,200,6,73\r\n198,65,14,86\r\n225,260,9,67\r\n120,90,5,72\r\n50,240,8,70\r\n212,25,15,93\r\n198,340,11,59\r\n40,40,1,77\r\n92,195,7,77\r\n188,70,11,84\r\n188,370,6,60\r\n",
+            "fileType": "csv",
+            "sourceType": "file"
+          }
+        },
+        {
+          "type": "Correlation",
+          "position": {
+            "x": 345.1735537190082,
+            "y": 184.38016528925618
+          },
+          "name": "Correlation 1",
+          "parameters": {
+            "columns": [
+              "연간보험료_만원",
+              "누적청구금액_만원",
+              "유지기간_년",
+              "건강지수"
+            ]
+          }
+        },
+        {
+          "type": "KMeans",
+          "position": {
+            "x": 359.0578512396694,
+            "y": -101.73553719008265
+          },
+          "name": "K-Means Clustering 1",
+          "parameters": {
+            "n_clusters": 4,
+            "init": "k-means++",
+            "n_init": 10,
+            "max_iter": 300,
+            "random_state": 42
+          }
+        },
+        {
+          "type": "ScalingTransform",
+          "position": {
+            "x": 353.8512396694215,
+            "y": 27.438016528925615
+          },
+          "name": "Scaling Transform 1",
+          "parameters": {
+            "method": "StandardScaler",
+            "columnSelections": {
+              "���������_����": {
+                "selected": true,
+                "type": "int64"
+              },
+              "����û���ݾ�_����": {
+                "selected": true,
+                "type": "int64"
+              },
+              "�����Ⱓ_��": {
+                "selected": true,
+                "type": "int64"
+              },
+              "�ǰ�����": {
+                "selected": true,
+                "type": "int64"
+              },
+              "연간보험료_만원": {
+                "type": "int64",
+                "selected": true
+              },
+              "누적청구금액_만원": {
+                "type": "int64",
+                "selected": true
+              },
+              "유지기간_년": {
+                "type": "int64",
+                "selected": true
+              },
+              "건강지수": {
+                "type": "int64",
+                "selected": true
+              }
+            }
+          }
+        },
+        {
+          "type": "TrainClusteringModel",
+          "position": {
+            "x": 647.2892561983472,
+            "y": 27.066115702479344
+          },
+          "name": "Train Clustering Model 1",
+          "parameters": {
+            "feature_columns": [
+              "연간보험료_만원",
+              "누적청구금액_만원",
+              "유지기간_년",
+              "건강지수"
+            ]
+          }
+        }
+      ],
+      "connections": [
+        {
+          "fromModuleIndex": 0,
+          "fromPort": "data_out",
+          "toModuleIndex": 1,
+          "toPort": "data_in"
+        },
+        {
+          "fromModuleIndex": 2,
+          "fromPort": "model_out",
+          "toModuleIndex": 4,
+          "toPort": "model_in"
+        },
+        {
+          "fromModuleIndex": 0,
+          "fromPort": "data_out",
+          "toModuleIndex": 3,
+          "toPort": "data_in"
+        },
+        {
+          "fromModuleIndex": 3,
+          "fromPort": "data_out",
+          "toModuleIndex": 4,
+          "toPort": "data_in"
         }
       ]
     }
@@ -2768,7 +2912,7 @@
     }
   },
   {
-    "filename": "Linear_Reg_in_Boston.json",
+    "filename": "Linear_Reg_in_Boston.ins",
     "name": "Linear_Reg in Boston",
     "inputData": "",
     "description": "",
